@@ -1,2 +1,5 @@
 # scroll-game
-A mobile app game based on scrolling
+A one-thumb neon arcade balancing game for mobile (working title).
+
+## Docs
+- [Game brief](docs/brief.md)
