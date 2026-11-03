@@ -645,7 +645,6 @@ let collOpen = false, collTab = 'balls', tiles = [], previewLast = 0;
 const LOCK_SVG = '<svg class="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="#cfe"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="#cfe" stroke-width="2.4"/></svg>';
 function openColl() {
   if (collOpen) return;
-  telFinalize(false);
   collOpen = true; drag = null; collEl.classList.add('open'); renderColl();
   previewLast = performance.now(); requestAnimationFrame(previewFrame);
 }
@@ -853,7 +852,7 @@ function render() {
 
 // Tap to resume after auto-pause
 window.addEventListener('pointerdown', e => {
-  if (game.paused && !panelOpen && e.target === canvas) { game.paused = false; }
+  if (game.paused && !panelOpen && e.target === canvas) { game.paused = false; telClearInProg(); }
 }, true);
 
 // ============================================================
@@ -906,7 +905,7 @@ function telSave() { lsSet(STORE_TQ, JSON.stringify(tq)); lsSet(STORE_TSENT, Str
 // ---- run lifecycle ----
 function telBegin() {
   try {
-    telTouch();
+    telTouch(); telClearInProg();
     const n = (parseInt(lsGet(STORE_RUNNO), 10) || 0) + 1; lsSet(STORE_RUNNO, String(n));
     const cfg = CONFIG, set = Object.assign({}, T, { ring_radius: cfg.ringRadius, ball_radius: cfg.ballRadius, start_health: cfg.startHealth,
       edge_restitution: cfg.restitutionEdge, edge_loss_base: cfg.edgeLossBase, stage_seconds: cfg.stageSeconds });
@@ -934,9 +933,9 @@ function telHit(o) { // a distinct contact = not touching the same shape within 
   if (game.t - (o.lastHit === undefined ? -9 : o.lastHit) > 0.15) { r.coll++; const b = r.bk[Math.floor(game.t * 4)]; if (b) b.c++; else r.bk[Math.floor(game.t * 4)] = { t: 0, d: 0, e: 0, c: 1 }; }
   o.lastHit = game.t;
 }
-function buildRecord(endedBy) {
+function buildRecord(endedBy, noCommit) {
   const r = rs, g = game, dur = g.t, R = CONFIG.ringRadius, ta = r.tAcc || 1e-9;
-  const life = (parseFloat(lsGet(STORE_PLAYTIME)) || 0) + dur; lsSet(STORE_PLAYTIME, String(life));
+  const life = (parseFloat(lsGet(STORE_PLAYTIME)) || 0) + dur; if (!noCommit) lsSet(STORE_PLAYTIME, String(life));
   let wt = 0, wd = 0, we = 0, wc = 0;
   const from = Math.floor(Math.max(0, dur - 5) * 4);
   for (const k in r.bk) if (+k >= from) { const b = r.bk[k]; wt += b.t; wd += b.d; we += b.e; wc += b.c; }
@@ -965,7 +964,7 @@ function telEnd() {
   try {
     telTouch();
     if (!rs || rs.done) return;
-    rs.done = true;
+    rs.done = true; telClearInProg();
     pending = { rec: buildRecord('death'), rating: null, overAt: game.overAt };
     rateUI();
   } catch (e) {}
@@ -984,15 +983,19 @@ function autoPause() {
   if (rs && game.state === 'play' && !game.paused && !panelOpen) rs.paused++;
   game.paused = true;
 }
-function telHide() {
+const STORE_INPROG = 'scrollgame.inProgressRun';
+function telClearInProg() { try { localStorage.removeItem(STORE_INPROG); } catch (e) {} }
+function telHide(unload) {
   try {
-    if (game.state === 'play' && rs && !rs.done) { rs.done = true; enqueue(buildRecord('quit'), true); }
-    else if (pending) telFinalize(false, true);
+    if (game.state === 'play' && rs && !rs.done) {
+      if (unload) { rs.done = true; telClearInProg(); enqueue(buildRecord('quit'), true); }
+      else lsSet(STORE_INPROG, JSON.stringify(buildRecord('quit', true))); // brief app switch: keep a local copy only
+    } else if (pending) telFinalize(false, true);
     else flush(true);
   } catch (e) {}
 }
-document.addEventListener('visibilitychange', () => { if (document.hidden) telHide(); });
-window.addEventListener('pagehide', telHide);
+document.addEventListener('visibilitychange', () => { if (document.hidden) telHide(false); });
+window.addEventListener('pagehide', () => telHide(true));
 
 // ---- queue + network ----
 function enqueue(rec, keepalive) {
@@ -1019,6 +1022,16 @@ async function flush(keepalive) {
 }
 window.addEventListener('online', () => flush(false));
 setInterval(() => flush(false), 30000);
+(function () { // a run left in progress by a killed tab (no pagehide): record it as abandoned
+  try {
+    const rec = lsJSON(STORE_INPROG, null); telClearInProg();
+    if (rec && rec.stats && rec.player_id) {
+      rec.ended_by = 'abandoned';
+      const lt = parseFloat(lsGet(STORE_PLAYTIME)) || 0; if (rec.stats.lifetime_play_time > lt) lsSet(STORE_PLAYTIME, String(rec.stats.lifetime_play_time));
+      enqueue(rec, false);
+    }
+  } catch (e) {}
+})();
 flush(false);
 
 // ---- fun rating UI (DOM, above the canvas; its taps never reach the retry handler) ----
