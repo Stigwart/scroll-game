@@ -86,7 +86,7 @@
 <script>
 "use strict";
 const TELEMETRY = { url: 'https://ahbfawcyytdrmmxepxjy.supabase.co/rest/v1/runs', key: 'sb_publishable_pWDVpRghWtIJLmDtPlQqag_lGzBQU3x', enabled: true };
-const GAME_VERSION = '0.3.0';
+const GAME_VERSION = '0.4.0';
 // ============================================================
 // CONFIG: fixed constants + tunable params (exposed in panel)
 // ============================================================
@@ -96,7 +96,7 @@ const CONFIG = {
   startHealth: 100,
   step: 1 / 120,           // fixed physics timestep (s)
   maxFrame: 0.1,           // dt clamp (s)
-  restitutionEdge: 0.35,
+  footerFrac: 0.19,        // footer HUD band height as fraction of viewport
   edgeLossBase: 1.0,       // edge loss = tuned lossRate*edgeMult*edgeLossBase per s
   stageSeconds: 30,        // seconds (at ramp 1) per background stage
   // Fixed force scalings (the sliders multiply these)
@@ -120,7 +120,10 @@ const CONFIG = {
     loss:    [4.5, 0, 20,  0.1,  'Health loss rate'],
     edge:    [4,   1, 15,  0.5,  'Edge damage multiplier'],
     spawn:   [1.0, 0.2, 4, 0.05, 'Obstacle spawn rate'],
-    ramp:    [1.0, 0, 3,   0.05, 'Difficulty ramp speed']
+    ramp:    [1.0, 0, 3,   0.05, 'Difficulty ramp speed'],
+    maxSpeed:[450, 100, 2000, 10, 'Max ball speed (px/s)'],
+    bounce:  [0.8, 0.3, 1.2, 0.05, 'Edge bounciness'],
+    kick:    [70,  0, 300, 5,    'Edge kick (min inward px/s)']
   }
 };
 const STORE_BEST = 'scrollgame.best', STORE_TUNE = 'scrollgame.tune';
@@ -142,13 +145,22 @@ function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
 // ============================================================
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-let W = 360, H = 640, DPR = 1;
+let W = 360, H = 640, DPR = 1, PH = 520, FH = 120, SAFE_B = 0; // PH = play-area height (footer starts at y=PH)
+function measureSafe() {
+  try {
+    const d = document.createElement('div');
+    d.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)';
+    document.body.appendChild(d); SAFE_B = parseFloat(getComputedStyle(d).paddingBottom) || 0; d.remove();
+  } catch (e) { SAFE_B = 0; }
+}
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 3);
   W = window.innerWidth; H = window.innerHeight;
+  measureSafe(); FH = Math.round(H * CONFIG.footerFrac + SAFE_B); PH = H - FH;
   canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  if (game.target) { game.target.x = clamp(game.target.x, 0, W); game.target.y = clamp(game.target.y, 0, H); }
+  if (game.target) { game.target.x = clamp(game.target.x, 0, W); game.target.y = clamp(game.target.y, 0, PH); }
+  if (game.ball) { game.ball.x = clamp(game.ball.x, game.ball.r, W - game.ball.r); game.ball.y = clamp(game.ball.y, game.ball.r, PH - game.ball.r); }
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', resize);
@@ -210,8 +222,8 @@ function resetRun() {
   game.t = 0; game.health = CONFIG.startHealth; game.newBest = false;
   game.obstacles = []; game.trailSt = newTrailSt(); game.unlockedNow = []; game.spawnTimer = 1.5;
   game.shake = 0; game.flash = 0; game.acc = 0;
-  game.target = { x: W / 2, y: H * 0.32 };
-  game.ball = { x: W / 2, y: H * 0.32, vx: 0, vy: 0, r: CONFIG.ballRadius };
+  game.target = { x: W / 2, y: PH * 0.32 };
+  game.ball = { x: W / 2, y: PH * 0.32, vx: 0, vy: 0, r: CONFIG.ballRadius };
   game.drift = { x: 0, y: 0, tx: 0, ty: 0, timer: 0 };
 }
 function startRun() { telRunStart(); resetRun(); game.state = 'play'; telBegin(); }
@@ -246,7 +258,7 @@ function onMove(e) {
   if (game.state === 'play' && !game.paused && !panelOpen && game.target) {
     if (rs) rs.drag += Math.hypot(e.clientX - drag.x, e.clientY - drag.y);
     game.target.x = clamp(game.target.x + (e.clientX - drag.x), 0, W);
-    game.target.y = clamp(game.target.y + (e.clientY - drag.y), 0, H);
+    game.target.y = clamp(game.target.y + (e.clientY - drag.y), 0, PH);
   }
   drag.x = e.clientX; drag.y = e.clientY;
 }
@@ -309,8 +321,8 @@ function spawnObstacle() {
   const side = Math.random();
   let x, y, ang;
   if (side < 0.5) { x = rand(0, W); y = -90; ang = Math.PI / 2 + rand(-0.6, 0.6); }
-  else if (side < 0.75) { x = -90; y = rand(0, H * 0.7); ang = rand(-0.3, 0.7); }
-  else { x = W + 90; y = rand(0, H * 0.7); ang = Math.PI - rand(-0.3, 0.7); }
+  else if (side < 0.75) { x = -90; y = rand(0, PH * 0.7); ang = rand(-0.3, 0.7); }
+  else { x = W + 90; y = rand(0, PH * 0.7); ang = Math.PI - rand(-0.3, 0.7); }
   const o = { kind, x, y, vx: Math.cos(ang) * speed, vy: Math.sin(ang) * speed, rot: rand(0, 6.28), spin: rand(-0.6, 0.6),
     seen: false, hue: Math.random() };
   if (kind === 'rect') { // wall (axis-aligned for collision)
@@ -369,7 +381,7 @@ function step(dt) {
   const excess = Math.max(0, d - T.sweet);
   const repel = T.repel * (1 + 0.55 * L) * CONFIG.repulsionUnit * excess;   // (a) away from target
   ax += dx / d * repel; ay += dy / d * repel;
-  ax += (W / 2 - b.x) * T.pull; ay += (H * 0.4 - b.y) * T.pull;             // (b) towards screen centre
+  ax += (W / 2 - b.x) * T.pull; ay += (PH * 0.5 - b.y) * T.pull;             // (b) towards screen centre
   ay -= T.up;                                                                // (c) upward bias
   const ds = T.drift * (1 + 0.6 * L) * CONFIG.driftUnit;                     // (d) drift
   ax += dr.x * ds; ay += dr.y * ds;
@@ -384,26 +396,32 @@ function step(dt) {
     const o = g.obstacles[i];
     o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.spin * dt;
     const m = (o.kind === 'rect' ? Math.max(o.w, o.h) : o.r) + 140;
-    if (o.x < -m || o.x > W + m || o.y < -m || o.y > H + m) {
+    if (o.x < -m || o.x > W + m || o.y < -m || o.y > PH + m) {
       if (o.seen || o.age > 8) { g.obstacles.splice(i, 1); continue; }
     }
     o.age = (o.age || 0) + dt;
-    if (o.x > -20 && o.x < W + 20 && o.y > -20 && o.y < H + 20) o.seen = true;
+    if (o.x > -20 && o.x < W + 20 && o.y > -20 && o.y < PH + 20) o.seen = true;
     if (collideObstacle(b, o)) { g.shake = Math.max(g.shake, 3); telHit(o); }
   }
 
-  // Screen edges: clamp + light bounce
-  let edge = false; const e = CONFIG.restitutionEdge;
-  if (b.x < b.r) { b.x = b.r; b.vx = Math.abs(b.vx) * e; edge = true; }
-  if (b.x > W - b.r) { b.x = W - b.r; b.vx = -Math.abs(b.vx) * e; edge = true; }
-  if (b.y < b.r) { b.y = b.r; b.vy = Math.abs(b.vy) * e; edge = true; }
-  if (b.y > H - b.r) { b.y = H - b.r; b.vy = -Math.abs(b.vy) * e; edge = true; }
+  // Play-area edges: mirror overshoot, reflect with restitution, guarantee a minimum inward speed
+  let edge = false; const e = T.bounce, kick = T.kick;
+  const x0 = b.r, x1 = W - b.r, y0 = b.r, y1 = PH - b.r;
+  if (b.x < x0) { b.x = Math.min(x1, x0 + (x0 - b.x)); b.vx = Math.max(Math.abs(b.vx) * e, kick); edge = true; }
+  else if (b.x > x1) { b.x = Math.max(x0, x1 - (b.x - x1)); b.vx = -Math.max(Math.abs(b.vx) * e, kick); edge = true; }
+  if (b.y < y0) { b.y = Math.min(y1, y0 + (y0 - b.y)); b.vy = Math.max(Math.abs(b.vy) * e, kick); edge = true; }
+  else if (b.y > y1) { b.y = Math.max(y0, y1 - (b.y - y1)); b.vy = -Math.max(Math.abs(b.vy) * e, kick); edge = true; }
+  const newContact = edge && !g.edgeTouch;
   g.edgeTouch = edge;
+  // Hard speed cap (not affected by escalation), applied after all forces, pushes and bounces
+  const sp = Math.hypot(b.vx, b.vy);
+  if (sp > T.maxSpeed) { const f = T.maxSpeed / sp; b.vx *= f; b.vy *= f; }
 
   // Health: none in sweet spot, grows with distance, much faster on edge
   const lossD = T.loss * (excess / 40) * (1 + 0.5 * L);
   let lossE = 0;
-  if (edge) { lossE = T.loss * T.edge * CONFIG.edgeLossBase * 1.5 + 6; g.shake = Math.max(g.shake, 4); g.flash = Math.min(0.35, g.flash + dt * 2); }
+  const edgeRate = T.loss * T.edge * CONFIG.edgeLossBase * 1.5 + 6;
+  if (edge) { lossE = edgeRate + (newContact ? 0.15 * edgeRate / dt : 0); g.shake = Math.max(g.shake, 4); g.flash = Math.min(0.35, g.flash + dt * 2); }
   const loss = lossD + lossE;
   if (loss > 0) { const f = Math.min(g.health, loss * dt) / loss; telStep(dt, d, edge, lossD * f, lossE * f); }
   else telStep(dt, d, edge, 0, 0);
@@ -783,16 +801,20 @@ function textCenter(str, y, size, color, blur) {
 }
 
 function drawHUD(pal) {
-  const g = game;
-  textCenter(fmtTime(g.t), 58, 54, '#ffffff', 16);
-  // Health bar
-  const bw = Math.min(W - 40, 320), bx = (W - bw) / 2, by = 96, bh = 12, hp = g.health / CONFIG.startHealth;
+  const g = game, inner = FH - SAFE_B;
+  // Footer band
+  ctx.fillStyle = '#030109'; ctx.fillRect(0, PH, W, FH);
+  ctx.save(); glow(pal[2], 14); ctx.strokeStyle = pal[2]; ctx.lineWidth = 3;
+  ctx.beginPath(); ctx.moveTo(0, PH + 1.5); ctx.lineTo(W, PH + 1.5); ctx.stroke(); ctx.restore();
+  const ts = Math.min(54, inner * 0.45);
+  textCenter(fmtTime(g.t), PH + inner * 0.36, ts, '#ffffff', 16);
+  const bw = Math.min(W - 40, 320), bx = (W - bw) / 2, bh = 12, by = PH + inner * 0.7, hp = clamp(g.health / CONFIG.startHealth, 0, 1);
   ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(bx, by, bw, bh);
   const hc = ringColor(1 - hp);
   ctx.save(); glow(hc, 10); ctx.fillStyle = hc; ctx.fillRect(bx, by, bw * hp, bh); ctx.restore();
   ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, bw, bh);
-  ctx.font = '13px "Trebuchet MS", system-ui, sans-serif'; ctx.textAlign = 'left';
-  ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('BEST ' + fmtTime(g.best), 14, 20);
+  ctx.font = '13px "Trebuchet MS", system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('BEST ' + fmtTime(g.best), 14, PH + 18);
 }
 
 function drawOverlayScreens(pal) {
@@ -832,12 +854,14 @@ function render() {
   if (g.shake > 0.2) ctx.translate(rand(-g.shake, g.shake), rand(-g.shake, g.shake));
   drawBackground(pal);
   if (g.state !== 'start') {
+    ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, PH); ctx.clip(); // play layer never draws over the footer
     for (const o of g.obstacles) drawObstacle(o, pal);
     drawTarget(); drawBall(pal);
+    ctx.restore();
   } else {
     // idle demo ring
     ctx.save(); glow(pal[2], 18); ctx.strokeStyle = pal[2]; ctx.lineWidth = 3; ctx.beginPath();
-    ctx.arc(W / 2, H * 0.78, CONFIG.ringRadius, 0, 6.283); ctx.stroke(); ctx.restore();
+    ctx.arc(W / 2, PH * 0.78, CONFIG.ringRadius, 0, 6.283); ctx.stroke(); ctx.restore();
   }
   ctx.restore();
   // Edge flash vignette
@@ -846,7 +870,7 @@ function render() {
     rg.addColorStop(0, 'rgba(255,0,0,0)'); rg.addColorStop(1, 'rgba(255,30,30,' + g.flash + ')');
     ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
   }
-  if (g.state !== 'start') drawHUD(pal);
+  drawHUD(pal);
   drawOverlayScreens(pal);
 }
 
@@ -908,7 +932,7 @@ function telBegin() {
     telTouch(); telClearInProg();
     const n = (parseInt(lsGet(STORE_RUNNO), 10) || 0) + 1; lsSet(STORE_RUNNO, String(n));
     const cfg = CONFIG, set = Object.assign({}, T, { ring_radius: cfg.ringRadius, ball_radius: cfg.ballRadius, start_health: cfg.startHealth,
-      edge_restitution: cfg.restitutionEdge, edge_loss_base: cfg.edgeLossBase, stage_seconds: cfg.stageSeconds });
+      footer_h: FH, edge_loss_base: cfg.edgeLossBase, stage_seconds: cfg.stageSeconds });
     rs = { playedAt: new Date().toISOString(), session: sessionId, runNo: n, settings: set, setStr: JSON.stringify(T),
       ball: selItem('balls').id, trail: selItem('trails').id, vw: W, vh: H, input: lastPtr,
       zS: 0, zI: 0, zO: 0, zX: 0, distSum: 0, tAcc: 0, coll: 0, edgeN: 0, edgeT: 0, lostD: 0, lostE: 0,
@@ -1063,7 +1087,7 @@ function frame(now) {
 }
 resize();
 resetRun();
-window.__TEST_HOOKS = { game, prog, tel: { get queue() { return tq; }, get pending() { return pending; }, get rs() { return rs; }, get sent() { return tsent; }, flush } }; // test-only hook (Playwright)
+window.__TEST_HOOKS = { game, T, area: () => ({ W, H, PH, FH }), prog, tel: { get queue() { return tq; }, get pending() { return pending; }, get rs() { return rs; }, get sent() { return tsent; }, flush } }; // test-only hook (Playwright)
 requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
 </script>
 </body>
