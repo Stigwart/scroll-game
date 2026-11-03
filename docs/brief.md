@@ -137,10 +137,11 @@ As the run goes on:
 |---|---|
 | Ball, target, drag control, the forces in §5.2 | Tilt control mode |
 | Health that drains with distance and faster at the edge | Power-up buttons and recharge |
-| Escalating difficulty and drifting background shapes that push the ball | XP, player levels, ball and trail unlocks, collection screen |
-| Survival timer and best score saved on the device | Ball designs and trails (cosmetic) |
+| Escalating difficulty and drifting background shapes that push the ball | XP, player levels, final unlock rules |
+| Survival timer and best score saved on the device | More ball designs and trails |
 | On-screen sliders to tune the forces while playtesting | Currency and shop, leaderboards, ads / skins |
-| Neon visual style (basic) | Music and sound (unless added to the prototype) |
+| Neon visual style (basic) |
+| Ball and trail picker with collection screen (placeholder unlocks: best time / runs played), added 3 Nov | Music and sound (unless added to the prototype) |
 
 ## 9. Roadmap
 
@@ -170,6 +171,7 @@ As the run goes on:
 |---|---|
 | 3 Nov 2026 | Prototype scope in §8 confirmed. Music is not in the prototype. |
 | 3 Nov 2026 | Balls are cosmetic only; add ball designs, trails and a collection / configuration screen. |
+| 3 Nov 2026 | Ball and trail picker added to the prototype. Code goes straight to `main`. Repo to be public with GitHub Pages. |
 | 3 Nov 2026 | Route: quick HTML MVP, then rebuild in a game engine. |
 | 3 Nov 2026 | No monetisation at launch; not an idle game; audience is not children. |
 
