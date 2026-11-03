@@ -53,22 +53,40 @@
   .tile.locked .nm { color:#889; }
   .tile .st { font-size:12px; color:#8ab; }
   .tile.sel .st { color:#7fff9a; font-weight:bold; }
+  #telToggle { width:auto; margin:0; transform:scale(1.4); }
+  #telStat { color:#889; font-size:12px; margin-top:4px; }
+  #rate { position:fixed; left:0; right:0; bottom:calc(max(26px, env(safe-area-inset-bottom)) + 62px); z-index:3;
+    display:none; flex-direction:column; align-items:center; gap:6px; }
+  #rate.show { display:flex; }
+  #rateQ { font:bold 17px "Trebuchet MS", system-ui, sans-serif; color:#dff; text-shadow:0 0 8px #0ff8; }
+  #rateRow { display:flex; gap:14px; }
+  #rateRow button { width:64px; height:64px; border-radius:18px; border:1px solid #6ff6; background:#0a1020dd;
+    font-size:34px; line-height:1; padding:0; cursor:pointer; }
+  #rateRow button.on { border-color:#7fff9a; box-shadow:0 0 14px #5f8a; background:#0e3a4a; transform:scale(1.1); }
+  #rateThx { height:18px; font:bold 15px "Trebuchet MS", system-ui, sans-serif; color:#7fff9a; visibility:hidden; }
+  #rateThx.show { visibility:visible; }
 </style>
 </head>
 <body>
 <canvas id="c"></canvas>
 <button id="gear" aria-label="Tuning">&#9881;</button>
 <div id="panel"><h2>TUNING</h2><div id="rows"></div>
+  <div class="row"><label><span>Send stats</span><input type="checkbox" id="telToggle"></label><div id="telStat"></div></div>
   <button class="reset" id="reset">Reset defaults</button>
   <button class="reset" id="unlockAll">Unlock all (testing)</button>
   <button class="reset" id="resetUnlocks">Reset unlocks</button>
   <div class="hint">Changes apply live. Tap the gear to close and resume.</div></div>
+<div id="rate"><div id="rateQ">How fun was that?</div>
+  <div id="rateRow"><button data-v="1" aria-label="Not fun">&#x1F61E;</button><button data-v="2" aria-label="OK">&#x1F610;</button><button data-v="3" aria-label="Fun">&#x1F600;</button></div>
+  <div id="rateThx">Thanks!</div></div>
 <button id="collBtn">Collection</button>
 <div id="coll"><div class="chead"><button id="collBack">&larr; Back</button><h2>COLLECTION</h2></div>
   <div id="tabs"><button data-k="balls"></button><button data-k="trails"></button></div>
   <div id="grid"></div></div>
 <script>
 "use strict";
+const TELEMETRY = { url: 'https://ahbfawcyytdrmmxepxjy.supabase.co/rest/v1/runs', key: 'sb_publishable_pWDVpRghWtIJLmDtPlQqag_lGzBQU3x', enabled: true };
+const GAME_VERSION = '0.3.0';
 // ============================================================
 // CONFIG: fixed constants + tunable params (exposed in panel)
 // ============================================================
@@ -196,12 +214,13 @@ function resetRun() {
   game.ball = { x: W / 2, y: H * 0.32, vx: 0, vy: 0, r: CONFIG.ballRadius };
   game.drift = { x: 0, y: 0, tx: 0, ty: 0, timer: 0 };
 }
-function startRun() { resetRun(); game.state = 'play'; }
+function startRun() { telRunStart(); resetRun(); game.state = 'play'; telBegin(); }
 function endRun() {
   game.state = 'over'; game.overAt = performance.now();
   const s = game.t;
   if (s > game.best) { game.best = s; game.newBest = true; lsSet(STORE_BEST, String(s)); }
   game.unlockedNow = recordRun(s);
+  telEnd();
 }
 
 // ============================================================
@@ -211,6 +230,7 @@ let drag = null; // {id, x, y}
 function onDown(e) {
   if (e.target !== canvas) return;
   e.preventDefault();
+  telTouch(); lastPtr = e.pointerType === 'touch' ? 'touch' : 'mouse';
   if (game.paused || panelOpen || collOpen) return;
   if (game.state === 'start') { startRun(); }
   else if (game.state === 'over') {
@@ -224,6 +244,7 @@ function onMove(e) {
   if (!drag || e.pointerId !== drag.id) return;
   e.preventDefault();
   if (game.state === 'play' && !game.paused && !panelOpen && game.target) {
+    if (rs) rs.drag += Math.hypot(e.clientX - drag.x, e.clientY - drag.y);
     game.target.x = clamp(game.target.x + (e.clientX - drag.x), 0, W);
     game.target.y = clamp(game.target.y + (e.clientY - drag.y), 0, H);
   }
@@ -238,8 +259,8 @@ window.addEventListener('pointercancel', onUp);
 document.addEventListener('touchmove', e => { if (!e.target.closest('#panel, #grid')) e.preventDefault(); }, { passive: false });
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('contextmenu', e => e.preventDefault());
-document.addEventListener('visibilitychange', () => { if (document.hidden) game.paused = true; });
-window.addEventListener('blur', () => { game.paused = true; });
+document.addEventListener('visibilitychange', () => { if (document.hidden) autoPause(); });
+window.addEventListener('blur', autoPause);
 
 // ============================================================
 // Tuning panel
@@ -271,6 +292,8 @@ document.getElementById('reset').addEventListener('click', () => {
 });
 document.getElementById('gear').addEventListener('click', () => {
   panelOpen = !panelOpen; panel.classList.toggle('open', panelOpen); drag = null;
+  if (panelOpen && rs && game.state === 'play' && !game.paused) rs.paused++;
+  telStat();
 });
 document.getElementById('gear').addEventListener('pointerdown', e => e.stopPropagation());
 
@@ -366,7 +389,7 @@ function step(dt) {
     }
     o.age = (o.age || 0) + dt;
     if (o.x > -20 && o.x < W + 20 && o.y > -20 && o.y < H + 20) o.seen = true;
-    if (collideObstacle(b, o)) g.shake = Math.max(g.shake, 3);
+    if (collideObstacle(b, o)) { g.shake = Math.max(g.shake, 3); telHit(o); }
   }
 
   // Screen edges: clamp + light bounce
@@ -378,8 +401,12 @@ function step(dt) {
   g.edgeTouch = edge;
 
   // Health: none in sweet spot, grows with distance, much faster on edge
-  let loss = T.loss * (excess / 40) * (1 + 0.5 * L);
-  if (edge) { loss += T.loss * T.edge * CONFIG.edgeLossBase * 1.5 + 6; g.shake = Math.max(g.shake, 4); g.flash = Math.min(0.35, g.flash + dt * 2); }
+  const lossD = T.loss * (excess / 40) * (1 + 0.5 * L);
+  let lossE = 0;
+  if (edge) { lossE = T.loss * T.edge * CONFIG.edgeLossBase * 1.5 + 6; g.shake = Math.max(g.shake, 4); g.flash = Math.min(0.35, g.flash + dt * 2); }
+  const loss = lossD + lossE;
+  if (loss > 0) { const f = Math.min(g.health, loss * dt) / loss; telStep(dt, d, edge, lossD * f, lossE * f); }
+  else telStep(dt, d, edge, 0, 0);
   g.health -= loss * dt;
   if (g.health <= 0) { g.health = 0; endRun(); }
 }
@@ -618,6 +645,7 @@ let collOpen = false, collTab = 'balls', tiles = [], previewLast = 0;
 const LOCK_SVG = '<svg class="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="#cfe"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="#cfe" stroke-width="2.4"/></svg>';
 function openColl() {
   if (collOpen) return;
+  telFinalize(false);
   collOpen = true; drag = null; collEl.classList.add('open'); renderColl();
   previewLast = performance.now(); requestAnimationFrame(previewFrame);
 }
@@ -788,7 +816,7 @@ function drawOverlayScreens(pal) {
     if (un.length > 3) textCenter('+' + (un.length - 3) + ' more', H * 0.585 + 90, 16, '#7fff9a', 6);
     if (performance.now() - g.overAt > 600) {
       const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 300);
-      ctx.globalAlpha = pulse; textCenter('TAP TO RETRY', H * 0.72, 26, '#ffffff', 12); ctx.globalAlpha = 1;
+      ctx.globalAlpha = pulse; textCenter('TAP TO RETRY', Math.min(H * 0.72, H - 236), 26, '#ffffff', 12); ctx.globalAlpha = 1;
     }
   }
   if (g.paused && g.state === 'play' && !panelOpen) {
@@ -829,17 +857,200 @@ window.addEventListener('pointerdown', e => {
 }, true);
 
 // ============================================================
+// Telemetry: per-run stats -> localStorage queue -> Supabase (best effort, never blocks play)
+// ============================================================
+const STORE_PID = 'scrollgame.pid', STORE_TQ = 'scrollgame.tq', STORE_TSENT = 'scrollgame.tsent',
+  STORE_TON = 'scrollgame.telon', STORE_PLAYTIME = 'scrollgame.playtime', STORE_RUNNO = 'scrollgame.runno';
+const TQ_MAX = 200, SESSION_GAP = 600000;
+let rs = null;            // stats for the run in progress
+let pending = null;       // finished run awaiting retry/rating: {rec, rating, overAt}
+let lastPtr = 'mouse', flushing = false;
+let tq = lsJSON(STORE_TQ, []); if (!Array.isArray(tq)) tq = [];
+let tsent = parseInt(lsGet(STORE_TSENT), 10) || 0;
+let telOn = () => TELEMETRY.enabled && lsGet(STORE_TON) !== '0';
+
+function uuid() {
+  try { if (crypto.randomUUID) return crypto.randomUUID(); } catch (e) {}
+  const h = new Uint8Array(16);
+  try { crypto.getRandomValues(h); } catch (e) { for (let i = 0; i < 16; i++) h[i] = Math.floor(Math.random() * 256); }
+  h[6] = (h[6] & 15) | 64; h[8] = (h[8] & 63) | 128;
+  return h.map((v, i) => (i === 4 || i === 6 || i === 8 || i === 10 ? '-' : '') + v.toString(16).padStart(2, '0')).join('');
+}
+let playerId = lsGet(STORE_PID);
+if (!playerId || playerId.length < 8) { playerId = uuid(); lsSet(STORE_PID, playerId); }
+let sessionId = uuid(), lastActive = Date.now();
+function telTouch() { const n = Date.now(); if (n - lastActive > SESSION_GAP) sessionId = uuid(); lastActive = n; }
+function deviceString() {
+  const ua = navigator.userAgent || '';
+  const os = /iPhone/.test(ua) ? 'iPhone' : /iPad/.test(ua) ? 'iPad' : /Android/.test(ua) ? 'Android' : /CrOS/.test(ua) ? 'ChromeOS'
+    : /Windows/.test(ua) ? 'Windows' : /Mac OS X|Macintosh/.test(ua) ? 'Mac' : /Linux/.test(ua) ? 'Linux' : 'Other';
+  const br = /EdgA?\/|EdgiOS/.test(ua) ? 'Edge' : /OPR\/|Opera/.test(ua) ? 'Opera' : /Firefox|FxiOS/.test(ua) ? 'Firefox'
+    : /Chrome|CriOS/.test(ua) ? 'Chrome' : /Safari/.test(ua) ? 'Safari' : 'Other';
+  const s = window.screen || {};
+  return os + ' / ' + br + ', ' + (s.width || 0) + 'x' + (s.height || 0);
+}
+const r2 = v => isFinite(v) ? Math.round(v * 100) / 100 : 0;
+
+function telStat() {
+  const el = document.getElementById('telStat');
+  if (el) el.textContent = 'Queued: ' + tq.length + ' · Sent: ' + tsent;
+}
+function telSave() { lsSet(STORE_TQ, JSON.stringify(tq)); lsSet(STORE_TSENT, String(tsent)); telStat(); }
+(function () {
+  const t = document.getElementById('telToggle');
+  t.checked = telOn();
+  t.addEventListener('change', () => { lsSet(STORE_TON, t.checked ? '1' : '0'); if (t.checked) flush(false); });
+  telStat();
+})();
+
+// ---- run lifecycle ----
+function telBegin() {
+  try {
+    telTouch();
+    const n = (parseInt(lsGet(STORE_RUNNO), 10) || 0) + 1; lsSet(STORE_RUNNO, String(n));
+    const cfg = CONFIG, set = Object.assign({}, T, { ring_radius: cfg.ringRadius, ball_radius: cfg.ballRadius, start_health: cfg.startHealth,
+      edge_restitution: cfg.restitutionEdge, edge_loss_base: cfg.edgeLossBase, stage_seconds: cfg.stageSeconds });
+    rs = { playedAt: new Date().toISOString(), session: sessionId, runNo: n, settings: set, setStr: JSON.stringify(T),
+      ball: selItem('balls').id, trail: selItem('trails').id, vw: W, vh: H, input: lastPtr,
+      zS: 0, zI: 0, zO: 0, zX: 0, distSum: 0, tAcc: 0, coll: 0, edgeN: 0, edgeT: 0, lostD: 0, lostE: 0,
+      drag: 0, paused: 0, bk: {}, lastEdge: -9, done: false };
+  } catch (e) { rs = null; }
+}
+function telStep(dt, d, edge, lD, lE) {
+  const r = rs; if (!r) return;
+  const R = CONFIG.ringRadius;
+  if (d <= T.sweet) r.zS += dt; else if (d <= R * 0.5) r.zI += dt; else if (d <= R) r.zO += dt; else r.zX += dt;
+  r.distSum += d * dt; r.tAcc += dt; r.lostD += lD; r.lostE += lE;
+  const k = Math.floor(game.t * 4), b = r.bk[k] || (r.bk[k] = { t: 0, d: 0, e: 0, c: 0 });
+  b.t += dt; b.d += d * dt;
+  if (edge) {
+    r.edgeT += dt; b.e += dt;
+    if (game.t - r.lastEdge > 0.15) { r.edgeN++; }
+    r.lastEdge = game.t;
+  }
+}
+function telHit(o) { // a distinct contact = not touching the same shape within the last 0.15s
+  const r = rs; if (!r) return;
+  if (game.t - (o.lastHit === undefined ? -9 : o.lastHit) > 0.15) { r.coll++; const b = r.bk[Math.floor(game.t * 4)]; if (b) b.c++; else r.bk[Math.floor(game.t * 4)] = { t: 0, d: 0, e: 0, c: 1 }; }
+  o.lastHit = game.t;
+}
+function buildRecord(endedBy) {
+  const r = rs, g = game, dur = g.t, R = CONFIG.ringRadius, ta = r.tAcc || 1e-9;
+  const life = (parseFloat(lsGet(STORE_PLAYTIME)) || 0) + dur; lsSet(STORE_PLAYTIME, String(life));
+  let wt = 0, wd = 0, we = 0, wc = 0;
+  const from = Math.floor(Math.max(0, dur - 5) * 4);
+  for (const k in r.bk) if (+k >= from) { const b = r.bk[k]; wt += b.t; wd += b.d; we += b.e; wc += b.c; }
+  const avg = r.distSum / ta;
+  return {
+    played_at: r.playedAt, player_id: playerId, session_id: r.session, game_version: GAME_VERSION, device: deviceString(),
+    run_number: r.runNo, settings: r.settings,
+    stats: {
+      duration: r2(dur), lifetime_play_time: r2(life), run_number: r.runNo, stage_reached: Math.floor(g.t * T.ramp / CONFIG.stageSeconds) + 1,
+      time_in_sweet_spot: r2(r.zS), time_in_inner: r2(r.zI), time_in_outer: r2(r.zO), time_outside_target: r2(r.zX),
+      avg_distance_from_centre_px: r2(avg), avg_distance_from_centre_frac: r2(avg / R),
+      shape_collisions: r.coll, edge_touches: r.edgeN, edge_contact_time: r2(r.edgeT),
+      health_lost_distance: r2(r.lostD), health_lost_edge: r2(r.lostE),
+      last5s: { avg_distance_frac: r2(wt > 0 ? wd / wt / R : 0), edge_contact_time: r2(we), shape_collisions: wc },
+      drag_distance_px: r2(r.drag), retry_delay_s: null, paused_count: r.paused,
+      viewport: { w: r.vw, h: r.vh }, input: r.input, ball: r.ball, trail: r.trail,
+      tuned_mid_run: JSON.stringify(T) !== r.setStr
+    },
+    fun_rating: null, ended_by: endedBy
+  };
+}
+function telRunStart() { // next run is starting: finalise the previous one with its retry delay
+  try { telTouch(); telFinalize(true); } catch (e) {}
+}
+function telEnd() {
+  try {
+    telTouch();
+    if (!rs || rs.done) return;
+    rs.done = true;
+    pending = { rec: buildRecord('death'), rating: null, overAt: game.overAt };
+    rateUI();
+  } catch (e) {}
+}
+function telFinalize(retried, keepalive) {
+  const p = pending; if (!p) return;
+  pending = null;
+  try {
+    if (p.rating) p.rec.fun_rating = p.rating;
+    if (retried) p.rec.stats.retry_delay_s = r2((performance.now() - p.overAt) / 1000);
+    enqueue(p.rec, keepalive);
+  } catch (e) {}
+  rateUI();
+}
+function autoPause() {
+  if (rs && game.state === 'play' && !game.paused && !panelOpen) rs.paused++;
+  game.paused = true;
+}
+function telHide() {
+  try {
+    if (game.state === 'play' && rs && !rs.done) { rs.done = true; enqueue(buildRecord('quit'), true); }
+    else if (pending) telFinalize(false, true);
+    else flush(true);
+  } catch (e) {}
+}
+document.addEventListener('visibilitychange', () => { if (document.hidden) telHide(); });
+window.addEventListener('pagehide', telHide);
+
+// ---- queue + network ----
+function enqueue(rec, keepalive) {
+  if (!telOn()) return;
+  tq.push(rec); while (tq.length > TQ_MAX) tq.shift();
+  telSave(); flush(keepalive);
+}
+async function flush(keepalive) {
+  if (!telOn() || flushing || !tq.length || typeof fetch !== 'function') return;
+  flushing = true;
+  try {
+    while (tq.length && telOn()) {
+      const batch = tq.slice(0, keepalive ? 20 : 50);
+      let res;
+      try {
+        res = await fetch(TELEMETRY.url, { method: 'POST', keepalive: !!keepalive, body: JSON.stringify(batch),
+          headers: { apikey: TELEMETRY.key, 'Content-Type': 'application/json', Prefer: 'return=minimal' } });
+      } catch (e) { break; }
+      if (!res || !res.ok) break;
+      tq = tq.filter(x => batch.indexOf(x) < 0); tsent += batch.length; telSave();
+    }
+  } catch (e) {}
+  flushing = false;
+}
+window.addEventListener('online', () => flush(false));
+setInterval(() => flush(false), 30000);
+flush(false);
+
+// ---- fun rating UI (DOM, above the canvas; its taps never reach the retry handler) ----
+const rateEl = document.getElementById('rate'), thxEl = document.getElementById('rateThx');
+const rateBtns = Array.from(document.querySelectorAll('#rateRow button'));
+function rateUI() {
+  const v = pending ? pending.rating : null;
+  rateBtns.forEach(b => b.classList.toggle('on', +b.dataset.v === v));
+  thxEl.classList.toggle('show', !!v);
+}
+rateBtns.forEach(b => {
+  for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'mousedown']) b.addEventListener(ev, e => e.stopPropagation());
+  b.addEventListener('click', e => { e.stopPropagation(); if (pending) { pending.rating = +b.dataset.v; rateUI(); } });
+});
+let rateShown = false;
+function telSyncRate() {
+  const g = game, show = !!pending && g.state === 'over' && !collOpen && !panelOpen && performance.now() - g.overAt > 600;
+  if (show !== rateShown) { rateShown = show; rateEl.classList.toggle('show', show); if (show) rateUI(); }
+}
+
+// ============================================================
 // Main loop
 // ============================================================
 let last = performance.now();
 function frame(now) {
   const dt = Math.min((now - last) / 1000, CONFIG.maxFrame); last = now;
-  update(dt); render(); syncCollBtn();
+  update(dt); render(); syncCollBtn(); telSyncRate();
   requestAnimationFrame(frame);
 }
 resize();
 resetRun();
-window.__TEST_HOOKS = { game, prog }; // test-only hook (Playwright)
+window.__TEST_HOOKS = { game, prog, tel: { get queue() { return tq; }, get pending() { return pending; }, get rs() { return rs; }, get sent() { return tsent; }, flush } }; // test-only hook (Playwright)
 requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
 </script>
 </body>
