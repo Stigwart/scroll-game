@@ -173,7 +173,8 @@ As the run goes on:
 | 3 Nov 2026 | Balls are cosmetic only; add ball designs, trails and a collection / configuration screen. |
 | 3 Nov 2026 | Ball and trail picker added to the prototype. Code goes straight to `main`. Repo to be public with GitHub Pages. |
 | 3 Nov 2026 | Balance testing loop: per-run stats sent to Supabase; tuning by rule-based nudges plus a simulated bot player; optional one-tap fun rating after each run; "good" = repeatability + engagement length. |
-| 3 Nov 2026 | Metrics defined. **Repeatability:** % of runs followed by a retry within 10s; average runs per sitting. **Engagement:** minutes per sitting; median run length; daily active players (DAU); total player time. Data is read through the Supabase connector, read-only. |
+| 3 Nov 2026 | Metrics defined. **Repeatability:** % of runs followed by a retry within 10s; average runs per sitting. **Engagement:** minutes per sitting; median run length; daily active players (DAU); total player time. Data is read through the Supabase connector. |
+| 3 Nov 2026 | Keep the admin Supabase connector during rapid prototyping; Claude only reads data unless asked. Revisit read-only before wider testing. |
 | 3 Nov 2026 | Route: quick HTML MVP, then rebuild in a game engine. |
 | 3 Nov 2026 | No monetisation at launch; not an idle game; audience is not children. |
 
