@@ -1,6 +1,6 @@
 # Game Brief: Scroll Game (working title)
 
-*Status: Draft v0.1 · Created 3 November 2026 · Owner: Stuart*
+*Status: Draft v0.2 · Updated 3 November 2026 · Owner: Stuart*
 *Source: design interview with Claude. Decisions below are Stuart's own; anything not yet decided is listed under [Open questions](#10-open-questions).*
 
 ---
@@ -109,7 +109,10 @@ As the run goes on:
 
 - Unlocked through **achievements** in-game and by reaching **player levels**.
 - Themes can be anything, from cute animal balls to Christmas baubles to unique objects.
-- **Each ball should have a unique character.** Whether that includes gameplay traits, such as heavier or bouncier balls, is still being explored (see open questions).
+- **Each ball should have a unique character.**
+- **Decided: balls are cosmetic only.** No gameplay traits, so balance and leaderboards stay fair.
+- Cosmetics include **ball designs** and **trails** (the visual streak behind the ball).
+- A **collection screen** shows players what they have unlocked (and what is still locked) and lets them choose which ball and trail to use.
 
 ### 6.5 Other unlockables
 
@@ -128,14 +131,14 @@ As the run goes on:
 
 **Goal:** a playable HTML version for Stuart and his daughter to test whether the core balancing feels fun.
 
-**Proposed scope** *(suggested by Claude; Stuart to confirm)*:
+**Scope (confirmed by Stuart, 3 Nov 2026):**
 
 | In the prototype | Later |
 |---|---|
 | Ball, target, drag control, the forces in §5.2 | Tilt control mode |
 | Health that drains with distance and faster at the edge | Power-up buttons and recharge |
-| Escalating difficulty and drifting background shapes that push the ball | XP, player levels and ball unlocks |
-| Survival timer and best score saved on the device | Ball characters with unique traits |
+| Escalating difficulty and drifting background shapes that push the ball | XP, player levels, ball and trail unlocks, collection screen |
+| Survival timer and best score saved on the device | Ball designs and trails (cosmetic) |
 | On-screen sliders to tune the forces while playtesting | Currency and shop, leaderboards, ads / skins |
 | Neon visual style (basic) | Music and sound (unless added to the prototype) |
 
@@ -153,17 +156,24 @@ As the run goes on:
 ## 10. Open questions
 
 1. **Working title.** Stuart will name the game later.
-2. **Prototype scope.** Confirm or adjust the proposed split in §8, including whether music goes into the prototype.
-3. **Ball traits.** Should balls be cosmetic only, or have gameplay traits? Traits add variety but complicate balancing and leaderboard fairness.
-4. **Force tuning.** Starting values for all forces, to be found in playtesting.
-5. **Currency rate.** How time survived converts into currency, and how fast upgrades are affordable. Evidence from other games suggests every run should afford *something*.
-6. **Achievement list.** Which achievements unlock which balls.
-7. **Background stages.** How many stages, and what triggers each transition (time thresholds?).
-8. **Game engine** for the iPhone rebuild.
-9. **Tilt mode on web.** iPhone browsers ask the player for permission before a page can read tilt (motion sensors). Decide whether tilt is web-only, engine-only, or both.
-10. **Music.** Pick tracks and confirm licences.
+2. **Force tuning.** Starting values for all forces, to be found in playtesting.
+3. **Currency rate.** How time survived converts into currency, and how fast upgrades are affordable. Evidence from other games suggests every run should afford *something*.
+4. **Achievement list.** Which achievements unlock which balls.
+5. **Background stages.** How many stages, and what triggers each transition (time thresholds?).
+6. **Game engine** for the iPhone rebuild.
+7. **Tilt mode on web.** iPhone browsers ask the player for permission before a page can read tilt (motion sensors). Decide whether tilt is web-only, engine-only, or both.
+8. **Music.** Pick tracks and confirm licences.
 
-## 11. Research references
+## 11. Decision log
+
+| Date | Decision |
+|---|---|
+| 3 Nov 2026 | Prototype scope in §8 confirmed. Music is not in the prototype. |
+| 3 Nov 2026 | Balls are cosmetic only; add ball designs, trails and a collection / configuration screen. |
+| 3 Nov 2026 | Route: quick HTML MVP, then rebuild in a game engine. |
+| 3 Nov 2026 | No monetisation at launch; not an idle game; audience is not children. |
+
+## 12. Research references
 
 - [Follow the Line](https://apps.microsoft.com/detail/9wzdncrfjfgx?hl=en-US): closest control match (drag to keep the ball centred); no meta-progression.
 - [Balancer: Don't let it fall](https://apps.apple.com/us/app/-/id6744556396): one-finger swipe balancing; markets "smooth, intuitive one-finger controls".
