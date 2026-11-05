@@ -50,7 +50,7 @@ function telBegin() {
   try {
     telTouch(); telClearInProg();
     const n = (parseInt(lsGet(STORE_RUNNO), 10) || 0) + 1; lsSet(STORE_RUNNO, String(n));
-    const cfg = CONFIG, set = Object.assign({}, T, { ring_radius: cfg.ringRadius, ball_radius: cfg.ballRadius, start_health: cfg.startHealth,
+    const cfg = CONFIG, set = Object.assign({}, T, { mods: Object.assign({}, MOD), plvl: playerLvl(), ring_radius: cfg.ringRadius, ball_radius: cfg.ballRadius, start_health: cfg.startHealth,
       footer_h: FH, edge_loss_base: cfg.edgeLossBase, stage_seconds: cfg.stageSeconds });
     rs = { playedAt: new Date().toISOString(), session: sessionId, runNo: n, settings: set, setStr: JSON.stringify(T),
       ball: selItem('balls').id, trail: selItem('trails').id, vw: window.innerWidth, vh: window.innerHeight, input: lastPtr,
@@ -61,7 +61,7 @@ function telBegin() {
 function telStep(dt, d, edge, lD, lE) {
   const r = rs; if (!r) return;
   const R = CONFIG.ringRadius;
-  if (d <= T.sweet) r.zS += dt; else if (d <= R * 0.5) r.zI += dt; else if (d <= R) r.zO += dt; else r.zX += dt;
+  if (d <= sweetR()) r.zS += dt; else if (d <= R * 0.5) r.zI += dt; else if (d <= R) r.zO += dt; else r.zX += dt;
   r.distSum += d * dt; r.tAcc += dt; r.lostD += lD; r.lostE += lE;
   const k = Math.floor(game.t * 4), b = r.bk[k] || (r.bk[k] = { t: 0, d: 0, e: 0, c: 0 });
   b.t += dt; b.d += d * dt;
@@ -122,6 +122,7 @@ function telFinalize(retried, keepalive) {
   } catch (e) {}
   rateUI();
 }
+document.addEventListener('visibilitychange', () => { document.hidden ? Audio_.pause() : Audio_.resume(); });
 function autoPause() {
   if (rs && game.state === 'play' && !game.paused && !panelOpen) rs.paused++;
   game.paused = true;

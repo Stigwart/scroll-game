@@ -63,3 +63,13 @@
   #stage { position:fixed; left:0; top:0; width:450px; height:800px; transform-origin:0 0; overflow:hidden; background:#05030d; --s:1; }
   /* keep small DOM text >= ~12 screen px when the stage is scaled down */
   .tile .st, .tile .nm, #rateThx, #telStat, #panel .hint, .row { font-size:max(12px, calc(12px / var(--s))); }
+
+  #tabs { gap:6px; } #tabs button { font-size:14px; padding:0 2px; }
+  .mhead { grid-column:1/-1; display:flex; justify-content:space-between; align-items:center; color:#dff; font-size:16px; padding:2px 4px; }
+  .mhead b { color:#ffd84d; } .mhead span:last-child i { display:inline-block; vertical-align:middle; height:8px; width:0; max-width:90px; background:#6ff; margin-left:8px; border-radius:4px; }
+  .mrow { grid-column:1/-1; display:flex; align-items:center; gap:10px; border:1px solid #6ff4; background:#0a1020cc; border-radius:14px; padding:10px 12px; color:#dff; }
+  .mrow .tx { flex:1; } .mrow b { display:block; font-size:16px; } .mrow small { color:#8ab; font-size:max(13px, calc(12px / var(--s))); } .mrow em { display:block; font-style:normal; color:#7fff9a; letter-spacing:2px; font-size:12px; } .mrow em s { text-decoration:none; color:#345; }
+  .mrow button { min-height:44px; min-width:84px; border-radius:10px; border:1px solid #7fff9a; background:#0e3a4a; color:#fff; font:bold 15px "Trebuchet MS", system-ui, sans-serif; cursor:pointer; }
+  .mrow button:disabled { opacity:.45; border-color:#6ff4; cursor:default; } .mrow.done { border-color:#7fff9a; }
+
+  #mute { position:absolute; top:10px; left:10px; width:42px; height:42px; border-radius:50%; border:1px solid #6ff8; background:#0a1020cc; color:#8ff; font-size:20px; padding:0; cursor:pointer; z-index:5; }

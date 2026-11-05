@@ -5,7 +5,7 @@ let drag = null; // {id, x, y}
 function onDown(e) {
   if (e.target !== canvas) return;
   e.preventDefault();
-  telTouch(); lastPtr = e.pointerType === 'touch' ? 'touch' : 'mouse';
+  Audio_.unlock(); telTouch(); lastPtr = e.pointerType === 'touch' ? 'touch' : 'mouse';
   if (game.paused || panelOpen || collOpen) return;
   if (game.state === 'start') { startRun(); }
   else if (game.state === 'over') {
@@ -129,6 +129,7 @@ window.addEventListener('keydown', e => {
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (/^(Arrow(Up|Down|Left|Right)| )$/.test(k)) e.preventDefault();
   if (k === ' ' || k === 'Enter') {
+    Audio_.unlock();
     if (e.repeat || panelOpen || collOpen) return;
     if (game.paused) { game.paused = false; telClearInProg(); return; } // same as tap-to-resume
     lastPtr = 'key';
@@ -136,7 +137,7 @@ window.addEventListener('keydown', e => {
     else if (game.state === 'over' && performance.now() - game.overAt > 600) startRun();
     return;
   }
-  keys[k] = true;
+  Audio_.unlock(); keys[k] = true;
 });
 window.addEventListener('keyup', e => { delete keys[e.key.length === 1 ? e.key.toLowerCase() : e.key]; });
 window.addEventListener('blur', () => { for (const k in keys) delete keys[k]; });

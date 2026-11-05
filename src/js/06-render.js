@@ -51,14 +51,14 @@ function ringColor(ratio) { // green -> yellow -> red
 function drawTarget() {
   const g = game, tg = g.target, b = g.ball;
   const d = Math.hypot(b.x - tg.x, b.y - tg.y);
-  const col = ringColor((d - T.sweet) / (CONFIG.ringRadius * 1.6));
+  const col = ringColor((d - sweetR()) / (CONFIG.ringRadius * 1.6));
   ctx.save();
   glow(col, 18); ctx.strokeStyle = col; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.arc(tg.x, tg.y, CONFIG.ringRadius, 0, 6.283); ctx.stroke();
   // Sweet spot
   ctx.lineWidth = 2; ctx.fillStyle = 'rgba(255,255,255,0.08)';
   ctx.setLineDash([5, 5]);
-  ctx.beginPath(); ctx.arc(tg.x, tg.y, T.sweet, 0, 6.283); ctx.fill(); ctx.stroke();
+  ctx.beginPath(); ctx.arc(tg.x, tg.y, sweetR(), 0, 6.283); ctx.fill(); ctx.stroke();
   ctx.setLineDash([]);
   noGlow(); ctx.fillStyle = col; ctx.beginPath(); ctx.arc(tg.x, tg.y, 2.5, 0, 6.283); ctx.fill();
   ctx.restore();
@@ -86,7 +86,7 @@ function drawHUD(pal) {
   if (g.state !== 'play') return; // start / game-over: the footer becomes the action bar (DOM buttons sit on it); no timer, so the score is never shown twice
   const ts = Math.min(54, inner * 0.45);
   textCenter(fmtTime(g.t), PH + inner * 0.36, ts, '#ffffff', 16);
-  const bw = Math.min(W - 40, 320), bx = (W - bw) / 2, bh = 12, by = PH + inner * 0.7, hp = clamp(g.health / CONFIG.startHealth, 0, 1);
+  const bw = Math.min(W - 40, 320), bx = (W - bw) / 2, bh = 12, by = PH + inner * 0.7, hp = clamp(g.health / g.maxHealth, 0, 1);
   ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(bx, by, bw, bh);
   const hc = ringColor(1 - hp);
   ctx.save(); glow(hc, 10); ctx.fillStyle = hc; ctx.fillRect(bx, by, bw * hp, bh); ctx.restore();
@@ -104,16 +104,25 @@ function drawOverlayScreens(pal) {
     const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 300);
     ctx.globalAlpha = pulse; textCenter('TAP TO START', H * 0.55, 28, '#ffee66', 14); ctx.globalAlpha = 1;
     textCenter('Best: ' + fmtTime(g.best) + 's', H * 0.55 + 50, 20, '#fff', 6);
+    meta.notice.slice(0, 2).forEach((n, i) => textCenter(n, H * 0.55 + 100 + i * 30, 18, '#ffd84d', 8));
   } else if (g.state === 'over') {
-    // Fixed vertical layout (stage units): title 70 | time 140 | best 200 | new-best 240 | unlock list 296-380 | CTA 470 | rate 520-640 | footer 648+
+    // Fixed vertical layout (stage units): title 56 | time 116 | best 166 | new-best 200 | shards 238 | xp bar 262 | event list 316-400 | goal 432 | CTA 470 | rate 520-640 | footer 648+
     ctx.fillStyle = 'rgba(3,1,9,0.8)'; ctx.fillRect(0, 0, W, PH);
-    textCenter('GAME OVER', 70, 40, '#ff3b5c', 22);
-    textCenter(fmtTime(g.t) + 's', 140, 64, '#ffffff', 18);
-    textCenter('Best: ' + fmtTime(g.best) + 's', 200, 22, '#9ff', 8);
-    if (g.newBest) textCenter('NEW BEST!', 242, 30, '#ffee00', 20);
-    const un = g.unlockedNow, shown = Math.min(un.length, 3);
-    for (let i = 0; i < shown; i++) textCenter('Unlocked: ' + un[i] + '!', 296 + i * 28, 22, '#7fff9a', 12);
-    if (un.length > 3) textCenter('+' + (un.length - 3) + ' more', 296 + 3 * 28, 18, '#7fff9a', 6);
+    textCenter('GAME OVER', 56, 38, '#ff3b5c', 22);
+    textCenter(fmtTime(g.t) + 's', 116, 60, '#ffffff', 18);
+    textCenter('Best: ' + fmtTime(g.best) + 's', 166, 22, '#9ff', 8);
+    if (g.newBest) textCenter('NEW BEST!', 202, 28, '#ffee00', 20);
+    const rs_ = g.runSum;
+    if (rs_) {
+      textCenter('+' + rs_.shards + ' shards   \u25C6 ' + meta.shards, 238, 22, '#ffd84d', 10);
+      const bw = 220, bx = (W - bw) / 2, f = clamp(rs_.xpInfo.into / rs_.xpInfo.need, 0, 1);
+      ctx.fillStyle = 'rgba(255,255,255,0.15)'; ctx.fillRect(bx, 258, bw, 8); ctx.fillStyle = '#6ff'; ctx.fillRect(bx, 258, bw * f, 8);
+      textCenter('Level ' + rs_.lvl, 282, 16, '#9ff', 4);
+    }
+    const ev = g.unlockedNow.map(n => ['Unlocked: ' + n + '!', '#7fff9a']).concat(rs_ ? rs_.lines : []), shown = Math.min(ev.length, 3);
+    for (let i = 0; i < shown; i++) textCenter(ev[i][0], 316 + i * 28, 20, ev[i][1], 10);
+    if (ev.length > 3) textCenter('+' + (ev.length - 3) + ' more', 316 + 3 * 28, 16, '#7fff9a', 6);
+    const goal = metaNextGoal(); if (goal) textCenter(goal, 432, 18, '#dff', 6);
     if (performance.now() - g.overAt > 600) {
       const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 300);
       ctx.globalAlpha = pulse; textCenter('TAP TO RETRY', 470, 26, '#ffffff', 12); ctx.globalAlpha = 1;

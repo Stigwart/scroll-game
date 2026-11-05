@@ -43,7 +43,7 @@ const BALLS = [
     c.fillStyle = '#fff'; circ(c, ix - r * 0.15, iy - r * 0.18, r * 0.11); c.fill();
     c.strokeStyle = 'rgba(255,120,160,0.6)'; c.lineWidth = 1; circ(c, x, y, r - 0.5); c.stroke();
   } },
-  { id: 'planet', name: 'Planet', unlock: { type: 'time', v: 20 }, draw(c, x, y, r) {
+  { id: 'planet', name: 'Planet', unlock: { type: 'level', v: 3 }, draw(c, x, y, r) {
     c.translate(x, y); c.rotate(-0.4); c.lineWidth = 2.5; c.strokeStyle = '#ffd27a';
     c.shadowColor = '#ffb040'; c.shadowBlur = 12;
     c.beginPath(); c.ellipse(0, 0, r * 1.75, r * 0.55, 0, Math.PI, 6.283); c.stroke();      // back half of ring
@@ -52,7 +52,7 @@ const BALLS = [
     c.fillStyle = g; circ(c, 0, 0, r * 0.88); c.fill();
     c.beginPath(); c.ellipse(0, 0, r * 1.75, r * 0.55, 0, 0, Math.PI); c.stroke();           // front half of ring
   } },
-  { id: 'bauble', name: 'Bauble', unlock: { type: 'runs', v: 8 }, draw(c, x, y, r, t) {
+  { id: 'bauble', name: 'Bauble', unlock: { type: 'level', v: 5 }, draw(c, x, y, r, t) {
     c.shadowColor = '#ff3050'; c.shadowBlur = 16;
     const g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, 1, x, y, r);
     g.addColorStop(0, '#ffb0b8'); g.addColorStop(0.5, '#e0102a'); g.addColorStop(1, '#6a0014');
@@ -82,7 +82,7 @@ const BALLS = [
     for (const s of [-1, 1]) { c.moveTo(x + s * r * 0.5, y + r * 0.2); c.lineTo(x + s * r * 1.15, y + r * 0.12); c.moveTo(x + s * r * 0.5, y + r * 0.32); c.lineTo(x + s * r * 1.12, y + r * 0.42); }
     c.stroke();
   } },
-  { id: 'disco', name: 'Disco', unlock: { type: 'time', v: 60 }, draw(c, x, y, r, t) {
+  { id: 'disco', name: 'Disco', unlock: { type: 'level', v: 8 }, draw(c, x, y, r, t) {
     c.shadowColor = '#fff'; c.shadowBlur = 18; c.fillStyle = '#9ab'; circ(c, x, y, r); c.fill(); c.shadowBlur = 0;
     c.save(); circ(c, x, y, r); c.clip();
     const n = 5, u = r * 2 / n;
@@ -101,7 +101,7 @@ const TRAILS = [
   { id: 'classic', name: 'Classic Fade', unlock: null },
   { id: 'rainbow', name: 'Rainbow', unlock: { type: 'time', v: 15 } },
   { id: 'sparks', name: 'Sparks', unlock: { type: 'runs', v: 4 } },
-  { id: 'ribbon', name: 'Ribbon', unlock: { type: 'time', v: 25 } },
+  { id: 'ribbon', name: 'Ribbon', unlock: { type: 'level', v: 4 } },
   { id: 'bubbles', name: 'Bubbles', unlock: { type: 'runs', v: 6 } },
   { id: 'none', name: 'None', unlock: null }
 ];
@@ -179,8 +179,8 @@ const sel = { balls: 'orb', trails: 'classic' };
 const ukey = (kind, it) => kind + ':' + it.id;
 const isUnlocked = (kind, it) => !it.unlock || unlocked.has(ukey(kind, it));
 function selItem(kind) { const l = LISTS[kind], it = l.find(i => i.id === sel[kind]); return it && isUnlocked(kind, it) ? it : l[0]; }
-function unlockText(it) { return it.unlock.type === 'time' ? 'Survive ' + it.unlock.v + 's' : 'Play ' + it.unlock.v + ' runs'; }
-function unlockMet(it) { const u = it.unlock; return !u || (u.type === 'time' ? prog.best >= u.v : prog.runs >= u.v); }
+function unlockText(it) { return it.unlock.type === 'level' ? 'Reach level ' + it.unlock.v : it.unlock.type === 'time' ? 'Survive ' + it.unlock.v + 's' : 'Play ' + it.unlock.v + ' runs'; }
+function unlockMet(it) { const u = it.unlock; return !u || (u.type === 'level' ? playerLvl() >= u.v : u.type === 'time' ? prog.best >= u.v : prog.runs >= u.v); }
 function saveCosm() {
   lsSet(STORE_PROG, JSON.stringify(prog)); lsSet(STORE_UNLOCKS, JSON.stringify(Array.from(unlocked))); lsSet(STORE_SEL, JSON.stringify(sel));
 }
@@ -215,10 +215,11 @@ function closeColl() { collOpen = false; collEl.classList.remove('open'); tiles 
 function renderColl() {
   const top = gridEl.scrollTop;
   tabBtns.forEach(b => {
-    const k = b.dataset.k; b.textContent = LABELS[k] + ' ' + countUnlocked(k) + '/' + LISTS[k].length;
+    const k = b.dataset.k; b.textContent = LISTS[k] ? LABELS[k] + ' ' + countUnlocked(k) + '/' + LISTS[k].length : k === 'upgrades' ? 'Upgrades' : 'Daily';
     b.classList.toggle('on', k === collTab);
   });
   gridEl.innerHTML = ''; tiles = [];
+  if (!LISTS[collTab]) { renderMeta(gridEl, collTab); gridEl.scrollTop = top; return; }
   const kind = collTab, chosen = selItem(kind);
   for (const it of LISTS[kind]) {
     const un = isUnlocked(kind, it), on = un && chosen === it;

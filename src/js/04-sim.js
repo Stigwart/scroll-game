@@ -19,12 +19,12 @@ function step(dt) {
   // Forces on the ball (accelerations)
   let ax = 0, ay = 0;
   const dx = b.x - tg.x, dy = b.y - tg.y, d = Math.hypot(dx, dy) || 1e-6;
-  const excess = Math.max(0, d - T.sweet);
+  const excess = Math.max(0, d - sweetR());
   const repel = T.repel * (1 + 0.55 * L) * CONFIG.repulsionUnit * excess;   // (a) away from target
   ax += dx / d * repel; ay += dy / d * repel;
   ax += (W / 2 - b.x) * T.pull; ay += (PH * 0.5 - b.y) * T.pull;             // (b) towards screen centre
   ay -= T.up;                                                                // (c) upward bias
-  const ds = T.drift * (1 + 0.6 * L) * CONFIG.driftUnit;                     // (d) drift
+  const ds = T.drift * MOD.drift * (1 + 0.6 * L) * CONFIG.driftUnit;                     // (d) drift
   ax += dr.x * ds; ay += dr.y * ds;
   b.vx += ax * dt; b.vy += ay * dt;
   const damp = Math.exp(-T.damp * dt); b.vx *= damp; b.vy *= damp;
@@ -42,7 +42,7 @@ function step(dt) {
     }
     o.age = (o.age || 0) + dt;
     if (o.x > -20 && o.x < W + 20 && o.y > -20 && o.y < PH + 20) o.seen = true;
-    if (collideObstacle(b, o)) { g.shake = Math.max(g.shake, 3); telHit(o); }
+    if (collideObstacle(b, o)) { g.shake = Math.max(g.shake, 3); telHit(o); Audio_.sfx('hit'); }
   }
 
   // Play-area edges: mirror overshoot, reflect with restitution, guarantee a minimum inward speed
@@ -53,7 +53,7 @@ function step(dt) {
   if (b.y < y0) { b.y = Math.min(y1, y0 + (y0 - b.y)); b.vy = Math.max(Math.abs(b.vy) * e, kick); edge = true; }
   else if (b.y > y1) { b.y = Math.max(y0, y1 - (b.y - y1)); b.vy = -Math.max(Math.abs(b.vy) * e, kick); edge = true; }
   const newContact = edge && !g.edgeTouch;
-  g.edgeTouch = edge;
+  g.edgeTouch = edge; if (newContact) Audio_.sfx('edge');
   // Hard speed cap (not affected by escalation), applied after all forces, pushes and bounces
   const sp = Math.hypot(b.vx, b.vy);
   if (sp > T.maxSpeed) { const f = T.maxSpeed / sp; b.vx *= f; b.vy *= f; }
@@ -72,7 +72,7 @@ function step(dt) {
 
 function update(frameDt) {
   const g = game;
-  g.bgT += frameDt;
+  g.bgT += frameDt; Audio_.setIntensity(Math.min(3, Math.floor(g.stageF())));
   // Background always drifts
   const sf = g.stageF();
   g.bgOff.x += Math.cos(g.bgT * 0.17) * 22 * frameDt * (1 + sf);

@@ -54,7 +54,7 @@ const game = {
   state: 'start',            // start | play | over
   paused: false,             // visibility/panel pause
   t: 0,                      // survival time
-  health: CONFIG.startHealth,
+  health: CONFIG.startHealth, maxHealth: CONFIG.startHealth, runSum: null,
   best: parseFloat(lsGet(STORE_BEST)) || 0,
   newBest: false,
   ball: null, target: null, obstacles: [], trailSt: null, unlockedNow: [], dirX: 0, dirY: -1,
@@ -78,19 +78,19 @@ function initBlobs() {
 initBlobs();
 
 function resetRun() {
-  game.t = 0; game.health = CONFIG.startHealth; game.newBest = false;
+  game.t = 0; game.maxHealth = CONFIG.startHealth * MOD.hp; game.health = game.maxHealth; game.newBest = false;
   game.obstacles = []; game.trailSt = newTrailSt(); game.unlockedNow = []; game.spawnTimer = 1.5;
   game.shake = 0; game.flash = 0; game.acc = 0;
   game.target = { x: W / 2, y: PH * 0.32 };
   game.ball = { x: W / 2, y: PH * 0.32, vx: 0, vy: 0, r: CONFIG.ballRadius };
   game.drift = { x: 0, y: 0, tx: 0, ty: 0, timer: 0 };
 }
-function startRun() { telRunStart(); resetRun(); game.state = 'play'; telBegin(); PLATFORM.gameplayStart(); }
+function startRun() { meta.notice = []; meta.pending = null; telRunStart(); resetRun(); game.state = 'play'; telBegin(); PLATFORM.gameplayStart(); Audio_.sfx('start'); Audio_.music(true); }
 function endRun() {
-  game.state = 'over'; game.overAt = performance.now(); PLATFORM.gameplayStop();
+  game.state = 'over'; game.overAt = performance.now(); PLATFORM.gameplayStop(); Audio_.music(false); Audio_.sfx('over');
   const s = game.t;
   if (s > game.best) { game.best = s; game.newBest = true; lsSet(STORE_BEST, String(s)); }
-  game.unlockedNow = recordRun(s);
+  game.unlockedNow = recordRun(s); game.runSum = metaOnRunEnd(s, game.newBest); if (game.unlockedNow.length || game.runSum.lines.length) setTimeout(() => Audio_.sfx('unlock'), 500);
   telEnd();
 }
 
