@@ -421,7 +421,7 @@ function collideObstacle(b, o) {
 
 // Keyboard (secondary control): arrows / WASD move the target; Space / Enter start or retry.
 const keys = {}, KSPEED = 380; // stage px/s
-function kbDir() { return { x: (keys.ArrowRight || keys.d ? 1 : 0) - (keys.ArrowLeft || keys.a ? 1 : 0), y: (keys.ArrowDown || keys.s ? 1 : 0) - (keys.ArrowUp || keys.w ? 1 : 0) }; }
+function kbDir() { return { x: (keys.ArrowRight || keys.KeyD ? 1 : 0) - (keys.ArrowLeft || keys.KeyA ? 1 : 0), y: (keys.ArrowDown || keys.KeyS ? 1 : 0) - (keys.ArrowUp || keys.KeyW ? 1 : 0) }; }
 window.addEventListener('keydown', e => {
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (/^(Arrow(Up|Down|Left|Right)| )$/.test(k)) e.preventDefault();
@@ -436,9 +436,9 @@ window.addEventListener('keydown', e => {
   }
   Audio_.unlock();
   if (k === '1' || k === '2' || k === '3') { usePw(PWS[+k - 1].id); return; }
-  keys[k] = true;
+  keys[e.code] = true;   // physical key position, so WASD works as ZQSD on AZERTY
 });
-window.addEventListener('keyup', e => { delete keys[e.key.length === 1 ? e.key.toLowerCase() : e.key]; });
+window.addEventListener('keyup', e => { delete keys[e.code]; });
 window.addEventListener('blur', () => { for (const k in keys) delete keys[k]; });
 
 // ============================================================
