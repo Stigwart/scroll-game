@@ -1,3 +1,15 @@
+// Dev-only UI is removed from the DOM entirely in builds without devUI
+if (!BUILD.devUI) ['gear', 'panel', 'rate'].forEach(i => { const n = document.getElementById(i); if (n && n.parentNode) n.parentNode.removeChild(n); });
+// Non-blocking first-run privacy notice
+(function () {
+  const el = document.getElementById('priv'), ok = document.getElementById('privOk');
+  if (!BUILD.telemetry || !el || lsGet('scrollgame.priv') === '1') { if (el) el.remove(); return; }
+  el.style.display = 'block';
+  const close = () => { lsSet('scrollgame.priv', '1'); el.remove(); };
+  ok.addEventListener('click', close); setTimeout(() => { if (el.parentNode) close(); }, 20000);
+})();
+// iOS: resume audio inside a click/touchend gesture too
+['touchend', 'click'].forEach(ev => document.addEventListener(ev, () => Audio_.unlock(), { capture: true, passive: true }));
 // Main loop
 // ============================================================
 let last = performance.now();

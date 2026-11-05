@@ -31,7 +31,7 @@ function play(H, sk, rnd) {
 }
 function buy(H) { // greedy: cheapest affordable upgrade
   for (;;) { let best = null; for (const u of H.UPG) { const l = H.meta.upg[u.id] || 0; if (l < u.max) { const c = H.upgCost(u, l); if (!best || c < best.c) best = { u, c, l }; } }
-    if (!best || H.meta.shards < best.c) return; H.meta.shards -= best.c; H.meta.upg[best.u.id] = best.l + 1; H.applyMods(); }
+    if (!best || H.meta.shards < best.c) return; if (globalThis.LOG) LOG.push(best.u.id + best.l); H.meta.shards -= best.c; H.meta.upg[best.u.id] = best.l + 1; H.applyMods(); }
 }
 const N = +process.argv[2] || 6; let seed = 1;
 const pct = (a, q) => { const s = [...a].sort((x, y) => x - y); return s[Math.floor(q * (s.length - 1))]; };
@@ -40,7 +40,7 @@ for (const [name, sk] of Object.entries(SKILLS)) {
   for (let i = 0; i < N; i++) {
     const H = load(); let s = seed++ * 7919; const rnd = () => ((s = (s * 1664525 + 1013904223) >>> 0) / 4294967296);
     H.seedSim(seed); let clock = 0, k = 0, unl = 0;
-    while (clock < 600) { const t = play(H, sk, rnd); if (k === 0) first.push(t); lens.push(t); k++; clock += t + 6; buy(H); if (!unl && (H.prog.runs >= 1) ) unl = k; }
+    while (clock < 600) { const t = play(H, sk, rnd); if (k === 0) first.push(t); lens.push(t); k++; clock += t + 6; globalThis.LOG = []; buy(H); if (globalThis.LOG.length && process.env.ECON) console.log(name, 'after run', k, 'bought', LOG.join(',')); if (!unl && (H.prog.runs >= 1) ) unl = k; }
     runs.push(k); lvls.push(H.playerLvl()); lastRunLens.push(lens[lens.length - 1]);
   }
   console.log(`${name.padEnd(8)} first-run>=60s ${Math.round(100 * first.filter(t => t >= 60).length / N)}%  first-run median ${pct(first, .5).toFixed(0)}s  run len p10/p50/p90 ${pct(lens, .1).toFixed(0)}/${pct(lens, .5).toFixed(0)}/${pct(lens, .9).toFixed(0)}s  runs/10min ${(runs.reduce((a, b) => a + b) / N).toFixed(1)}  lvl@10min ${(lvls.reduce((a, b) => a + b) / N).toFixed(1)}`);

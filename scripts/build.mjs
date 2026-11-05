@@ -34,6 +34,7 @@ ${js}
 `;
   mkdirSync(new URL(`../dist/${name}/`, import.meta.url), { recursive: true });
   writeFileSync(new URL(`../dist/${name}/index.html`, import.meta.url), html);
+  writeFileSync(new URL(`../dist/${name}/privacy.html`, import.meta.url), readFileSync(new URL('../src/privacy.html', import.meta.url), 'utf8'));
   console.log(name, (html.length / 1024).toFixed(1) + ' KB');
 }
 const a = process.argv[2] || 'all';

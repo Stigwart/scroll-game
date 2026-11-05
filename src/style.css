@@ -79,3 +79,6 @@
   #pw button { position:relative; width:58px; height:58px; border-radius:50%; border:1px solid #6ff; background:#0a1020dd; color:#8ff; font-size:30px; line-height:1; padding:0; overflow:hidden; cursor:pointer; box-shadow:0 0 12px #0ff5; }
   #pw button span { position:relative; z-index:1; } #pw button i { position:absolute; left:0; right:0; bottom:0; height:0; background:#000a; }
   #pw button.cd { color:#567; border-color:#6ff4; box-shadow:none; } #pw kbd { position:absolute; z-index:1; right:7px; bottom:3px; font:bold 11px sans-serif; color:#ffd84d; }
+
+#priv { position:absolute; left:8px; right:8px; bottom:8px; z-index:6; display:none; background:#0a1020ee; border:1px solid #6ff6; border-radius:10px; padding:8px 10px; font:12px/1.35 system-ui,sans-serif; color:#cde; }
+#priv a { color:#6ff; } #priv button { margin-left:6px; padding:3px 12px; border-radius:6px; border:1px solid #6ff8; background:#123; color:#8ff; font-size:12px; cursor:pointer; }

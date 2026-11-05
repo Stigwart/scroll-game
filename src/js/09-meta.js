@@ -55,7 +55,7 @@ function addXp(n) { const before = playerLvl(); meta.xp += n; let reward = 0, lv
 
 // Called from endRun: bank shards/xp, advance quests; returns a summary for the game-over screen
 function metaOnRunEnd(t, newBest) {
-  const s = { shards: Math.floor(t * MOD.shard) + (newBest ? 10 : 0), lines: [] };
+  const s = { shards: Math.floor(t * 0.7 * MOD.shard) + (newBest ? 10 : 0), lines: [] };
   const xp = addXp(Math.floor(t) + 5);
   s.lvl = xp.lvl; s.xpInfo = lvlInfo(meta.xp);
   meta.shards += s.shards; meta.q.runs++; meta.q.best = Math.max(meta.q.best, t); meta.q.shards += s.shards; meta.q.time += t;
@@ -71,7 +71,7 @@ function metaNextGoal() { // cheapest not-maxed upgrade
   return meta.shards >= best.c ? 'Upgrade ready: ' + best.u.name + '!' : best.u.name + ' upgrade in ' + (best.c - meta.shards) + ' shards';
 }
 // Bank a running run if the page is hidden/closed (brief 5.7): restored next open
-function metaPend() { if (game.state === 'play' && game.t > 1) { meta.pending = { shards: Math.floor(game.t * MOD.shard), xp: Math.floor(game.t) + 5 }; metaSave(); } }
+function metaPend() { if (game.state === 'play' && game.t > 1) { meta.pending = { shards: Math.floor(game.t * 0.7 * MOD.shard), xp: Math.floor(game.t) + 5 }; metaSave(); } }
 document.addEventListener('visibilitychange', () => { if (document.hidden) metaPend(); });
 window.addEventListener('pagehide', metaPend);
 
