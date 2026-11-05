@@ -83,6 +83,7 @@ function drawHUD(pal) {
   ctx.fillStyle = '#030109'; ctx.fillRect(0, PH, W, FH);
   ctx.save(); glow(pal[2], 14); ctx.strokeStyle = pal[2]; ctx.lineWidth = 3;
   ctx.beginPath(); ctx.moveTo(0, PH + 1.5); ctx.lineTo(W, PH + 1.5); ctx.stroke(); ctx.restore();
+  if (g.state !== 'play') return; // start / game-over: the footer becomes the action bar (DOM buttons sit on it); no timer, so the score is never shown twice
   const ts = Math.min(54, inner * 0.45);
   textCenter(fmtTime(g.t), PH + inner * 0.36, ts, '#ffffff', 16);
   const bw = Math.min(W - 40, 320), bx = (W - bw) / 2, bh = 12, by = PH + inner * 0.7, hp = clamp(g.health / CONFIG.startHealth, 0, 1);
@@ -104,17 +105,18 @@ function drawOverlayScreens(pal) {
     ctx.globalAlpha = pulse; textCenter('TAP TO START', H * 0.55, 28, '#ffee66', 14); ctx.globalAlpha = 1;
     textCenter('Best: ' + fmtTime(g.best) + 's', H * 0.55 + 50, 20, '#fff', 6);
   } else if (g.state === 'over') {
-    ctx.fillStyle = 'rgba(0,0,0,0.6)'; ctx.fillRect(0, 0, W, H);
-    textCenter('GAME OVER', H * 0.25, 40, '#ff3b5c', 22);
-    textCenter(fmtTime(g.t) + 's', H * 0.37, 64, '#ffffff', 18);
-    textCenter('Best: ' + fmtTime(g.best) + 's', H * 0.46, 22, '#9ff', 8);
-    if (g.newBest) textCenter('NEW BEST!', H * 0.53, 30, '#ffee00', 20);
-    const un = g.unlockedNow;
-    for (let i = 0; i < Math.min(un.length, 3); i++) textCenter('Unlocked: ' + un[i] + '!', H * 0.585 + i * 30, 22, '#7fff9a', 12);
-    if (un.length > 3) textCenter('+' + (un.length - 3) + ' more', H * 0.585 + 90, 16, '#7fff9a', 6);
+    // Fixed vertical layout (stage units): title 70 | time 140 | best 200 | new-best 240 | unlock list 296-380 | CTA 470 | rate 520-640 | footer 648+
+    ctx.fillStyle = 'rgba(3,1,9,0.8)'; ctx.fillRect(0, 0, W, PH);
+    textCenter('GAME OVER', 70, 40, '#ff3b5c', 22);
+    textCenter(fmtTime(g.t) + 's', 140, 64, '#ffffff', 18);
+    textCenter('Best: ' + fmtTime(g.best) + 's', 200, 22, '#9ff', 8);
+    if (g.newBest) textCenter('NEW BEST!', 242, 30, '#ffee00', 20);
+    const un = g.unlockedNow, shown = Math.min(un.length, 3);
+    for (let i = 0; i < shown; i++) textCenter('Unlocked: ' + un[i] + '!', 296 + i * 28, 22, '#7fff9a', 12);
+    if (un.length > 3) textCenter('+' + (un.length - 3) + ' more', 296 + 3 * 28, 18, '#7fff9a', 6);
     if (performance.now() - g.overAt > 600) {
       const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 300);
-      ctx.globalAlpha = pulse; textCenter('TAP TO RETRY', Math.min(H * 0.72, H - 236), 26, '#ffffff', 12); ctx.globalAlpha = 1;
+      ctx.globalAlpha = pulse; textCenter('TAP TO RETRY', 470, 26, '#ffffff', 12); ctx.globalAlpha = 1;
     }
   }
   if (g.paused && g.state === 'play' && !panelOpen) {
@@ -130,12 +132,12 @@ function render() {
   ctx.save();
   if (g.shake > 0.2) ctx.translate(rand(-g.shake, g.shake), rand(-g.shake, g.shake));
   drawBackground(pal);
-  if (g.state !== 'start') {
+  if (g.state === 'play') {
     ctx.save(); ctx.beginPath(); ctx.rect(0, 0, W, PH); ctx.clip(); // play layer never draws over the footer
     for (const o of g.obstacles) drawObstacle(o, pal);
     drawTarget(); drawBall(pal);
     ctx.restore();
-  } else {
+  } else if (g.state === 'start') {
     // idle demo ring
     ctx.save(); glow(pal[2], 18); ctx.strokeStyle = pal[2]; ctx.lineWidth = 3; ctx.beginPath();
     ctx.arc(W / 2, PH * 0.78, CONFIG.ringRadius, 0, 6.283); ctx.stroke(); ctx.restore();
