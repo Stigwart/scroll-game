@@ -15,14 +15,17 @@ function load() {
   return ctx.__t;
 }
 // skill: finger speed (px/s), reaction delay (s), aim noise (px), lead (s)
-const SKILLS = { novice: { sp: 140, delay: 0.4, noise: 45, lead: 0.05 }, casual: { sp: 260, delay: 0.28, noise: 22, lead: 0.1 }, average: { sp: 420, delay: 0.18, noise: 12, lead: 0.15 }, good: { sp: 650, delay: 0.1, noise: 6, lead: 0.2 } };
+const SKILLS = { novice: { sp: 140, delay: 0.4, noise: 45, lead: 0.05, dodge: 0 }, casual: { sp: 260, delay: 0.28, noise: 22, lead: 0.1, dodge: 0.4 }, average: { sp: 420, delay: 0.18, noise: 12, lead: 0.15, dodge: 0.7 }, good: { sp: 650, delay: 0.1, noise: 6, lead: 0.2, dodge: 1 } };
 function play(H, sk, rnd) {
   const { game: g, update, resetRun } = H; resetRun(); g.state = 'play';
   const hist = []; const dt = 1 / 60; let n = 0;
   while (g.state === 'play' && g.t < 900 && n++ < 1e6) {
     const b = g.ball; hist.push([b.x, b.y, b.vx, b.vy]); if (hist.length > 60) hist.shift();
     const h = hist[Math.max(0, hist.length - 1 - Math.round(sk.delay * 60))];
-    const tx = h[0] + h[2] * sk.lead + (rnd() - 0.5) * 2 * sk.noise, ty = h[1] + h[3] * sk.lead + (rnd() - 0.5) * 2 * sk.noise;
+    let tx = h[0] + h[2] * sk.lead + (rnd() - 0.5) * 2 * sk.noise, ty = h[1] + h[3] * sk.lead + (rnd() - 0.5) * 2 * sk.noise;
+    let ox = 0, oy = 0; // dodge: steer away from obstacles close to where the ball is heading
+    if (sk.dodge) for (const o of g.obstacles) { const rr = (o.kind === 'rect' ? Math.max(o.w, o.h) / 2 : o.r) + 70, ex = b.x + b.vx * 0.3 - o.x, ey = b.y + b.vy * 0.3 - o.y, dd = Math.hypot(ex, ey); if (dd < rr && rnd() < sk.dodge) { ox += ex / dd * (rr - dd) * 1.2; oy += ey / dd * (rr - dd) * 1.2; } }
+    tx -= ox * 0.5; ty -= oy * 0.5;
     const tg = g.target, dx = tx - tg.x, dy = ty - tg.y, d = Math.hypot(dx, dy), m = Math.min(d, sk.sp * dt);
     if (d > 1e-6) { tg.x += dx / d * m; tg.y += dy / d * m; }
     update(dt);

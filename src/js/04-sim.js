@@ -42,7 +42,12 @@ function step(dt) {
     }
     o.age = (o.age || 0) + dt;
     if (o.x > -20 && o.x < W + 20 && o.y > -20 && o.y < PH + 20) o.seen = true;
-    if (collideObstacle(b, o)) { g.shake = Math.max(g.shake, 3); telHit(o); Audio_.sfx('hit'); }
+    if (collideObstacle(b, o)) {
+      g.shake = Math.max(g.shake, 3); telHit(o); Audio_.sfx('hit');
+      if (g.t - (o.dmgAt === undefined ? -9 : o.dmgAt) > 0.6) { // one damage tick per obstacle contact
+        o.dmgAt = g.t; g.health -= T.hit * (1 + 0.2 * L) * (1 - 0.4 * assist()); g.flash = Math.min(0.35, g.flash + 0.25);
+      }
+    }
   }
 
   // Play-area edges: mirror overshoot, reflect with restitution, guarantee a minimum inward speed
@@ -61,7 +66,7 @@ function step(dt) {
   // Health: none in sweet spot, grows with distance, much faster on edge
   const lossD = T.loss * (excess / 40) * (1 + 0.5 * L) * (1 - 0.4 * assist());
   let lossE = 0;
-  const edgeRate = (T.loss * T.edge * CONFIG.edgeLossBase * 1.5 + 6) * (1 - 0.4 * assist());
+  const edgeRate = (CONFIG.edgeBase * T.edge * CONFIG.edgeLossBase * 1.5 + 6) * (1 - 0.4 * assist());
   if (edge) { lossE = edgeRate + (newContact ? 0.15 * edgeRate / dt : 0); g.shake = Math.max(g.shake, 4); g.flash = Math.min(0.35, g.flash + dt * 2); }
   const loss = lossD + lossE;
   if (loss > 0) { const f = Math.min(g.health, loss * dt) / loss; telStep(dt, d, edge, lossD * f, lossE * f); }

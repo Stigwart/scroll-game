@@ -10,7 +10,8 @@ const CONFIG = {
   step: 1 / 120,           // fixed physics timestep (s)
   maxFrame: 0.1,           // dt clamp (s)
   footerFrac: 0.19,        // footer HUD band height as fraction of viewport
-  edgeLossBase: 1.0,       // edge loss = tuned lossRate*edgeMult*edgeLossBase per s
+  edgeLossBase: 1.0,
+  edgeBase: 4.5,           // edge-loss base rate (independent of the distance-loss slider)       // edge loss = tuned lossRate*edgeMult*edgeLossBase per s
   stageSeconds: 30,        // seconds (at ramp 1) per background stage
   // Fixed force scalings (the sliders multiply these)
   repulsionUnit: 1.0,      // accel per px beyond sweet spot, per slider unit
@@ -34,7 +35,8 @@ const CONFIG = {
     up:      [22,  0, 120, 1,    'Upward bias'],
     drift:   [3.0, 0, 10,  0.1,  'Random drift strength'],
     damp:    [1.3, 0.2, 4, 0.05, 'Damping'],
-    loss:    [4.5, 0, 20,  0.1,  'Health loss rate'],
+    loss:    [0,   0, 20,  0.1,  'Distance health loss rate (0 = off)'],
+    hit:     [5,   0, 40,  0.5,  'Obstacle hit damage'],
     edge:    [4,   1, 15,  0.5,  'Edge damage multiplier'],
     spawn:   [1.0, 0.2, 4, 0.05, 'Obstacle spawn rate'],
     ramp:    [1.0, 0, 3,   0.05, 'Difficulty ramp speed'],
@@ -43,7 +45,7 @@ const CONFIG = {
     kick:    [70,  0, 300, 5,    'Edge kick (min inward px/s)']
   }
 };
-const STORE_BEST = 'scrollgame.best', STORE_TUNE = 'scrollgame.tune';
+const STORE_BEST = 'scrollgame.best', STORE_TUNE = 'scrollgame.tune2';
 
 // Tunable values (live)
 const T = {};
