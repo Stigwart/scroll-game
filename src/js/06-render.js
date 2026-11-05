@@ -99,7 +99,7 @@ function drawOverlayScreens(pal) {
   const g = game;
   if (g.state === 'start') {
     ctx.fillStyle = 'rgba(0,0,0,0.45)'; ctx.fillRect(0, 0, W, H);
-    textCenter('SCROLL GAME', H * 0.3, Math.min(48, W / 7.5), pal[2], 24);
+    textCenter('BULLSEYE', H * 0.3, Math.min(48, W / 7.5), pal[2], 24);
     textCenter('Drag to keep the ball centred', H * 0.3 + 52, 18, '#dff', 6);
     const pulse = 0.6 + 0.4 * Math.sin(performance.now() / 300);
     ctx.globalAlpha = pulse; textCenter('TAP TO START', H * 0.55, 28, '#ffee66', 14); ctx.globalAlpha = 1;

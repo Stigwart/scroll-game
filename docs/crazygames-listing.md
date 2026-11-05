@@ -1,6 +1,6 @@
-# CrazyGames listing draft (replace [NAME] once chosen)
+# CrazyGames listing draft (replace Bullseye once chosen)
 
-**Title:** [NAME]
+**Title:** Bullseye
 **Short description:** Drag your thumb to keep the glowing ball balanced in the ring. Survive escalating neon chaos, earn shards, unlock power-ups, balls and trails.
 **Instructions / controls:** Mouse or touch: drag to move the ring. Keyboard: arrow keys / WASD to move, Space or Enter to start/retry, 1-3 for power-ups, M to mute (button top-left).
 **Category suggestions:** Skill, Casual, Arcade
@@ -19,6 +19,6 @@
 - Add `user-select:none` on body: done. Safe areas: handled by letterboxed stage; verify in CrazyGames app.
 - Privacy/Terms notice for non-SDK personal data: non-blocking notice + privacy.html added.
 - Portrait is allowed with black bars/background.
-- Basic implementation: "trigger Gameplay start from the Game module" is listed under SDK integration - confirm whether SDK Basic integration is mandatory for Basic Launch (our plan assumed optional). `PLATFORM.gameplayStart/Stop` hooks already exist; wiring takes minutes.
+- SDK Basic integration: DONE (crazygames build only): SDK v3 script, init + loadingStart/Stop, gameplayStart on run start, gameplayStop on game over. No ads (disabled in Basic).
 - Size limits: 50 MB initial (ours ~85 KB). Relative paths only: yes (single file).
 - Quality Guidelines / Basic Launch Guide pages: URLs 404 - read in the developer portal.

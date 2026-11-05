@@ -1,5 +1,5 @@
 name: Deploy web build
-on: { push: { branches: [main] }, workflow_dispatch: {} }
+on: { workflow_dispatch: {} }   # enable push trigger after switching Pages source to GitHub Actions
 permissions: { contents: read, pages: write, id-token: write }
 jobs:
   deploy:

@@ -17,7 +17,7 @@ function build(name) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<title>Scroll Game</title>
+<title>Bullseye</title>${b.target === 'crazygames' ? '\n<script src="https://sdk.crazygames.com/crazygames-sdk-v3.js"></script>' : ''}
 <style>
 ${rd('style.css')}${hide}
 </style>
