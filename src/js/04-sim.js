@@ -3,7 +3,7 @@
 // ============================================================
 function step(dt) {
   const g = game, b = g.ball, tg = g.target, L = level();
-  g.t += dt;
+  g.t += dt; pwTick(g, dt);
   const kd = kbDir(); if (kd.x || kd.y) { const n = Math.hypot(kd.x, kd.y); tg.x = clamp(tg.x + kd.x / n * KSPEED * dt, 0, W); tg.y = clamp(tg.y + kd.y / n * KSPEED * dt, 0, PH); }
 
   // Smooth random drift: lerp toward a periodically re-rolled target vector
@@ -20,11 +20,11 @@ function step(dt) {
   let ax = 0, ay = 0;
   const dx = b.x - tg.x, dy = b.y - tg.y, d = Math.hypot(dx, dy) || 1e-6;
   const excess = Math.max(0, d - sweetR());
-  const repel = T.repel * (1 + 0.55 * L) * CONFIG.repulsionUnit * excess;   // (a) away from target
+  const repel = T.repel * MOD.calm * (1 + 0.55 * L) * CONFIG.repulsionUnit * excess;   // (a) away from target
   ax += dx / d * repel; ay += dy / d * repel;
   ax += (W / 2 - b.x) * T.pull; ay += (PH * 0.5 - b.y) * T.pull;             // (b) towards screen centre
   ay -= T.up;                                                                // (c) upward bias
-  const ds = T.drift * MOD.drift * (1 + 0.6 * L) * CONFIG.driftUnit;                     // (d) drift
+  const ds = T.drift * MOD.drift * MOD.calm * (1 + 0.6 * L) * CONFIG.driftUnit;                     // (d) drift
   ax += dr.x * ds; ay += dr.y * ds;
   b.vx += ax * dt; b.vy += ay * dt;
   const damp = Math.exp(-T.damp * dt); b.vx *= damp; b.vy *= damp;

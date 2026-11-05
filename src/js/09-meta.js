@@ -3,7 +3,7 @@
 // All state lives in one versioned object (meta) so the CrazyGames Data module can store it as a single blob later.
 // ============================================================
 const STORE_META = 'scrollgame.meta';
-const MOD = { sweet: 0, hp: 1, drift: 1, shard: 1, sweetTemp: 0 };   // permanent upgrade (and temporary power-up) modifiers read by the sim
+const MOD = { sweet: 0, hp: 1, drift: 1, shard: 1, sweetTemp: 0, calm: 1 };   // permanent upgrade (and temporary power-up) modifiers read by the sim
 const sweetR = () => T.sweet + MOD.sweet + MOD.sweetTemp;
 const UPG = [
   { id: 'sweet',  name: 'Sweet Spot',   desc: '+3 radius per level',  max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
@@ -88,6 +88,7 @@ function renderMeta(el, tab) {
     const b = r.querySelector('button'); b.textContent = l >= u.max ? 'MAX' : '◆ ' + cost; b.disabled = l >= u.max || meta.shards < cost;
     b.addEventListener('click', () => { if (meta.shards >= cost && l < u.max) { meta.shards -= cost; meta.upg[u.id] = l + 1; applyMods(); metaSave(); if (typeof Audio_ !== 'undefined') Audio_.sfx('buy'); renderColl(); } });
     el.appendChild(r);
+    renderPwShop(el);
   } else {
     const h = document.createElement('div'); h.className = 'mrow';
     h.innerHTML = '<div class="tx"><b></b><small></small></div>'; h.querySelector('b').textContent = 'Day ' + meta.streak + ' streak';
@@ -98,4 +99,55 @@ function renderMeta(el, tab) {
       r.querySelector('small').textContent = done ? 'Complete' : v + ' / ' + q.target; r.querySelector('button').textContent = '◆ ' + q.reward; el.appendChild(r);
     }
   }
+}
+
+// ============================================================
+// Power-ups: bought once (Upgrades tab), used in-run via left-edge buttons / keys 1-3, cooldown-based.
+// State lives in game.pw and is advanced inside step() so it stays deterministic.
+// ============================================================
+const PWS = [
+  { id: 'recentre', name: 'Recentre', glyph: '◎', desc: 'Snap the ball to the target centre', cost: 120, cd: 18 },
+  { id: 'surge',    name: 'Wide Spot', glyph: '⊕', desc: 'Bigger sweet spot for 5s',          cost: 200, cd: 24, dur: 5 },
+  { id: 'calm',     name: 'Calm',      glyph: '≋', desc: 'Halve destabilising forces for 6s', cost: 300, cd: 30, dur: 6 }
+];
+meta.pw = meta.pw || {}; meta.lefty = !!meta.lefty;
+const newPw = () => ({ cd: { recentre: 0, surge: 0, calm: 0 }, surge: 0, calm: 0 });
+function pwTick(g, dt) { // called at the top of step()
+  const p = g.pw; for (const k in p.cd) p.cd[k] = Math.max(0, p.cd[k] - dt);
+  p.surge = Math.max(0, p.surge - dt); p.calm = Math.max(0, p.calm - dt);
+  MOD.sweetTemp = p.surge > 0 ? 18 : 0; MOD.calm = p.calm > 0 ? 0.5 : 1;
+}
+function usePw(id) {
+  const g = game, def = PWS.find(p => p.id === id);
+  if (!def || g.state !== 'play' || g.paused || panelOpen || collOpen || !meta.pw[id] || g.pw.cd[id] > 0) return;
+  g.pw.cd[id] = def.cd; if (def.dur) g.pw[id] = def.dur;
+  if (id === 'recentre') { g.ball.x = g.target.x; g.ball.y = g.target.y; g.ball.vx = g.ball.vy = 0; g.flash = Math.max(g.flash, 0.2); }
+  g.pwUsed = (g.pwUsed || 0) + 1; Audio_.sfx('power');
+}
+const pwEl = document.getElementById('pw'), pwBtns = {};
+for (const d of PWS) {
+  const b = document.createElement('button'); b.innerHTML = '<span>' + d.glyph + '</span><kbd>' + (PWS.indexOf(d) + 1) + '</kbd><i></i>'; b.setAttribute('aria-label', d.name);
+  for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'mousedown']) b.addEventListener(ev, e => e.stopPropagation());
+  b.addEventListener('click', e => { e.stopPropagation(); usePw(d.id); });
+  pwEl.appendChild(b); pwBtns[d.id] = b;
+}
+let pwSig = '';
+function syncPw() { // cheap per-frame: only touches the DOM when something changed
+  const g = game, show = g.state === 'play' && !collOpen, sig = [show, meta.lefty, ...PWS.map(d => meta.pw[d.id] ? Math.ceil(g.pw.cd[d.id] * 10) : -1)].join();
+  if (sig === pwSig) return; pwSig = sig;
+  pwEl.style.display = show ? 'flex' : 'none'; pwEl.classList.toggle('r', meta.lefty);
+  for (const d of PWS) { const b = pwBtns[d.id], own = !!meta.pw[d.id], cd = own ? g.pw.cd[d.id] : 0; b.style.display = own ? 'block' : 'none'; b.classList.toggle('cd', cd > 0); b.lastChild.style.height = own ? Math.round(100 * cd / d.cd) + '%' : '0'; }
+}
+// Shop rows (appended to the Upgrades tab)
+function renderPwShop(el) {
+  for (const d of PWS) {
+    const own = !!meta.pw[d.id], r = document.createElement('div'); r.className = 'mrow' + (own ? ' done' : '');
+    r.innerHTML = '<div class="tx"><b></b><small></small></div><button></button>'; r.querySelector('b').textContent = d.glyph + ' ' + d.name + '  [' + (PWS.indexOf(d) + 1) + ']';
+    r.querySelector('small').textContent = d.desc + ' · ' + d.cd + 's cooldown';
+    const b = r.querySelector('button'); b.textContent = own ? 'OWNED' : '◆ ' + d.cost; b.disabled = own || meta.shards < d.cost;
+    b.addEventListener('click', () => { if (!own && meta.shards >= d.cost) { meta.shards -= d.cost; meta.pw[d.id] = 1; metaSave(); Audio_.sfx('buy'); renderColl(); } });
+    el.appendChild(r);
+  }
+  const r = document.createElement('div'); r.className = 'mrow'; r.innerHTML = '<div class="tx"><b>Left-hand mode</b><small>Power-up buttons on the right edge</small></div><button></button>';
+  const b = r.querySelector('button'); b.textContent = meta.lefty ? 'ON' : 'OFF'; b.addEventListener('click', () => { meta.lefty = !meta.lefty; metaSave(); renderColl(); }); el.appendChild(r);
 }

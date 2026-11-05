@@ -73,3 +73,9 @@
   .mrow button:disabled { opacity:.45; border-color:#6ff4; cursor:default; } .mrow.done { border-color:#7fff9a; }
 
   #mute { position:absolute; top:10px; left:10px; width:42px; height:42px; border-radius:50%; border:1px solid #6ff8; background:#0a1020cc; color:#8ff; font-size:20px; padding:0; cursor:pointer; z-index:5; }
+
+  #pw { position:absolute; left:8px; top:170px; display:none; flex-direction:column; gap:14px; z-index:3; }
+  #pw.r { left:auto; right:8px; }
+  #pw button { position:relative; width:58px; height:58px; border-radius:50%; border:1px solid #6ff; background:#0a1020dd; color:#8ff; font-size:30px; line-height:1; padding:0; overflow:hidden; cursor:pointer; box-shadow:0 0 12px #0ff5; }
+  #pw button span { position:relative; z-index:1; } #pw button i { position:absolute; left:0; right:0; bottom:0; height:0; background:#000a; }
+  #pw button.cd { color:#567; border-color:#6ff4; box-shadow:none; } #pw kbd { position:absolute; z-index:1; right:7px; bottom:3px; font:bold 11px sans-serif; color:#ffd84d; }

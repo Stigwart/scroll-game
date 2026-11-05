@@ -78,7 +78,7 @@ function initBlobs() {
 initBlobs();
 
 function resetRun() {
-  game.t = 0; game.maxHealth = CONFIG.startHealth * MOD.hp; game.health = game.maxHealth; game.newBest = false;
+  game.pw = newPw(); game.pwUsed = 0; MOD.sweetTemp = 0; MOD.calm = 1; game.t = 0; game.maxHealth = CONFIG.startHealth * MOD.hp; game.health = game.maxHealth; game.newBest = false;
   game.obstacles = []; game.trailSt = newTrailSt(); game.unlockedNow = []; game.spawnTimer = 1.5;
   game.shake = 0; game.flash = 0; game.acc = 0;
   game.target = { x: W / 2, y: PH * 0.32 };

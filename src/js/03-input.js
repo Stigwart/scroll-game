@@ -137,7 +137,9 @@ window.addEventListener('keydown', e => {
     else if (game.state === 'over' && performance.now() - game.overAt > 600) startRun();
     return;
   }
-  Audio_.unlock(); keys[k] = true;
+  Audio_.unlock();
+  if (k === '1' || k === '2' || k === '3') { usePw(PWS[+k - 1].id); return; }
+  keys[k] = true;
 });
 window.addEventListener('keyup', e => { delete keys[e.key.length === 1 ? e.key.toLowerCase() : e.key]; });
 window.addEventListener('blur', () => { for (const k in keys) delete keys[k]; });

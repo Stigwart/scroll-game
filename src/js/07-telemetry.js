@@ -50,7 +50,7 @@ function telBegin() {
   try {
     telTouch(); telClearInProg();
     const n = (parseInt(lsGet(STORE_RUNNO), 10) || 0) + 1; lsSet(STORE_RUNNO, String(n));
-    const cfg = CONFIG, set = Object.assign({}, T, { mods: Object.assign({}, MOD), plvl: playerLvl(), ring_radius: cfg.ringRadius, ball_radius: cfg.ballRadius, start_health: cfg.startHealth,
+    const cfg = CONFIG, set = Object.assign({}, T, { mods: Object.assign({}, MOD), plvl: playerLvl(), pw_owned: Object.keys(meta.pw).length, pw_used: game.pwUsed || 0, ring_radius: cfg.ringRadius, ball_radius: cfg.ballRadius, start_health: cfg.startHealth,
       footer_h: FH, edge_loss_base: cfg.edgeLossBase, stage_seconds: cfg.stageSeconds });
     rs = { playedAt: new Date().toISOString(), session: sessionId, runNo: n, settings: set, setStr: JSON.stringify(T),
       ball: selItem('balls').id, trail: selItem('trails').id, vw: window.innerWidth, vh: window.innerHeight, input: lastPtr,
