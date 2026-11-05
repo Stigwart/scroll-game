@@ -4,7 +4,9 @@
 // ============================================================
 const STORE_META = 'scrollgame.meta';
 const MOD = { sweet: 0, hp: 1, drift: 1, shard: 1, sweetTemp: 0, calm: 1 };   // permanent upgrade (and temporary power-up) modifiers read by the sim
-const sweetR = () => T.sweet + MOD.sweet + MOD.sweetTemp;
+// New-player assist: bigger sweet spot and slower health loss in the first two runs
+const assist = () => { const r = typeof prog !== 'undefined' ? prog.runs : 9; return r < 1 ? 1 : r < 2 ? 0.5 : 0; };
+const sweetR = () => T.sweet + MOD.sweet + MOD.sweetTemp + 10 * assist();
 const UPG = [
   { id: 'sweet',  name: 'Sweet Spot',   desc: '+3 radius per level',  max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
   { id: 'hull',   name: 'Sturdy Hull',  desc: '+8% health per level', max: 5, base: 40, apply: l => { MOD.hp = 1 + 0.08 * l; } },

@@ -59,9 +59,9 @@ function step(dt) {
   if (sp > T.maxSpeed) { const f = T.maxSpeed / sp; b.vx *= f; b.vy *= f; }
 
   // Health: none in sweet spot, grows with distance, much faster on edge
-  const lossD = T.loss * (excess / 40) * (1 + 0.5 * L);
+  const lossD = T.loss * (excess / 40) * (1 + 0.5 * L) * (1 - 0.4 * assist());
   let lossE = 0;
-  const edgeRate = T.loss * T.edge * CONFIG.edgeLossBase * 1.5 + 6;
+  const edgeRate = (T.loss * T.edge * CONFIG.edgeLossBase * 1.5 + 6) * (1 - 0.4 * assist());
   if (edge) { lossE = edgeRate + (newContact ? 0.15 * edgeRate / dt : 0); g.shake = Math.max(g.shake, 4); g.flash = Math.min(0.35, g.flash + dt * 2); }
   const loss = lossD + lossE;
   if (loss > 0) { const f = Math.min(g.health, loss * dt) / loss; telStep(dt, d, edge, lossD * f, lossE * f); }
