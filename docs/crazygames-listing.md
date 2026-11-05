@@ -21,4 +21,5 @@
 - Portrait is allowed with black bars/background.
 - SDK Basic integration: DONE (crazygames build only): SDK v3 script, init + loadingStart/Stop, gameplayStart on run start, gameplayStop on game over. No ads (disabled in Basic).
 - Size limits: 50 MB initial (ours ~85 KB). Relative paths only: yes (single file).
-- Quality Guidelines / Basic Launch Guide pages: URLs 404 - read in the developer portal.
+- Quality Guidelines (docs.crazygames.com/requirements/quality/): restricted keys are Escape and Ctrl/Cmd+W - we use neither. Key bindings use physical key positions (WASD = ZQSD on AZERTY). Onboarding should be in-gameplay and skippable (recommended, we have none beyond the start screen - consider a brief hint).
+- Basic Launch metrics (resources/basic-launch-metrics/): SDK NOT required for Basic (ads stay disabled if integrated); 7-21 days, ends at >=7 days AND >=500 plays; benchmarks 10+ min avg session, D1 10-15%, conversion 80%+; load <10 s, build <20 MB. Loading is measured up to gameplayStart.

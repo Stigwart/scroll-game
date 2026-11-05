@@ -107,7 +107,7 @@ function drawOverlayScreens(pal) {
     meta.notice.slice(0, 2).forEach((n, i) => textCenter(n, H * 0.55 + 100 + i * 30, 18, '#ffd84d', 8));
   } else if (g.state === 'over') {
     // Fixed vertical layout (stage units): title 56 | time 116 | best 166 | new-best 200 | shards 238 | xp bar 262 | event list 316-400 | goal 432 | CTA 470 | rate 520-640 | footer 648+
-    ctx.fillStyle = 'rgba(3,1,9,0.8)'; ctx.fillRect(0, 0, W, PH);
+    ctx.fillStyle = 'rgba(3,1,9,0.92)'; ctx.fillRect(0, 0, W, PH);
     textCenter('GAME OVER', 56, 38, '#ff3b5c', 22);
     textCenter(fmtTime(g.t) + 's', 116, 60, '#ffffff', 18);
     textCenter('Best: ' + fmtTime(g.best) + 's', 166, 22, '#9ff', 8);
@@ -146,10 +146,6 @@ function render() {
     for (const o of g.obstacles) drawObstacle(o, pal);
     drawTarget(); drawBall(pal);
     ctx.restore();
-  } else if (g.state === 'start') {
-    // idle demo ring
-    ctx.save(); glow(pal[2], 18); ctx.strokeStyle = pal[2]; ctx.lineWidth = 3; ctx.beginPath();
-    ctx.arc(W / 2, PH * 0.78, CONFIG.ringRadius, 0, 6.283); ctx.stroke(); ctx.restore();
   }
   ctx.restore();
   // Edge flash vignette

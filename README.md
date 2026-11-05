@@ -14,7 +14,7 @@ A one-thumb neon arcade balancing game for mobile (working title).
 - `node tests/determinism.mjs` - refresh-rate determinism (60/120/144/165 Hz).
 - `node tests/bot.mjs [n]` - bot pacing/economy simulation at four skill levels.
 - `supabase/metrics.sql` - launch-gate queries (run in Supabase).
-- CI: `.github/workflows/pages.yml` publishes `dist/web` at the site root, the CrazyGames build at `/cg/`, and the frozen prototype at `/prototype/`.
+- `node scripts/publish-play.mjs [--commit] [--push]` rebuilds, runs the determinism test and refreshes `play/`.
 
 ## Playtest links (GitHub Pages, legacy branch deploy)
-`play/` is a committed copy of the build for the Pages site (`cp dist/web/* play/ && cp dist/crazygames/* play/cg/` after a build). Web: `/play/`, CrazyGames-flagged build: `/play/cg/`.
+`play/` is a committed copy of the build for the Pages site, refreshed by `node scripts/publish-play.mjs`. Web: `/play/`, CrazyGames-flagged build: `/play/cg/`.
