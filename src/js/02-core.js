@@ -66,7 +66,9 @@ const game = {
 };
 game.stageF = () => game.state === 'play' || game.state === 'over' ? diffTime() / CONFIG.stageSeconds : 0.0;
 // Effective "difficulty time" (seconds scaled by ramp speed)
-function diffTime() { return game.t * T.ramp; }
+// First-run easing: runs 1-2 ramp slower so new players reach the 60s mark
+function easeF() { const r = typeof prog !== 'undefined' ? prog.runs : 9; return r < 1 ? 0.6 : r < 2 ? 0.75 : r < 4 ? 0.9 : 1; }
+function diffTime() { return game.t * T.ramp * easeF(); }
 // Difficulty level: 0 at start, ~1 at 60s with ramp 1
 function level() { return diffTime() / 60; }
 

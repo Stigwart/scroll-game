@@ -20,7 +20,11 @@ const CONFIG = {
     ['#06061a', '#14083a', '#00e5ff', '#9b5cff', '#2bd9ff'],
     ['#12041f', '#2a0640', '#ff2bd6', '#7a5cff', '#ff4de0'],
     ['#1c0407', '#3a0a0a', '#ff3b30', '#ff9a1f', '#ff6a2b'],
-    ['#2a0000', '#000000', '#ff1a1a', '#ffee00', '#ffffff']
+    ['#2a0000', '#000000', '#ff1a1a', '#ffee00', '#ffffff'],
+    ['#00141a', '#001f1a', '#00ffa3', '#00c2ff', '#7dffd4'],
+    ['#1a1200', '#2e1a00', '#ffb300', '#ff5e00', '#ffd966'],
+    ['#10001f', '#05000d', '#c200ff', '#00f0ff', '#f0b3ff'],
+    ['#000000', '#1a0010', '#ffffff', '#ff0066', '#ff0066']
   ],
   // Tunables: key -> [default, min, max, step, label]
   tune: {
