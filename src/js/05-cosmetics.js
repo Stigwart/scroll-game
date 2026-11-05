@@ -233,14 +233,14 @@ function renderColl() {
   }
   for (const tl of tiles) { // size after layout so the grid columns are final
     const w = tl.cv.clientWidth || 140, h = tl.cv.clientHeight || 76;
-    tl.cv.width = Math.round(w * DPR); tl.cv.height = Math.round(h * DPR);
+    tl.cv.width = Math.round(w * RS); tl.cv.height = Math.round(h * RS);
     tl.c = tl.cv.getContext('2d'); tl.w = w; tl.h = h;
   }
   gridEl.scrollTop = top;
 }
 function drawTile(tl, t, dt) {
   const c = tl.c, w = tl.w, h = tl.h, trail = tl.kind === 'trails', col = '#00e5ff';
-  c.setTransform(DPR, 0, 0, DPR, 0, 0); c.clearRect(0, 0, w, h);
+  c.setTransform(RS, 0, 0, RS, 0, 0); c.clearRect(0, 0, w, h);
   const A = w * (trail ? 0.3 : 0.1), B = h * (trail ? 0.26 : 0.08);
   const x = w / 2 + Math.sin(t * 1.9) * A, y = h / 2 + Math.sin(t * 3.1) * B;
   const ang = Math.atan2(Math.cos(t * 3.1) * 3.1 * B, Math.cos(t * 1.9) * 1.9 * A);

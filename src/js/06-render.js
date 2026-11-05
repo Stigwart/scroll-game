@@ -72,7 +72,7 @@ function drawBall(pal) {
 
 function fmtTime(s) { return s.toFixed(1); }
 function textCenter(str, y, size, color, blur) {
-  ctx.font = 'bold ' + size + 'px "Trebuchet MS", system-ui, sans-serif';
+  ctx.font = 'bold ' + Math.round(Math.max(size, 12 / SCALE)) + 'px "Trebuchet MS", system-ui, sans-serif';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   glow(color, blur || 12); ctx.fillStyle = color; ctx.fillText(str, W / 2, y); noGlow();
 }
@@ -90,7 +90,7 @@ function drawHUD(pal) {
   const hc = ringColor(1 - hp);
   ctx.save(); glow(hc, 10); ctx.fillStyle = hc; ctx.fillRect(bx, by, bw * hp, bh); ctx.restore();
   ctx.strokeStyle = 'rgba(255,255,255,0.5)'; ctx.lineWidth = 1; ctx.strokeRect(bx, by, bw, bh);
-  ctx.font = '13px "Trebuchet MS", system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+  ctx.font = Math.round(Math.max(13, 12 / SCALE)) + 'px "Trebuchet MS", system-ui, sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
   ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillText('BEST ' + fmtTime(g.best), 14, PH + 18);
 }
 
@@ -126,7 +126,7 @@ function drawOverlayScreens(pal) {
 
 function render() {
   const g = game, pal = palette(g.stageF());
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.setTransform(RS, 0, 0, RS, 0, 0);
   ctx.save();
   if (g.shake > 0.2) ctx.translate(rand(-g.shake, g.shake), rand(-g.shake, g.shake));
   drawBackground(pal);

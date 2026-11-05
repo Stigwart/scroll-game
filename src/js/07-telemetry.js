@@ -53,7 +53,7 @@ function telBegin() {
     const cfg = CONFIG, set = Object.assign({}, T, { ring_radius: cfg.ringRadius, ball_radius: cfg.ballRadius, start_health: cfg.startHealth,
       footer_h: FH, edge_loss_base: cfg.edgeLossBase, stage_seconds: cfg.stageSeconds });
     rs = { playedAt: new Date().toISOString(), session: sessionId, runNo: n, settings: set, setStr: JSON.stringify(T),
-      ball: selItem('balls').id, trail: selItem('trails').id, vw: W, vh: H, input: lastPtr,
+      ball: selItem('balls').id, trail: selItem('trails').id, vw: window.innerWidth, vh: window.innerHeight, input: lastPtr,
       zS: 0, zI: 0, zO: 0, zX: 0, distSum: 0, tAcc: 0, coll: 0, edgeN: 0, edgeT: 0, lostD: 0, lostE: 0,
       drag: 0, paused: 0, bk: {}, lastEdge: -9, done: false };
   } catch (e) { rs = null; }

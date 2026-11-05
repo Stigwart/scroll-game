@@ -19,9 +19,9 @@ function onMove(e) {
   if (!drag || e.pointerId !== drag.id) return;
   e.preventDefault();
   if (game.state === 'play' && !game.paused && !panelOpen && game.target) {
-    if (rs) rs.drag += Math.hypot(e.clientX - drag.x, e.clientY - drag.y);
-    game.target.x = clamp(game.target.x + (e.clientX - drag.x), 0, W);
-    game.target.y = clamp(game.target.y + (e.clientY - drag.y), 0, PH);
+    if (rs) rs.drag += Math.hypot(e.clientX - drag.x, e.clientY - drag.y) / SCALE;
+    game.target.x = clamp(game.target.x + (e.clientX - drag.x) / SCALE, 0, W);
+    game.target.y = clamp(game.target.y + (e.clientY - drag.y) / SCALE, 0, PH);
   }
   drag.x = e.clientX; drag.y = e.clientY;
 }
@@ -121,3 +121,22 @@ function collideObstacle(b, o) {
   return true;
 }
 
+
+// Keyboard (secondary control): arrows / WASD move the target; Space / Enter start or retry.
+const keys = {}, KSPEED = 380; // stage px/s
+function kbDir() { return { x: (keys.ArrowRight || keys.d ? 1 : 0) - (keys.ArrowLeft || keys.a ? 1 : 0), y: (keys.ArrowDown || keys.s ? 1 : 0) - (keys.ArrowUp || keys.w ? 1 : 0) }; }
+window.addEventListener('keydown', e => {
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (/^(Arrow(Up|Down|Left|Right)| )$/.test(k)) e.preventDefault();
+  if (k === ' ' || k === 'Enter') {
+    if (e.repeat || panelOpen || collOpen) return;
+    if (game.paused) { game.paused = false; telClearInProg(); return; } // same as tap-to-resume
+    lastPtr = 'key';
+    if (game.state === 'start') startRun();
+    else if (game.state === 'over' && performance.now() - game.overAt > 600) startRun();
+    return;
+  }
+  keys[k] = true;
+});
+window.addEventListener('keyup', e => { delete keys[e.key.length === 1 ? e.key.toLowerCase() : e.key]; });
+window.addEventListener('blur', () => { for (const k in keys) delete keys[k]; });

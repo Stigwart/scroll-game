@@ -4,6 +4,7 @@
 function step(dt) {
   const g = game, b = g.ball, tg = g.target, L = level();
   g.t += dt;
+  const kd = kbDir(); if (kd.x || kd.y) { const n = Math.hypot(kd.x, kd.y); tg.x = clamp(tg.x + kd.x / n * KSPEED * dt, 0, W); tg.y = clamp(tg.y + kd.y / n * KSPEED * dt, 0, PH); }
 
   // Smooth random drift: lerp toward a periodically re-rolled target vector
   const dr = g.drift;

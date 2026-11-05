@@ -2,20 +2,18 @@
 // ============================================================
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-let W = 360, H = 640, DPR = 1, PH = 520, FH = 120, SAFE_B = 0; // PH = play-area height (footer starts at y=PH)
-function measureSafe() {
-  try {
-    const d = document.createElement('div');
-    d.style.cssText = 'position:fixed;left:0;top:0;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)';
-    document.body.appendChild(d); SAFE_B = parseFloat(getComputedStyle(d).paddingBottom) || 0; d.remove();
-  } catch (e) { SAFE_B = 0; }
-}
+const STAGE_W = 450, STAGE_H = 800;                  // fixed logical stage: identical physics/difficulty on every device
+let W = STAGE_W, H = STAGE_H, DPR = 1, SCALE = 1, RS = 1, PH = 520, FH = 120, SAFE_B = 0; // PH = play-area height (footer starts at y=PH); RS = DPR*SCALE
+const stageEl = document.getElementById('stage');
 function resize() {
   DPR = Math.min(window.devicePixelRatio || 1, 3);
-  W = window.innerWidth; H = window.innerHeight;
-  measureSafe(); FH = Math.round(H * CONFIG.footerFrac + SAFE_B); PH = H - FH;
-  canvas.width = Math.round(W * DPR); canvas.height = Math.round(H * DPR);
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const vw = window.innerWidth, vh = window.innerHeight;
+  SCALE = Math.min(vw / STAGE_W, vh / STAGE_H); RS = DPR * SCALE;
+  stageEl.style.transform = 'translate(' + ((vw - STAGE_W * SCALE) / 2) + 'px,' + ((vh - STAGE_H * SCALE) / 2) + 'px) scale(' + SCALE + ')';
+  stageEl.style.setProperty('--s', SCALE);
+  FH = Math.round(H * CONFIG.footerFrac); PH = H - FH;
+  canvas.width = Math.round(W * RS); canvas.height = Math.round(H * RS);
+  ctx.setTransform(RS, 0, 0, RS, 0, 0);
   if (game.target) { game.target.x = clamp(game.target.x, 0, W); game.target.y = clamp(game.target.y, 0, PH); }
   if (game.ball) { game.ball.x = clamp(game.ball.x, game.ball.r, W - game.ball.r); game.ball.y = clamp(game.ball.y, game.ball.r, PH - game.ball.r); }
 }
