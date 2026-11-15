@@ -1,6 +1,6 @@
 // Concatenation build (no deps): src/ -> dist/<target>/index.html
 // Usage: node scripts/build.mjs [web|crazygames|all]
-import { readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { readFileSync, writeFileSync, mkdirSync, readdirSync, rmSync } from 'node:fs';
 const T = {
   web:        { target: 'web',        devUI: true,  telemetry: true },
   crazygames: { target: 'crazygames', devUI: false, telemetry: false },  // decision 15 Nov 2026: no third-party stats in the CrazyGames build
@@ -36,7 +36,9 @@ ${js}
 `;
   mkdirSync(new URL(`../dist/${name}/`, import.meta.url), { recursive: true });
   writeFileSync(new URL(`../dist/${name}/index.html`, import.meta.url), html);
-  writeFileSync(new URL(`../dist/${name}/privacy.html`, import.meta.url), readFileSync(new URL('../src/privacy.html', import.meta.url), 'utf8'));
+  // privacy page ships only with builds that send play stats
+  if (b.telemetry) writeFileSync(new URL(`../dist/${name}/privacy.html`, import.meta.url), readFileSync(new URL('../src/privacy.html', import.meta.url), 'utf8'));
+  else rmSync(new URL(`../dist/${name}/privacy.html`, import.meta.url), { force: true });
   console.log(name, (html.length / 1024).toFixed(1) + ' KB');
 }
 const a = process.argv[2] || 'all';

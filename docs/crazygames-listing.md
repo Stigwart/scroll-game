@@ -1,25 +1,51 @@
-# CrazyGames listing draft (replace Bullseye once chosen)
+# CrazyGames listing: Neon Bullseye
 
-**Title:** Bullseye
-**Short description:** Drag your thumb to keep the glowing ball balanced in the ring. Survive escalating neon chaos, earn shards, unlock power-ups, balls and trails.
-**Instructions / controls:** Mouse or touch: drag to move the ring. Keyboard: arrow keys / WASD to move, Space or Enter to start/retry, 1-3 for power-ups, M to mute (button top-left).
-**Category suggestions:** Skill, Casual, Arcade
-**Tags:** balance, one-touch, neon, arcade, endless, upgrades
-**Orientation:** Portrait (fixed 9:16 stage, letterboxed)
-**Devices:** Desktop + mobile (touch)
-**Languages:** English
-**Content rating:** PEGI 12-safe (no violence, text, or user content)
+*Final copy for the developer portal form. Rules re-checked against docs.crazygames.com on 15 Nov 2026.*
 
-## Assets still to produce (need final name)
-- Covers: 1920x1080, 800x1200, 800x800 (title text only, stylised)
-- Preview videos: 15-20 s, silent, 1080p 16:9 and 2:3, no cursor, no promo text, <=50 MB
+| Field | Value |
+|---|---|
+| **Title** | Neon Bullseye |
+| **Category** | Casual (alternative if offered: Skill / Arcade) |
+| **Tags** | arcade, skill, balance, ball, neon, endless, mouse, 1 player, upgrade, reflex |
+| **Orientation, desktop** | Landscape (the play field fills the 16:9 frame) |
+| **Orientation, mobile** | Portrait and landscape both work; choose **portrait** if only one is allowed |
+| **Devices** | Desktop, tablet, mobile |
+| **Languages** | English |
+| **Players** | Single player |
+| **Age rating** | Suitable for PEGI 12 and under: no violence, no text chat, no user content, no purchases |
+| **SDK** | CrazyGames SDK v3: loading and gameplay start/stop events. No ads (Basic Launch). |
+| **Data collected** | None beyond the SDK. Progress is saved in the browser's local storage. |
 
-## Docs findings (read 5 Nov 2026)
-- Physics must be refresh-rate independent: covered (fixed 120 Hz step + determinism test).
-- Add `user-select:none` on body: done. Safe areas: handled by letterboxed stage; verify in CrazyGames app.
-- Privacy/Terms notice for non-SDK personal data: non-blocking notice + privacy.html added.
-- Portrait is allowed with black bars/background.
-- SDK Basic integration: DONE (crazygames build only): SDK v3 script, init + loadingStart/Stop, gameplayStart on run start, gameplayStop on game over. No ads (disabled in Basic).
-- Size limits: 50 MB initial (ours ~85 KB). Relative paths only: yes (single file).
-- Quality Guidelines (docs.crazygames.com/requirements/quality/): restricted keys are Escape and Ctrl/Cmd+W - we use neither. Key bindings use physical key positions (WASD = ZQSD on AZERTY). Onboarding should be in-gameplay and skippable (recommended, we have none beyond the start screen - consider a brief hint).
-- Basic Launch metrics (resources/basic-launch-metrics/): SDK NOT required for Basic (ads stay disabled if integrated); 7-21 days, ends at >=7 days AND >=500 plays; benchmarks 10+ min avg session, D1 10-15%, conversion 80%+; load <10 s, build <20 MB. Loading is measured up to gameplayStart.
+## Description
+
+Neon Bullseye is a one-move arcade game about balance. A glowing ball floats inside your ring and it does not want to stay there. Move the ring to keep the ball centred while neon shapes drift in and try to knock it loose.
+
+Every second you survive counts. Runs climb through eight named stages, from CALM to BULLSEYE, each faster and brighter than the last, with pulsing circles and closing gates joining in as you go deeper. A near miss pays bonus shards. A clean hit cracks your ring.
+
+Between runs, spend shards on upgrades and power-ups, complete missions and daily quests, and build a collection of 16 balls, 10 trails and 4 colour themes. Every run earns something, and the next unlock is never far away.
+
+- One control: move the ring. Nothing else to learn.
+- Eight stages with rising speed, new hazards and a music layer for each.
+- Upgrades, three power-ups, missions, daily quests and a seven-day streak.
+- 30 cosmetics to unlock by skill, level or shards.
+- Plays full screen on desktop and in portrait or landscape on phones and tablets.
+
+## Controls
+
+**Desktop**
+- Click to start. Move the mouse to steer the ring.
+- Or use the arrow keys / WASD.
+- Space or Enter: start and retry.
+- 1, 2, 3: use power-ups. P: pause. M: mute.
+
+**Mobile and tablet**
+- Tap to start. Drag anywhere on the screen to move the ring.
+- Tap the buttons at the screen edge to use power-ups.
+
+## Assets
+
+See [store/README.md](../store/README.md): three covers (1920×1080, 800×1200, 800×800) and two preview videos (1920×1080 and 1080×1620, 15–20 s, silent).
+
+## Upload
+
+`store/neon-bullseye-crazygames.zip`: `index.html` at the root, single file, relative paths only. Built by `node scripts/package.mjs`.

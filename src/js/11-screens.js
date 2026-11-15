@@ -209,7 +209,7 @@ function checkStreakCard() {
   if (meta.lastDay !== today || lsGet(STORE_STREAK) === today) return;
   lsSet(STORE_STREAK, today);
   scrEl('stDays').innerHTML = streakHTML();
-  scrEl('stTxt').textContent = 'Day ' + meta.streak + ' streak: +' + DAILY[(meta.streak - 1) % 7] + ' shards. Day 7 pays +' + DAILY[6] + '!';
+  scrEl('stTxt').textContent = 'Day ' + meta.streak + ' streak: +' + DAILY[(meta.streak - 1) % 7] + ' shards. Day 7: +' + DAILY[6] + ' and the Royal ball.';
   openStreak(true);
 }
 // keep Space/Enter/arrows from starting a run while a sheet is open

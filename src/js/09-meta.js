@@ -37,9 +37,9 @@ function missionNow(m) { // current step of a ladder, or null when finished
   if (m.kinds) { const k = m.kinds[st[0]]; return { text: k[0](st[1]), v: k[1](), target: st[1], reward: st[2] }; }
   return { text: m.text(st[0]), v: m.val(), target: st[0], reward: st[1] };
 }
-function missionsCheck() { // after a run: pay out every completed step; returns [[text, reward]]
+function missionsCheck() { // after a run: pay out the current step of each ladder if met; returns [[text, reward]]
   const done = []; meta.ms = meta.ms || {};
-  for (const m of MISSIONS) for (;;) { const c = missionNow(m); if (!c || c.v < c.target) break; meta.ms[m.id] = (meta.ms[m.id] || 0) + 1; meta.shards += c.reward; done.push([c.text, c.reward]); }
+  for (const m of MISSIONS) { const c = missionNow(m); if (!c || c.v < c.target) continue; meta.ms[m.id] = (meta.ms[m.id] || 0) + 1; meta.shards += c.reward; done.push([c.text, c.reward]); }   // one step per ladder per run
   return done;
 }
 const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -139,7 +139,7 @@ function dailyDone() { let n = 0; for (const q of todaysQuests()) if (meta.q.don
 function streakHTML() {
   const d = (meta.streak - 1) % 7 < 0 ? 0 : (meta.streak - 1) % 7; let h = '';
   for (let i = 0; i < 7; i++) {
-    h += '<div class="dc' + (i < d ? ' past' : i === d ? ' today' : '') + (i === 6 ? ' big' : '') + '"><small>Day ' + (i + 1) + '</small><b>' + (i < d ? '&#10003;' : '&#9670; ' + DAILY[i]) + '</b>' + (i === 6 ? '<em>BIG REWARD</em>' : '') + '</div>';
+    h += '<div class="dc' + (i < d ? ' past' : i === d ? ' today' : '') + (i === 6 ? ' big' : '') + '"><small>Day ' + (i + 1) + '</small><b>' + (i < d ? '&#10003;' : '&#9670; ' + DAILY[i]) + '</b>' + (i === 6 ? '<em>+ ROYAL BALL</em>' : '') + '</div>';
   }
   return h;
 }
@@ -174,9 +174,9 @@ function renderMeta(el, tab) {
 // State lives in game.pw and is advanced inside step() so it stays deterministic.
 // ============================================================
 const PWS = [
-  { id: 'recentre', name: 'Recentre', glyph: '◎', desc: 'Snap the ball to the target centre', cost: 120, cd: 18 },
+  { id: 'recentre', name: 'Recentre', glyph: '◎', desc: 'Snap the ball back to the centre', cost: 120, cd: 18 },
   { id: 'surge',    name: 'Wide Spot', glyph: '⊕', desc: 'Bigger sweet spot for 5s',          cost: 200, cd: 24, dur: 5 },
-  { id: 'calm',     name: 'Calm',      glyph: '≋', desc: 'Halve destabilising forces for 6s', cost: 300, cd: 30, dur: 6 }
+  { id: 'calm',     name: 'Calm',      glyph: '≋', desc: 'Everything calms down for 6s', cost: 300, cd: 30, dur: 6 }
 ];
 meta.pw = meta.pw || {}; meta.lefty = !!meta.lefty;
 const newPw = () => ({ cd: { recentre: 0, surge: 0, calm: 0 }, surge: 0, calm: 0 });

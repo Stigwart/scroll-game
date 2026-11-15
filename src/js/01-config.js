@@ -1,5 +1,5 @@
 const TELEMETRY = { url: 'https://ahbfawcyytdrmmxepxjy.supabase.co/rest/v1/runs', key: 'sb_publishable_pWDVpRghWtIJLmDtPlQqag_lGzBQU3x', enabled: BUILD.telemetry && !/[?&]notel=1/.test(location.search) };
-const GAME_VERSION = '0.5.0-dev' + (BUILD.target === 'web' ? '' : '+' + BUILD.target);
+const GAME_VERSION = '1.0.0' + (BUILD.target === 'web' ? '' : '+' + BUILD.target);
 // ============================================================
 // CONFIG: fixed constants + tunable params (exposed in panel)
 // ============================================================
