@@ -1,6 +1,6 @@
 # Neon Bullseye: launch status
 
-*Updated 15 Nov 2026, build 1.0.0. Status: **ready to submit, waiting for Stuart's review of the store assets and a go-ahead.** Nothing has been pushed or submitted.*
+*Updated 15 Nov 2026, build 1.0.0. Status: **submitted to CrazyGames for Basic Launch on 15 Nov 2026 and awaiting review.** Game ID 174300.*
 
 ---
 
@@ -52,26 +52,34 @@ A one-move neon arcade game. The player moves a target ring (mouse, arrow keys/W
 
 See [docs/qa-record.md](../qa-record.md). Headlines: 38 of 38 automated QA checks pass; determinism holds at 60/120/144/165 Hz; 60 fps at 1920×1080 with software rendering; novice bots pass 60 s on their first run 100% of the time in portrait and 60% on the wide desktop field (17% before).
 
-## 6. Open items
+## 6. Submission record
 
-1. **Stuart to review** the three covers and two videos in `store/`, then say whether to submit.
-2. **Device checks** nobody has done yet: list in `docs/qa-record.md` ("Not tested here"). The iPhone and Chromebook checks matter most.
-3. **Listen to the audio.** Levels are measured, not heard.
-4. **Name check** in the CrazyGames catalogue.
-5. `store/` adds about 43 MB of video to the repository. If that is unwelcome, remove the two `.mp4` files from git and regenerate them when needed.
-6. Not pushed. `play/` (GitHub Pages copy) has not been refreshed; run `node scripts/publish-play.mjs --commit` when you want testers on the new build.
+| Item | Value |
+|---|---|
+| Submitted | 15 Nov 2026, by Stuart, from developer.crazygames.com (Basic) |
+| Game ID | 174300 |
+| Status at submission | Awaiting review |
+| Build | `dist/crazygames/index.html` 1.0.0 (commit `1edd496` source; 0.2 MB), uploaded as a single file |
+| Progress save | LocalStorage. The portal notes that its Automatic Progress Save does not cover iframe games; cloud save needs the SDK Data module (Full Launch item). |
+| Mobile | Supported, orientation Both |
+| Not ticked | Online multiplayer; "supports CrazyGames muting audio through SDK" (not implemented) |
+| Category / tags | Arcade / Ball, Skill, Avoid, Obstacle, Survival (tags come from a fixed list) |
+| Tools declared | Claude |
+| Covers | The three files in `store/` |
+| Videos | 9 MB re-encodes of the two files in `store/` (same content, 1080p 60 fps 17 s). The full-quality originals can be swapped in from the game's Art tab. |
+| QA preview | Ran in CrazyGames' QA tool: `sdkInit`, loading start/stop and `gameplayStart` logged; no warnings; total size 0.2 MB. |
+| Declarations | The "Before you submit" list, the QA Results checklist, the Terms and the PEGI 12 box were all answered by Stuart. |
 
-## 7. Submission steps (developer.crazygames.com, Stuart's account)
+## 7. Open items
 
-Stuart signs in. The agent does not enter passwords, accept terms or create accounts, and presses Submit only after an explicit yes.
+1. **Load time in the QA tool read 15 seconds.** CrazyGames measures from its Play Now button to the first `gameplayStart`, so time spent on our title screen counts. The game loads in under a second; a player who hesitates before clicking shows as a slow load. Option if the dashboard shows a problem: drop first-time players straight into run 1 (the ball already waits until they move). Trade-off: a mouse player who never clicks gets no sound, because browsers only allow audio after a click or key press.
+2. **An idle first run lasts a long time** (over a minute on the wide field in the QA preview) because of the new-player edge relief and shield. Good for conversion; revisit if first runs feel too safe.
+3. **SDK mute support** (`muteAudio` setting) is not implemented. Small job; lets CrazyGames mute the game from its own UI.
+4. **Device checks** still worth doing on a Chromebook, Safari and Edge: list in `docs/qa-record.md`.
+5. **Name check** in the CrazyGames catalogue and trademark registers was never done beyond a web search.
+6. `store/` adds about 43 MB of video to the repository.
 
-1. New game → upload `store/neon-bullseye-crazygames.zip` (HTML5; `index.html` at the root).
-2. Fill the form from `docs/crazygames-listing.md`: title, description, controls, category, tags, orientation, devices.
-3. Upload `cover-1920x1080.png`, `cover-800x1200.png`, `cover-800x800.png`, `preview-1920x1080.mp4`, `preview-1080x1620.mp4`.
-4. Use the portal's preview to play one run and confirm the SDK events register.
-5. Stuart reviews the completed form, then submit.
-
-## 8. After submission
+## 8. What happens next
 
 - **QA feedback:** usually 1–2 days. Fixes can be uploaded straight away.
 - **Basic Launch:** at least 7 days and 500 plays; ends automatically at 21 days. No ads, no revenue. Updates go live at once and show in the next daily refresh.
