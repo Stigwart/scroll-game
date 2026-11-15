@@ -10,7 +10,7 @@ const Audio_ = (() => {
   ];
   const DIV = [4, 2, 2, 1];            // arp note every N sixteenths, by intensity
   const CUT = [900, 1300, 1800, 2600]; // lowpass cutoff by intensity
-  const MIN_GAP = { edge: 80, hit: 80 };
+  const MIN_GAP = { edge: 80, hit: 80, nearMiss: 120, tick: 30 };
 
   let ctx = null, master = null, bus = null, lp = null, noise = null;
   let timer = null, nextT = 0, step = 0, intensity = 0;
@@ -119,16 +119,46 @@ const Audio_ = (() => {
     syncMusic();
   }
 
+  // Filtered noise burst (crackle / crunch), uses a cached 0.25 s buffer.
+  let burstBuf = null;
+  function burst(out, t, dur, freq, q, vol) {
+    if (!burstBuf) {
+      burstBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.25), ctx.sampleRate);
+      const d = burstBuf.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+    }
+    const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+    s.buffer = burstBuf; f.type = 'bandpass'; f.frequency.value = freq; f.Q.value = q;
+    g.gain.setValueAtTime(vol, t);
+    g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    s.connect(f); f.connect(g); g.connect(out);
+    s.start(t); s.stop(t + Math.min(dur + 0.02, 0.24));
+  }
+
   // Sound effects: each takes (output node, start time).
   const SFX = {
     start:  (o, t) => { voice(o, 'sawtooth', 220, 880, t, 0.01, 0.25, 0.2); voice(o, 'square', 440, 1320, t + 0.12, 0.01, 0.2, 0.08); },
-    hit:    (o, t) => voice(o, 'square', 180, 60, t, 0.005, 0.12, 0.25),
-    edge:   (o, t) => voice(o, 'triangle', 1200, 900, t, 0.003, 0.05, 0.15),
+    hit:    (o, t) => { voice(o, 'square', 180, 60, t, 0.005, 0.12, 0.25); voice(o, 'sine', 110, 38, t, 0.004, 0.22, 0.45); burst(o, t, 0.08, 1800, 0.8, 0.18); }, // + low thud
+    edge:   (o, t) => { voice(o, 'triangle', 1200, 900, t, 0.003, 0.05, 0.15); burst(o, t, 0.1, 5200, 1.5, 0.22); burst(o, t + 0.03, 0.07, 3400, 2, 0.14); }, // + crackle
     over:   (o, t) => { voice(o, 'sawtooth', 440, 55, t, 0.01, 0.35, 0.3); voice(o, 'triangle', 330, 110, t + 0.12, 0.01, 0.22, 0.15); },
     unlock: (o, t) => [523.25, 659.25, 783.99].forEach((f, i) => voice(o, 'sine', f, 0, t + i * 0.06, 0.005, 0.12, 0.2)),
     buy:    (o, t) => { voice(o, 'square', 660, 0, t, 0.005, 0.1, 0.12); voice(o, 'square', 990, 0, t + 0.07, 0.005, 0.14, 0.12); },
     power:  (o, t) => voice(o, 'sawtooth', 300, 1500, t, 0.02, 0.3, 0.18),
-    tick:   (o, t) => voice(o, 'sine', 1800, 0, t, 0.002, 0.03, 0.15)
+    tick:   (o, t) => voice(o, 'sine', 1800, 0, t, 0.002, 0.03, 0.15),
+    nearMiss: (o, t) => { voice(o, 'sine', 900, 1500, t, 0.004, 0.09, 0.2); voice(o, 'sine', 1500, 2200, t + 0.06, 0.004, 0.1, 0.14); },
+    stage:  (o, t) => {
+      voice(o, 'sawtooth', 140, 700, t, 0.02, 0.5, 0.14);
+      [392, 523.25, 659.25, 783.99].forEach((f, i) => voice(o, 'square', f, 0, t + 0.12 + i * 0.08, 0.005, 0.18, 0.1));
+    },
+    newBest: (o, t) => {
+      [523.25, 659.25, 783.99, 1046.5, 1318.5].forEach((f, i) => { voice(o, 'square', f, 0, t + i * 0.09, 0.005, 0.22, 0.13); voice(o, 'sine', f * 2, 0, t + i * 0.09, 0.005, 0.3, 0.08); });
+      voice(o, 'triangle', 261.63, 0, t, 0.01, 0.7, 0.15);
+    },
+    milestone: (o, t) => [659.25, 880, 1174.66].forEach((f, i) => voice(o, 'sine', f, 0, t + i * 0.07, 0.004, 0.2, 0.2)),
+    levelUp: (o, t) => {
+      [392, 493.88, 587.33, 783.99, 987.77, 1174.66].forEach((f, i) => voice(o, 'square', f, 0, t + i * 0.07, 0.005, 0.2, 0.1));
+      voice(o, 'sine', 1567.98, 2093, t + 0.45, 0.01, 0.4, 0.14);
+    }
   };
 
   return {
@@ -158,6 +188,13 @@ const Audio_ = (() => {
         lastAt[name] = now;
       }
       try { f(master, c.currentTime); } catch (e) {}
+    },
+    // Brief intensity lift on stage change: filter opens wide, then relaxes back to the stage's level.
+    lift() {
+      if (!ctx || !lp) return;
+      const now = ctx.currentTime;
+      lp.frequency.setTargetAtTime(CUT[3] * 1.7, now, 0.08);
+      setTimeout(() => { if (ctx) lp.frequency.setTargetAtTime(CUT[intensity], ctx.currentTime, 0.9); }, 1400);
     },
     music(on) { wanted = !!on; syncMusic(); },
     setIntensity(n) {

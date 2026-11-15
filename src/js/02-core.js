@@ -62,8 +62,14 @@ const game = {
   spawnTimer: 1.5,
   shake: 0, flash: 0, edgeTouch: false,
   overAt: 0, acc: 0,
-  bgT: 0, bgOff: { x: 0, y: 0 }, blobs: []
+  bgT: 0, bgOff: { x: 0, y: 0 }, blobs: [],
+  stats: { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0 },
+  hitStop: 0, slowMo: 0,     // frame-time seconds (cosmetic pacing; never affects sim results)
+  reduceMotion: lsGet('scrollgame.rm') === '1',
+  tutorial: '', tutSpawnAt: -1, breatherUntil: 0, stageSeen: 0, bestPassed: false, prevBest: 0, msDone: 0,
+  mouseGoal: null, tutRun: false
 };
+game.stageName = () => CONFIG.stageNames[Math.min(7, Math.floor(game.stageF()))];
 game.stageF = () => game.state === 'play' || game.state === 'over' ? diffTime() / CONFIG.stageSeconds : 0.0;
 // Effective "difficulty time" (seconds scaled by ramp speed)
 // First-run easing: runs 1-2 ramp slower so new players reach the 60s mark
@@ -81,14 +87,23 @@ initBlobs();
 
 function resetRun() {
   game.pw = newPw(); game.pwUsed = 0; MOD.sweetTemp = 0; MOD.calm = 1; game.t = 0; game.maxHealth = CONFIG.startHealth * MOD.hp; game.health = game.maxHealth; game.newBest = false;
+  game.stats = { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0 };
+  game.hitStop = 0; game.slowMo = 0; game.tutorial = ''; game.tutSpawnAt = -1; game.breatherUntil = 0; game.stageSeen = 0;
+  game.bestPassed = false; game.prevBest = game.best; game.msDone = 0; game.mouseGoal = null; game.tutRun = typeof prog !== 'undefined' && prog.runs === 0;
   game.obstacles = []; game.trailSt = newTrailSt(); game.unlockedNow = []; game.spawnTimer = 1.5;
   game.shake = 0; game.flash = 0; game.acc = 0;
   game.target = { x: W / 2, y: PH * 0.32 };
   game.ball = { x: W / 2, y: PH * 0.32, vx: 0, vy: 0, r: CONFIG.ballRadius };
   game.drift = { x: 0, y: 0, tx: 0, ty: 0, timer: 0 };
 }
-function startRun() { meta.notice = []; meta.pending = null; telRunStart(); resetRun(); game.state = 'play'; telBegin(); PLATFORM.gameplayStart(); Audio_.sfx('start'); Audio_.music(true); }
+function fxe(type, data) { if (typeof fxEvent === 'function') fxEvent(type, data || {}); }
+function startRun() {
+  meta.notice = []; meta.pending = null; telRunStart(); resetRun(); game.state = 'play'; telBegin(); PLATFORM.gameplayStart(); Audio_.sfx('start'); Audio_.music(true);
+  fxe('start'); fxe('stage', { index: 0, name: CONFIG.stageNames[0] });
+}
 function endRun() {
+  fxe('death', { x: game.ball ? game.ball.x : 0, y: game.ball ? game.ball.y : 0 });
+  game.tutorial = ''; game.hitStop = 0;
   game.state = 'over'; game.overAt = performance.now(); PLATFORM.gameplayStop(); Audio_.music(false); Audio_.sfx('over');
   const s = game.t;
   if (s > game.best) { game.best = s; game.newBest = true; lsSet(STORE_BEST, String(s)); }

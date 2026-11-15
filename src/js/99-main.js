@@ -1,5 +1,5 @@
 // Dev-only UI is removed from the DOM entirely in builds without devUI
-if (!BUILD.devUI) ['gear', 'panel', 'rate'].forEach(i => { const n = document.getElementById(i); if (n && n.parentNode) n.parentNode.removeChild(n); });
+if (!BUILD.devUI) ['gear', 'panel'].forEach(i => { const n = document.getElementById(i); if (n && n.parentNode) n.parentNode.removeChild(n); });
 // Non-blocking first-run privacy notice
 (function () {
   const el = document.getElementById('priv'), ok = document.getElementById('privOk');
@@ -15,7 +15,7 @@ if (!BUILD.devUI) ['gear', 'panel', 'rate'].forEach(i => { const n = document.ge
 let last = performance.now();
 function frame(now) {
   const dt = Math.min((now - last) / 1000, CONFIG.maxFrame); last = now;
-  update(dt); render(); syncCollBtn(); syncPw(); telSyncRate();
+  update(dt); render(); syncCollBtn(); syncPw(); syncScreens();
   requestAnimationFrame(frame);
 }
 resize();

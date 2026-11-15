@@ -8,7 +8,8 @@ function star4(c, x, y, s) { // 4-point sparkle
   c.beginPath(); c.moveTo(x, y - s); c.quadraticCurveTo(x, y, x + s, y); c.quadraticCurveTo(x, y, x, y + s);
   c.quadraticCurveTo(x, y, x - s, y); c.quadraticCurveTo(x, y, x, y - s); c.fill();
 }
-// unlock: null = available from start; {type:'time', v} = best survival >= v seconds; {type:'runs', v} = total runs >= v.
+// unlock: null = available from start; {type:'time', v} = best survival >= v seconds; {type:'runs', v} = total runs >= v;
+// {type:'level', v}; skill unlocks: {type:'near', v} = v near misses in ONE run; {type:'stage', v} = reach stage number v (1-8); {type:'sweet', v} = v seconds in the sweet spot in ONE run.
 // Change these numbers/types freely; nothing else depends on them.
 // draw(c, x, y, r, t, ang, col): c = context, t = seconds, ang = direction of travel, col = accent colour
 const BALLS = [
@@ -33,7 +34,7 @@ const BALLS = [
     c.fillStyle = 'rgba(0,0,40,0.35)'; c.fillRect(x0 + 2 * u, y0 + 2 * u, u, u); c.fillRect(x0 + u, y0 + 2 * u, u, u); c.fillRect(x0 + 2 * u, y0 + u, u, u);
     c.strokeStyle = '#fff'; c.lineWidth = 1.5; c.strokeRect(x0, y0, s, s);
   } },
-  { id: 'eye', name: 'Eyeball', unlock: { type: 'runs', v: 5 }, draw(c, x, y, r, t, a) {
+  { id: 'eye', name: 'Eyeball', unlock: { type: 'near', v: 4 }, draw(c, x, y, r, t, a) {
     const dx = Math.cos(a), dy = Math.sin(a);
     c.shadowColor = '#fff'; c.shadowBlur = 16; c.fillStyle = '#f4fbff'; circ(c, x, y, r); c.fill(); c.shadowBlur = 0;
     const ix = x + dx * r * 0.36, iy = y + dy * r * 0.36;
@@ -52,7 +53,7 @@ const BALLS = [
     c.fillStyle = g; circ(c, 0, 0, r * 0.88); c.fill();
     c.beginPath(); c.ellipse(0, 0, r * 1.75, r * 0.55, 0, 0, Math.PI); c.stroke();           // front half of ring
   } },
-  { id: 'bauble', name: 'Bauble', unlock: { type: 'level', v: 5 }, draw(c, x, y, r, t) {
+  { id: 'bauble', name: 'Bauble', unlock: { type: 'stage', v: 5 }, draw(c, x, y, r, t) {
     c.shadowColor = '#ff3050'; c.shadowBlur = 16;
     const g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, 1, x, y, r);
     g.addColorStop(0, '#ffb0b8'); g.addColorStop(0.5, '#e0102a'); g.addColorStop(1, '#6a0014');
@@ -101,12 +102,13 @@ const TRAILS = [
   { id: 'classic', name: 'Classic Fade', unlock: null },
   { id: 'rainbow', name: 'Rainbow', unlock: { type: 'time', v: 15 } },
   { id: 'sparks', name: 'Sparks', unlock: { type: 'runs', v: 4 } },
-  { id: 'ribbon', name: 'Ribbon', unlock: { type: 'level', v: 4 } },
-  { id: 'bubbles', name: 'Bubbles', unlock: { type: 'runs', v: 6 } },
+  { id: 'ribbon', name: 'Ribbon', unlock: { type: 'stage', v: 3 } },
+  { id: 'bubbles', name: 'Bubbles', unlock: { type: 'sweet', v: 10 } },
   { id: 'none', name: 'None', unlock: null }
 ];
 const LISTS = { balls: BALLS, trails: TRAILS };
 const LABELS = { balls: 'Balls', trails: 'Trails' };
+const TAB_ICON = { balls: '&#9679;', trails: '&#8779;', upgrades: '&#9650;', daily: '&#9788;' };
 
 function ballDraw(c, id, x, y, r, t, ang, col) {
   const it = BALLS.find(b => b.id === id) || BALLS[0];
@@ -171,16 +173,25 @@ function trailDraw(c, st, id, r, col) {
 
 // ---- Persistence + unlock rules ----
 function lsJSON(k, def) { try { const v = JSON.parse(lsGet(k)); return v == null ? def : v; } catch (e) { return def; } }
-const prog = { runs: 0, best: 0 };
-(function () { const s = lsJSON(STORE_PROG, {}); prog.runs = +s.runs || 0; prog.best = Math.max(+s.best || 0, game.best); })();
+const prog = { runs: 0, best: 0, nearMissBest: 0, stageMax: 0, sweetBest: 0 };   // last three: best single-run skill stats, used by skill unlocks
+(function () { const s = lsJSON(STORE_PROG, {}); prog.runs = +s.runs || 0; prog.best = Math.max(+s.best || 0, game.best); prog.nearMissBest = +s.nearMissBest || 0; prog.stageMax = +s.stageMax || 0; prog.sweetBest = +s.sweetBest || 0; })();
 const unlocked = new Set((function () { const a = lsJSON(STORE_UNLOCKS, []); return Array.isArray(a) ? a : []; })());
 const sel = { balls: 'orb', trails: 'classic' };
 (function () { const s = lsJSON(STORE_SEL, {}); for (const k in sel) if (typeof s[k] === 'string') sel[k] = s[k]; })();
 const ukey = (kind, it) => kind + ':' + it.id;
 const isUnlocked = (kind, it) => !it.unlock || unlocked.has(ukey(kind, it));
 function selItem(kind) { const l = LISTS[kind], it = l.find(i => i.id === sel[kind]); return it && isUnlocked(kind, it) ? it : l[0]; }
-function unlockText(it) { return it.unlock.type === 'level' ? 'Reach level ' + it.unlock.v : it.unlock.type === 'time' ? 'Survive ' + it.unlock.v + 's' : 'Play ' + it.unlock.v + ' runs'; }
-function unlockMet(it) { const u = it.unlock; return !u || (u.type === 'level' ? playerLvl() >= u.v : u.type === 'time' ? prog.best >= u.v : prog.runs >= u.v); }
+function unlockText(it) {
+  const u = it.unlock;
+  return u.type === 'level' ? 'Reach level ' + u.v : u.type === 'time' ? 'Survive ' + u.v + 's' : u.type === 'near' ? u.v + ' near misses in one run'
+    : u.type === 'stage' ? 'Reach Stage ' + u.v + (CONFIG.stageNames && CONFIG.stageNames[u.v - 1] ? ' (' + CONFIG.stageNames[u.v - 1] + ')' : '')
+    : u.type === 'sweet' ? u.v + 's in the sweet spot, one run' : 'Play ' + u.v + ' runs';
+}
+function unlockMet(it) {
+  const u = it.unlock; if (!u) return true;
+  return u.type === 'level' ? playerLvl() >= u.v : u.type === 'time' ? prog.best >= u.v : u.type === 'near' ? prog.nearMissBest >= u.v
+    : u.type === 'stage' ? prog.stageMax + 1 >= u.v : u.type === 'sweet' ? prog.sweetBest >= u.v : prog.runs >= u.v;
+}
 function saveCosm() {
   lsSet(STORE_PROG, JSON.stringify(prog)); lsSet(STORE_UNLOCKS, JSON.stringify(Array.from(unlocked))); lsSet(STORE_SEL, JSON.stringify(sel));
 }
@@ -188,15 +199,17 @@ function countUnlocked(kind) { return LISTS[kind].filter(it => isUnlocked(kind, 
 // Called at game over: updates stats, returns names of newly unlocked items
 function recordRun(seconds) {
   prog.runs++; prog.best = Math.max(prog.best, seconds);
-  const fresh = [];
-  for (const kind in LISTS) for (const it of LISTS[kind]) {
-    if (!isUnlocked(kind, it) && unlockMet(it)) { unlocked.add(ukey(kind, it)); fresh.push(it.name); }
+  const st = game.stats;
+  if (st) { prog.nearMissBest = Math.max(prog.nearMissBest, st.nearMiss || 0); prog.stageMax = Math.max(prog.stageMax, st.stageMax || 0); prog.sweetBest = Math.max(prog.sweetBest, st.sweetTime || 0); }
+  const fresh = []; // at most one unlock per run; other met conditions unlock on later runs
+  outer: for (const kind in LISTS) for (const it of LISTS[kind]) {
+    if (!isUnlocked(kind, it) && unlockMet(it)) { unlocked.add(ukey(kind, it)); fresh.push(it.name); break outer; }
   }
   saveCosm(); return fresh;
 }
 function unlockAll() { for (const kind in LISTS) for (const it of LISTS[kind]) if (it.unlock) unlocked.add(ukey(kind, it)); saveCosm(); if (collOpen) renderColl(); }
 function resetUnlocks() {
-  unlocked.clear(); prog.runs = 0; prog.best = 0; sel.balls = 'orb'; sel.trails = 'classic'; saveCosm(); if (collOpen) renderColl();
+  unlocked.clear(); prog.runs = 0; prog.best = 0; prog.nearMissBest = 0; prog.stageMax = 0; prog.sweetBest = 0; sel.balls = 'orb'; sel.trails = 'classic'; saveCosm(); if (collOpen) renderColl();
 }
 document.getElementById('unlockAll').addEventListener('click', unlockAll);
 document.getElementById('resetUnlocks').addEventListener('click', resetUnlocks);
@@ -211,11 +224,13 @@ function openColl() {
   collOpen = true; drag = null; collEl.classList.add('open'); renderColl();
   previewLast = performance.now(); requestAnimationFrame(previewFrame);
 }
+function openCollTab(k) { collTab = k; gridEl.scrollTop = 0; if (collOpen) renderColl(); else openColl(); }
 function closeColl() { collOpen = false; collEl.classList.remove('open'); tiles = []; }
 function renderColl() {
   const top = gridEl.scrollTop;
   tabBtns.forEach(b => {
-    const k = b.dataset.k; b.textContent = LISTS[k] ? LABELS[k] + ' ' + countUnlocked(k) + '/' + LISTS[k].length : k === 'upgrades' ? 'Upgrades' : 'Daily';
+    const k = b.dataset.k, lab = LISTS[k] ? LABELS[k] + ' ' + countUnlocked(k) + '/' + LISTS[k].length : k === 'upgrades' ? 'Upgrades' : 'Daily';
+    b.innerHTML = '<span class="ti">' + (TAB_ICON[k] || '') + '</span><span class="tl"></span>'; b.lastChild.textContent = lab;
     b.classList.toggle('on', k === collTab);
   });
   gridEl.innerHTML = ''; tiles = [];
@@ -228,6 +243,7 @@ function renderColl() {
     b.innerHTML = '<div class="pv"><canvas></canvas>' + (un ? '' : LOCK_SVG) + '</div><div class="nm"></div><div class="st"></div>';
     b.querySelector('.nm').textContent = it.name;
     b.querySelector('.st').textContent = on ? 'Selected' : un ? 'Tap to select' : unlockText(it);
+    if (!un) b.querySelector('.st').classList.add('need');
     b.addEventListener('click', () => { if (un) { sel[kind] = it.id; saveCosm(); renderColl(); } });
     gridEl.appendChild(b);
     tiles.push({ cv: b.querySelector('canvas'), kind, it, st: newTrailSt() });

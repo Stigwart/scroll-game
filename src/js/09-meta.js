@@ -53,11 +53,14 @@ function addXp(n) { const before = playerLvl(); meta.xp += n; let reward = 0, lv
   applyMods(); metaSave();
 })();
 
+// Shards earned so far this run: time-based + in-run bonuses (near misses, milestones) from game.stats.
+function runShards() { return Math.floor(game.t * 0.7 * MOD.shard) + ((game.stats && game.stats.bonusShards) || 0); }
 // Called from endRun: bank shards/xp, advance quests; returns a summary for the game-over screen
 function metaOnRunEnd(t, newBest) {
-  const s = { shards: Math.floor(t * 0.7 * MOD.shard) + (newBest ? 10 : 0), lines: [] };
+  const st = game.stats || {}, b0 = lvlInfo(meta.xp);
+  const s = { shards: runShards() + (newBest ? 10 : 0), lines: [], bonus: (st.bonusShards || 0) + (newBest ? 10 : 0), nearMiss: st.nearMiss || 0, sweet: st.sweetTime || 0, stage: st.stageMax || 0, p0: b0.lvl + b0.into / b0.need };
   const xp = addXp(Math.floor(t) + 5);
-  s.lvl = xp.lvl; s.xpInfo = lvlInfo(meta.xp);
+  s.lvl = xp.lvl; s.up = xp.up; s.xpInfo = lvlInfo(meta.xp); s.p1 = s.xpInfo.lvl + s.xpInfo.into / s.xpInfo.need;
   meta.shards += s.shards; meta.q.runs++; meta.q.best = Math.max(meta.q.best, t); meta.q.shards += s.shards; meta.q.time += t;
   if (xp.up) { s.lines.push(['Level ' + xp.lvl + '! +' + xp.reward + ' shards', '#6ff']); meta.shards += xp.reward; s.shards += xp.reward; }
   for (const q of todaysQuests()) if (!meta.q.done[q.id] && meta.q[q.metric] >= q.target) {
@@ -65,13 +68,20 @@ function metaOnRunEnd(t, newBest) {
   }
   meta.pending = null; metaSave(); return s;
 }
-function metaNextGoal() { // cheapest not-maxed upgrade
+function metaGoalInfo() { // cheapest not-maxed upgrade
   let best = null; for (const u of UPG) { const l = upgLvl(u); if (l < u.max) { const c = upgCost(u, l); if (!best || c < best.c) best = { u, c }; } }
-  if (!best) return '';
-  return meta.shards >= best.c ? 'Upgrade ready: ' + best.u.name + '!' : best.u.name + ' upgrade in ' + (best.c - meta.shards) + ' shards';
+  if (!best) return null;
+  const afford = meta.shards >= best.c;
+  return { u: best.u, c: best.c, afford, frac: clamp(meta.shards / best.c, 0, 1), text: afford ? 'Upgrade ready: ' + best.u.name + '!' : best.u.name + ' upgrade in ' + (best.c - meta.shards) + ' shards' };
 }
+function buyUpg(u) {
+  const l = upgLvl(u); if (l >= u.max) return false;
+  const c = upgCost(u, l); if (meta.shards < c) return false;
+  meta.shards -= c; meta.upg[u.id] = l + 1; applyMods(); metaSave(); if (typeof Audio_ !== 'undefined') Audio_.sfx('buy'); return true;
+}
+function metaNextGoal() { const g = metaGoalInfo(); return g ? g.text : ''; }
 // Bank a running run if the page is hidden/closed (brief 5.7): restored next open
-function metaPend() { if (game.state === 'play' && game.t > 1) { meta.pending = { shards: Math.floor(game.t * 0.7 * MOD.shard), xp: Math.floor(game.t) + 5 }; metaSave(); } }
+function metaPend() { if (game.state === 'play' && game.t > 1) { meta.pending = { shards: runShards(), xp: Math.floor(game.t) + 5 }; metaSave(); } }
 document.addEventListener('visibilitychange', () => { if (document.hidden) metaPend(); });
 window.addEventListener('pagehide', metaPend);
 
@@ -81,24 +91,59 @@ function metaHead(el) {
   d.innerHTML = '<span>&#9670; <b>' + meta.shards + '</b> shards</span><span>Level <b>' + li.lvl + '</b> <i style="width:' + Math.round(100 * li.into / li.need) + '%"></i></span>';
   el.appendChild(d);
 }
+// Small SVG showing the upgrade's effect: solid = current level, dashed green = next level
+function upgPreview(u, l) {
+  const nx = Math.min(u.max, l + 1), more = nx > l, G = ' fill="none" stroke="#7fff9a" stroke-width="1.5" stroke-dasharray="3 2"';
+  let a = '', b = '';
+  if (u.id === 'sweet') {
+    const r = k => 6 + 2.2 * k;
+    a = '<circle cx="28" cy="20" r="18" fill="none" stroke="#6ff6" stroke-width="2"/><circle cx="28" cy="20" r="' + r(l) + '" fill="#6ff2" stroke="#6ff" stroke-width="1.5"/>';
+    b = more ? '<circle cx="28" cy="20" r="' + r(nx) + '"' + G + '/>' : '';
+  } else if (u.id === 'hull') {
+    const w = k => 24 + 5 * k;
+    a = '<rect x="3" y="14" width="' + w(l) + '" height="12" rx="3" fill="#6ff" opacity=".85"/><rect x="3" y="14" width="50" height="12" rx="3" fill="none" stroke="#6ff6"/>';
+    b = more ? '<rect x="3" y="14" width="' + w(nx) + '" height="12" rx="3"' + G + '/>' : '';
+  } else if (u.id === 'calm') {
+    const wave = k => { let d = ''; const amp = 12 * (1 - 0.12 * k); for (let x = 2; x <= 54; x += 2) d += (x === 2 ? 'M' : 'L') + x + ' ' + (20 + amp * Math.sin(x / 5)).toFixed(1); return d; };
+    a = '<path d="' + wave(l) + '" fill="none" stroke="#6ff" stroke-width="2"/>';
+    b = more ? '<path d="' + wave(nx) + '"' + G + '/>' : '';
+  } else {
+    const dia = (k, att) => { const s = 7 + 1.6 * k; return '<path d="M28 ' + (20 - s) + ' L' + (28 + s) + ' 20 L28 ' + (20 + s) + ' L' + (28 - s) + ' 20Z"' + att + '/>'; };
+    a = dia(l, ' fill="#ffd84d" opacity=".85"'); b = more ? dia(nx, G) : '';
+  }
+  return '<svg class="up" viewBox="0 0 56 40" width="56" height="40" aria-hidden="true">' + a + b + '</svg>';
+}
+function dailyDone() { let n = 0; for (const q of todaysQuests()) if (meta.q.done[q.id]) n++; return n; }
+// 7-day streak calendar (HTML), shared by the daily card and the Daily tab
+function streakHTML() {
+  const d = (meta.streak - 1) % 7 < 0 ? 0 : (meta.streak - 1) % 7; let h = '';
+  for (let i = 0; i < 7; i++) {
+    h += '<div class="dc' + (i < d ? ' past' : i === d ? ' today' : '') + (i === 6 ? ' big' : '') + '"><small>Day ' + (i + 1) + '</small><b>' + (i < d ? '&#10003;' : '&#9670; ' + DAILY[i]) + '</b>' + (i === 6 ? '<em>BIG REWARD</em>' : '') + '</div>';
+  }
+  return h;
+}
 function renderMeta(el, tab) {
   metaHead(el);
-  if (tab === 'upgrades') for (const u of UPG) {
-    const l = upgLvl(u), cost = l < u.max ? upgCost(u, l) : 0, r = document.createElement('div'); r.className = 'mrow';
-    r.innerHTML = '<div class="tx"><b></b><small></small><em>' + '&#9679;'.repeat(l) + '<s>' + '&#9679;'.repeat(u.max - l) + '</s></em></div><button></button>';
-    r.querySelector('b').textContent = u.name; r.querySelector('small').textContent = u.desc;
-    const b = r.querySelector('button'); b.textContent = l >= u.max ? 'MAX' : '◆ ' + cost; b.disabled = l >= u.max || meta.shards < cost;
-    b.addEventListener('click', () => { if (meta.shards >= cost && l < u.max) { meta.shards -= cost; meta.upg[u.id] = l + 1; applyMods(); metaSave(); if (typeof Audio_ !== 'undefined') Audio_.sfx('buy'); renderColl(); } });
-    el.appendChild(r);
+  if (tab === 'upgrades') {
+    for (const u of UPG) {
+      const l = upgLvl(u), cost = l < u.max ? upgCost(u, l) : 0, r = document.createElement('div'); r.className = 'mrow';
+      r.innerHTML = upgPreview(u, l) + '<div class="tx"><b></b><small></small><em>' + '&#9679;'.repeat(l) + '<s>' + '&#9679;'.repeat(u.max - l) + '</s></em></div><button></button>';
+      r.querySelector('b').textContent = u.name; r.querySelector('small').textContent = u.desc;
+      const b = r.querySelector('button'); b.textContent = l >= u.max ? 'MAX' : '\u25C6 ' + cost; b.disabled = l >= u.max || meta.shards < cost;
+      b.addEventListener('click', () => { if (buyUpg(u)) renderColl(); });
+      el.appendChild(r);
+    }
     renderPwShop(el);
   } else {
+    meta.dq = dailyDone(); metaSave();
+    const cal = document.createElement('div'); cal.className = 'cal'; cal.innerHTML = streakHTML(); el.appendChild(cal);
     const h = document.createElement('div'); h.className = 'mrow';
     h.innerHTML = '<div class="tx"><b></b><small></small></div>'; h.querySelector('b').textContent = 'Day ' + meta.streak + ' streak';
     h.querySelector('small').textContent = 'Come back tomorrow: +' + DAILY[meta.streak % 7] + ' shards'; el.appendChild(h);
     for (const q of todaysQuests()) {
       const v = Math.min(q.target, Math.floor(meta.q[q.metric] || 0)), done = !!meta.q.done[q.id], r = document.createElement('div'); r.className = 'mrow' + (done ? ' done' : '');
       r.innerHTML = '<div class="tx"><b></b><small></small></div><button disabled></button>'; r.querySelector('b').textContent = q.text;
-      r.querySelector('small').textContent = done ? 'Complete' : v + ' / ' + q.target; r.querySelector('button').textContent = '◆ ' + q.reward; el.appendChild(r);
+      r.querySelector('small').textContent = done ? 'Complete' : v + ' / ' + q.target; r.querySelector('button').textContent = '\u25C6 ' + q.reward; el.appendChild(r);
     }
   }
 }

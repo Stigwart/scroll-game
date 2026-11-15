@@ -6,16 +6,33 @@ function onDown(e) {
   if (e.target !== canvas) return;
   e.preventDefault();
   Audio_.unlock(); telTouch(); lastPtr = e.pointerType === 'touch' ? 'touch' : 'mouse';
-  if (game.paused || panelOpen || collOpen) return;
+  if (panelOpen || collOpen) return;
+  if (game.paused) { resumeGame(); return; }
   if (game.state === 'start') { startRun(); }
   else if (game.state === 'over') {
-    if (performance.now() - game.overAt > 600) startRun();
-    return;
+    if (performance.now() - game.overAt > 300) startRun(); else return;
   }
+  if (e.pointerType === 'mouse') mouseFollow(e);
   drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
   try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
 }
+function resumeGame() { game.paused = false; telClearInProg(); }
+// Desktop mouse: ring follows the cursor (absolute position), no click needed
+let mouseTravel = 0, mouseLast = null;
+function mouseFollow(e) {
+  const r = canvas.getBoundingClientRect(); if (!r.width) return;
+  game.mouseGoal = { x: clamp((e.clientX - r.left) / r.width * W, 0, W), y: clamp((e.clientY - r.top) / r.height * H, 0, PH) };
+}
 function onMove(e) {
+  if (e.pointerType === 'mouse' && e.target === canvas && !panelOpen && !collOpen && !game.paused) {
+    lastPtr = 'mouse';
+    if (mouseLast) mouseTravel += Math.hypot(e.clientX - mouseLast.x, e.clientY - mouseLast.y);
+    mouseLast = { x: e.clientX, y: e.clientY };
+    if (game.state === 'start' && mouseTravel > 8 && matchMedia('(pointer: fine)').matches) { Audio_.unlock(); startRun(); }
+    if (game.state === 'play') { mouseFollow(e); }
+    return;
+  }
+  if (e.pointerType === 'mouse') return;
   if (!drag || e.pointerId !== drag.id) return;
   e.preventDefault();
   if (game.state === 'play' && !game.paused && !panelOpen && game.target) {
@@ -131,15 +148,17 @@ window.addEventListener('keydown', e => {
   if (k === ' ' || k === 'Enter') {
     Audio_.unlock();
     if (e.repeat || panelOpen || collOpen) return;
-    if (game.paused) { game.paused = false; telClearInProg(); return; } // same as tap-to-resume
+    if (game.paused) { resumeGame(); return; }
     lastPtr = 'key';
     if (game.state === 'start') startRun();
-    else if (game.state === 'over' && performance.now() - game.overAt > 600) startRun();
+    else if (game.state === 'over' && performance.now() - game.overAt > 300) startRun();
     return;
   }
   Audio_.unlock();
+  if (game.paused && !panelOpen && !collOpen) { resumeGame(); return; }
   if (k === '1' || k === '2' || k === '3') { usePw(PWS[+k - 1].id); return; }
-  keys[e.code] = true;   // physical key position, so WASD works as ZQSD on AZERTY
+  keys[e.code] = true;
+  if (game.state === 'start' && !panelOpen && !collOpen && /^(Arrow(Up|Down|Left|Right)|Key[WASD])$/.test(e.code)) { lastPtr = 'key'; game.mouseGoal = null; startRun(); }   // physical key position, so WASD works as ZQSD on AZERTY
 });
 window.addEventListener('keyup', e => { delete keys[e.code]; });
 window.addEventListener('blur', () => { for (const k in keys) delete keys[k]; });

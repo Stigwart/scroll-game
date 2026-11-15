@@ -10,7 +10,7 @@ const js = readdirSync(new URL('../src/js/', import.meta.url)).sort().map(f => r
 function build(name) {
   const b = T[name];
   const hide = b.devUI ? '' :
-    '\n  #gear, #panel, #rate { display:none !important; }  /* dev-only UI (hidden in this build) */';
+    '\n  #gear, #panel { display:none !important; }  /* dev-only UI (hidden in this build) */';
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>

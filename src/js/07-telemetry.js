@@ -5,7 +5,7 @@ const STORE_PID = 'scrollgame.pid', STORE_TQ = 'scrollgame.tq', STORE_TSENT = 's
   STORE_TON = 'scrollgame.telon', STORE_PLAYTIME = 'scrollgame.playtime', STORE_RUNNO = 'scrollgame.runno';
 const TQ_MAX = 200, SESSION_GAP = 600000;
 let rs = null;            // stats for the run in progress
-let pending = null;       // finished run awaiting retry/rating: {rec, rating, overAt}
+let pending = null;       // finished run awaiting retry: {rec, overAt}
 let lastPtr = 'mouse', flushing = false;
 let tq = lsJSON(STORE_TQ, []); if (!Array.isArray(tq)) tq = [];
 let tsent = parseInt(lsGet(STORE_TSENT), 10) || 0;
@@ -90,6 +90,7 @@ function buildRecord(endedBy, noCommit) {
       duration: r2(dur), lifetime_play_time: r2(life), run_number: r.runNo, stage_reached: Math.floor(g.t * T.ramp / CONFIG.stageSeconds) + 1,
       time_in_sweet_spot: r2(r.zS), time_in_inner: r2(r.zI), time_in_outer: r2(r.zO), time_outside_target: r2(r.zX),
       avg_distance_from_centre_px: r2(avg), avg_distance_from_centre_frac: r2(avg / R),
+      near_miss: g.stats ? g.stats.nearMiss : 0, stage_max: g.stats ? g.stats.stageMax : 0,
       shape_collisions: r.coll, edge_touches: r.edgeN, edge_contact_time: r2(r.edgeT),
       health_lost_distance: r2(r.lostD), health_lost_edge: r2(r.lostE),
       last5s: { avg_distance_frac: r2(wt > 0 ? wd / wt / R : 0), edge_contact_time: r2(we), shape_collisions: wc },
@@ -108,19 +109,16 @@ function telEnd() {
     telTouch();
     if (!rs || rs.done) return;
     rs.done = true; telClearInProg();
-    pending = { rec: buildRecord('death'), rating: null, overAt: game.overAt };
-    rateUI();
+    pending = { rec: buildRecord('death'), overAt: game.overAt };
   } catch (e) {}
 }
 function telFinalize(retried, keepalive) {
   const p = pending; if (!p) return;
   pending = null;
   try {
-    if (p.rating) p.rec.fun_rating = p.rating;
     if (retried) p.rec.stats.retry_delay_s = r2((performance.now() - p.overAt) / 1000);
     enqueue(p.rec, keepalive);
   } catch (e) {}
-  rateUI();
 }
 document.addEventListener('visibilitychange', () => { document.hidden ? Audio_.pause() : Audio_.resume(); });
 function autoPause() {
@@ -177,23 +175,3 @@ setInterval(() => flush(false), 30000);
   } catch (e) {}
 })();
 flush(false);
-
-// ---- fun rating UI (DOM, above the canvas; its taps never reach the retry handler) ----
-const rateEl = document.getElementById('rate'), thxEl = document.getElementById('rateThx');
-const rateBtns = Array.from(document.querySelectorAll('#rateRow button'));
-function rateUI() {
-  const v = pending ? pending.rating : null;
-  rateBtns.forEach(b => b.classList.toggle('on', +b.dataset.v === v));
-  thxEl.classList.toggle('show', !!v);
-}
-rateBtns.forEach(b => {
-  for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'mousedown']) b.addEventListener(ev, e => e.stopPropagation());
-  b.addEventListener('click', e => { e.stopPropagation(); if (pending) { pending.rating = +b.dataset.v; rateUI(); } });
-});
-let rateShown = false;
-function telSyncRate() {
-  const g = game, show = BUILD.devUI && !!pending && g.state === 'over' && !collOpen && !panelOpen && performance.now() - g.overAt > 600;
-  if (show !== rateShown) { rateShown = show; rateEl.classList.toggle('show', show); if (show) rateUI(); }
-}
-
-// ============================================================

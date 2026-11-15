@@ -2,7 +2,19 @@
 <body>
 <canvas id="c"></canvas>
 <div id="pw"></div>
-<button id="mute" aria-label="Mute"></button>
+<div id="rail">
+  <button id="mute" class="keep" aria-label="Mute"></button>
+  <button id="rCol" class="rb" aria-label="Collection" title="Collection">&#9672;<i class="dot"></i></button>
+  <button id="rDaily" class="rb" aria-label="Daily" title="Daily">&#9788;<i class="dot"></i></button>
+  <button id="rSet" class="rb" aria-label="Settings" title="Settings">&#9881;</button>
+  <button id="rPause" class="rb keep" aria-label="Pause" title="Pause">&#10074;&#10074;</button>
+</div>
+<button id="retry">RETRY</button>
+<div id="settings"><div class="card"><h2>SETTINGS</h2>
+  <div class="mrow"><div class="tx"><b>Reduce motion</b><small>No screen shake, flashes or slow-mo</small></div><button id="setRm"></button></div>
+  <div class="mrow"><div class="tx"><b>Left-handed</b><small>Power-up buttons on the right edge</small></div><button id="setLefty"></button></div>
+  <button id="setClose" class="big">Close</button></div></div>
+<div id="streak"><div class="card"><h2>DAILY STREAK</h2><div class="cal" id="stDays"></div><p id="stTxt"></p><button id="stOk" class="big">Nice!</button></div></div>
 <div id="priv">This game saves your progress on this device and sends anonymous play stats. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a> <button id="privOk">OK</button></div>
 <button id="gear" aria-label="Tuning">&#9881;</button>
 <div id="panel"><h2>TUNING</h2><div id="rows"></div>
@@ -11,11 +23,9 @@
   <button class="reset" id="unlockAll">Unlock all (testing)</button>
   <button class="reset" id="resetUnlocks">Reset unlocks</button>
   <div class="hint">Changes apply live. Tap the gear to close and resume.</div></div>
-<div id="rate"><div id="rateQ">How fun was that?</div>
-  <div id="rateRow"><button data-v="1" aria-label="Not fun">&#x1F61E;</button><button data-v="2" aria-label="OK">&#x1F610;</button><button data-v="3" aria-label="Fun">&#x1F600;</button></div>
-  <div id="rateThx">Thanks!</div></div>
-<button id="collBtn">Collection</button>
+<button id="collBtn" tabindex="-1">Collection</button>
 <div id="coll"><div class="chead"><button id="collBack">&larr; Back</button><h2>COLLECTION</h2></div>
   <div id="tabs"><button data-k="balls"></button><button data-k="trails"></button><button data-k="upgrades"></button><button data-k="daily"></button></div>
   <div id="grid"></div></div>
 </div>
+<div id="sideL" class="side"></div><div id="sideR" class="side"></div>

@@ -12,6 +12,7 @@ const CONFIG = {
   footerFrac: 0.19,        // footer HUD band height as fraction of viewport
   edgeLossBase: 1.0,
   edgeBase: 4.5,           // edge-loss base rate (independent of the distance-loss slider)       // edge loss = tuned lossRate*edgeMult*edgeLossBase per s
+  stageNames: ['CALM', 'PULSE', 'HEAT', 'REDLINE', 'TOXIC', 'SOLAR', 'VOID', 'BULLSEYE'],
   stageSeconds: 30,        // seconds (at ramp 1) per background stage
   // Fixed force scalings (the sliders multiply these)
   repulsionUnit: 1.0,      // accel per px beyond sweet spot, per slider unit
