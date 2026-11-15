@@ -123,6 +123,7 @@ scrEl('streak').addEventListener('click', e => { if (e.target === scrEl('streak'
 function checkStreakCard() {
   SCR.streakChecked = true;
   const today = dayKey(new Date());
+  if (prog.runs < 1) { lsSet(STORE_STREAK, today); meta.notice = meta.notice.filter(n => !/^Daily bonus/.test(n)); return; } // first session is play only: no card, no bonus line
   if (meta.lastDay !== today || lsGet(STORE_STREAK) === today) return;
   lsSet(STORE_STREAK, today);
   scrEl('stDays').innerHTML = streakHTML();
@@ -135,15 +136,6 @@ window.addEventListener('keydown', e => {
   e.stopPropagation();
   if (e.key === 'Escape' || e.key === 'Enter' || e.key === ' ') { e.preventDefault(); if (SCR.streakOpen) openStreak(false); else openSettings(false); }
 }, true);
-
-// letterbox: neon side panels on wide viewports
-function layoutSides() {
-  const vw = window.innerWidth, lb = Math.max(0, (vw - STAGE_W * SCALE) / 2);
-  document.body.style.setProperty('--lb', lb + 'px');
-  const on = lb >= 150; scrEl('sideL').classList.toggle('on', on); scrEl('sideR').classList.toggle('on', on);
-}
-window.addEventListener('resize', layoutSides);
-layoutSides();
 
 function anyUpgradeAffordable() {
   for (const u of UPG) { const l = upgLvl(u); if (l < u.max && meta.shards >= upgCost(u, l)) return true; }
@@ -163,8 +155,4 @@ function syncScreens() {
   scrEl('retry').classList.toggle('show', showGo);
   dotOf(railEls.col).classList.toggle('on', anyUpgradeAffordable());
   dotOf(railEls.daily).classList.toggle('on', dailyDone() > (meta.dq || 0));
-  const li = lvlInfo(meta.xp);
-  const left = '<h3>BULLSEYE</h3><div><div class="k">BEST</div><div class="v">' + fmtTime(g.best) + 's</div></div><div><div class="k">LEVEL</div><div class="v">' + li.lvl + '</div></div><div><div class="k">SHARDS</div><div class="v">&#9670; ' + Math.floor(meta.shards) + '</div></div>';
-  const right = '<div class="k">CONTROLS</div><div>Move: <kbd>Mouse</kbd></div><div><kbd>&larr;</kbd><kbd>&uarr;</kbd><kbd>&darr;</kbd><kbd>&rarr;</kbd> or <kbd>WASD</kbd></div><div>Retry: <kbd>Space</kbd></div><div>Power-ups: <kbd>1</kbd><kbd>2</kbd><kbd>3</kbd></div><div class="k">Keep the ball in the bullseye</div>';
-  if (left !== SCR.side) { SCR.side = left; scrEl('sideL').innerHTML = left; scrEl('sideR').innerHTML = right; }
 }

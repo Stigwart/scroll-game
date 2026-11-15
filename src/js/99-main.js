@@ -15,7 +15,7 @@ if (!BUILD.devUI) ['gear', 'panel'].forEach(i => { const n = document.getElement
 let last = performance.now();
 function frame(now) {
   const dt = Math.min((now - last) / 1000, CONFIG.maxFrame); last = now;
-  update(dt); render(); syncCollBtn(); syncPw(); syncScreens();
+  update(dt); render(); syncPw(); syncScreens();
   requestAnimationFrame(frame);
 }
 resize();

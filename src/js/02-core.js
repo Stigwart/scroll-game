@@ -2,20 +2,32 @@
 // ============================================================
 const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
-const STAGE_W = 450, STAGE_H = 800;                  // fixed logical stage: identical physics/difficulty on every device
-let W = STAGE_W, H = STAGE_H, DPR = 1, SCALE = 1, RS = 1, PH = 520, FH = 120, SAFE_B = 0; // PH = play-area height (footer starts at y=PH); RS = DPR*SCALE
+// Logical play field. Height 648 with width 450..1152 on landscape frames (fills 16:9), width 450 with height 648..800 on portrait.
+// Physics units are the same everywhere; obstacle density is normalised by fieldK() (04-sim.js).
+const REF_W = 450, REF_H = 648, MAX_W = 1152, MAX_H = 800;
+let W = REF_W, H = REF_H, DPR = 1, SCALE = 1, RS = 1, PH = REF_H, FH = 0, SAFE = { t: 0, r: 0, b: 0, l: 0 }; // PH = play-area height (footer starts at y=PH); RS = DPR*SCALE
 const stageEl = document.getElementById('stage');
+function fieldFor(vw, vh) {
+  const a = vw / Math.max(1, vh);
+  return a >= REF_W / REF_H ? { w: Math.round(clamp(REF_H * a, REF_W, MAX_W)), h: REF_H } : { w: REF_W, h: Math.round(clamp(REF_W / a, REF_H, MAX_H)) };
+}
+function safeInsets() { // env(safe-area-inset-*) via a probe element (CrazyGames app runs fullscreen under notches)
+  try { const cs = getComputedStyle(document.getElementById('safe')); return { t: parseFloat(cs.paddingTop) || 0, r: parseFloat(cs.paddingRight) || 0, b: parseFloat(cs.paddingBottom) || 0, l: parseFloat(cs.paddingLeft) || 0 }; } catch (e) { return { t: 0, r: 0, b: 0, l: 0 }; }
+}
 function resize() {
-  DPR = Math.min(window.devicePixelRatio || 1, 3);
-  const vw = window.innerWidth, vh = window.innerHeight;
-  SCALE = Math.min(vw / STAGE_W, vh / STAGE_H); RS = DPR * SCALE;
-  stageEl.style.transform = 'translate(' + ((vw - STAGE_W * SCALE) / 2) + 'px,' + ((vh - STAGE_H * SCALE) / 2) + 'px) scale(' + SCALE + ')';
-  stageEl.style.setProperty('--s', SCALE);
-  FH = Math.round(H * CONFIG.footerFrac); PH = H - FH;
+  DPR = Math.min(window.devicePixelRatio || 1, 2);
+  SAFE = safeInsets();
+  const vw = Math.max(50, window.innerWidth - SAFE.l - SAFE.r), vh = Math.max(50, window.innerHeight - SAFE.t - SAFE.b);
+  const f = fieldFor(vw, vh); W = f.w; H = f.h; PH = H; FH = 0;
+  SCALE = Math.min(vw / W, vh / H); RS = DPR * SCALE;
+  stageEl.style.width = W + 'px'; stageEl.style.height = H + 'px';
+  stageEl.style.transform = 'translate(' + (SAFE.l + (vw - W * SCALE) / 2) + 'px,' + (SAFE.t + (vh - H * SCALE) / 2) + 'px) scale(' + SCALE + ')';
+  stageEl.style.setProperty('--s', SCALE); stageEl.classList.toggle('wide', W > 700);
   canvas.width = Math.round(W * RS); canvas.height = Math.round(H * RS);
   ctx.setTransform(RS, 0, 0, RS, 0, 0);
   if (game.target) { game.target.x = clamp(game.target.x, 0, W); game.target.y = clamp(game.target.y, 0, PH); }
   if (game.ball) { game.ball.x = clamp(game.ball.x, game.ball.r, W - game.ball.r); game.ball.y = clamp(game.ball.y, game.ball.r, PH - game.ball.r); }
+  if (game.state !== 'play' && game.ball && game.target) { game.target.x = game.ball.x = W / 2; game.target.y = game.ball.y = PH * 0.32; }
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', resize);
@@ -64,7 +76,7 @@ const game = {
   overAt: 0, acc: 0,
   bgT: 0, bgOff: { x: 0, y: 0 }, blobs: [],
   stats: { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0 },
-  hitStop: 0, slowMo: 0,     // frame-time seconds (cosmetic pacing; never affects sim results)
+  hold: false, holdT: 0, holdMove: 0, hitStop: 0, slowMo: 0,     // frame-time seconds (cosmetic pacing; never affects sim results)
   reduceMotion: lsGet('scrollgame.rm') === '1',
   tutorial: '', tutSpawnAt: -1, breatherUntil: 0, stageSeen: 0, bestPassed: false, prevBest: 0, msDone: 0,
   mouseGoal: null, tutRun: false
@@ -88,7 +100,7 @@ initBlobs();
 function resetRun() {
   game.pw = newPw(); game.pwUsed = 0; MOD.sweetTemp = 0; MOD.calm = 1; game.t = 0; game.maxHealth = CONFIG.startHealth * MOD.hp; game.health = game.maxHealth; game.newBest = false;
   game.stats = { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0 };
-  game.hitStop = 0; game.slowMo = 0; game.tutorial = ''; game.tutSpawnAt = -1; game.breatherUntil = 0; game.stageSeen = 0;
+  game.hold = true; game.holdT = 0; game.holdMove = 0; game.hitStop = 0; game.slowMo = 0; game.tutorial = ''; game.tutSpawnAt = -1; game.breatherUntil = 0; game.stageSeen = 0;
   game.bestPassed = false; game.prevBest = game.best; game.msDone = 0; game.mouseGoal = null; game.tutRun = typeof prog !== 'undefined' && prog.runs === 0;
   game.obstacles = []; game.trailSt = newTrailSt(); game.unlockedNow = []; game.spawnTimer = 1.5;
   game.shake = 0; game.flash = 0; game.acc = 0;

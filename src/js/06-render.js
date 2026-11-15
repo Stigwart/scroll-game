@@ -215,11 +215,6 @@ function drawEdgeDanger() {
 }
 
 // ---- HUD ----
-function drawFooter(pal) {
-  ctx.fillStyle = '#030109'; ctx.fillRect(0, PH, W, FH);
-  ctx.save(); glow(pal[2], 14); ctx.strokeStyle = pal[2]; ctx.lineWidth = 3;
-  ctx.beginPath(); ctx.moveTo(0, PH + 1.5); ctx.lineTo(W, PH + 1.5); ctx.stroke(); ctx.restore();
-}
 function drawHero() {
   const g = game, passed = g.best > 0 && g.t > g.best;
   const pulse = 1 + (game.reduceMotion ? 0 : 0.06 * fx.bestFlash);
@@ -276,7 +271,6 @@ function render() {
     const k = dT < 450 ? dT / 450 : 1;
     ctx.save(); ctx.globalCompositeOperation = 'saturation'; ctx.globalAlpha = 0.75 * k; ctx.fillStyle = '#808080'; ctx.fillRect(0, 0, W, PH); ctx.restore();
   }
-  drawFooter(pal);
   if (g.state === 'play') drawHero();
   fxDraw(ctx);
   drawOverlayScreens(pal);

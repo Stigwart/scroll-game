@@ -215,7 +215,7 @@ document.getElementById('unlockAll').addEventListener('click', unlockAll);
 document.getElementById('resetUnlocks').addEventListener('click', resetUnlocks);
 
 // ---- Collection screen ----
-const collEl = document.getElementById('coll'), gridEl = document.getElementById('grid'), collBtn = document.getElementById('collBtn');
+const collEl = document.getElementById('coll'), gridEl = document.getElementById('grid');
 const tabBtns = Array.from(document.querySelectorAll('#tabs button'));
 let collOpen = false, collTab = 'balls', tiles = [], previewLast = 0;
 const LOCK_SVG = '<svg class="lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2" fill="#cfe"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="#cfe" stroke-width="2.4"/></svg>';
@@ -272,14 +272,7 @@ function previewFrame(now) {
   for (const tl of tiles) drawTile(tl, now / 1000, dt);
   requestAnimationFrame(previewFrame);
 }
-collBtn.addEventListener('click', openColl);
 document.getElementById('collBack').addEventListener('click', closeColl);
 tabBtns.forEach(b => b.addEventListener('click', () => { collTab = b.dataset.k; gridEl.scrollTop = 0; renderColl(); }));
-// Collection button only on start / game-over screens
-let collBtnShown = false;
-function syncCollBtn() {
-  const g = game, show = !collOpen && !panelOpen && (g.state === 'start' || (g.state === 'over' && performance.now() - g.overAt > 600));
-  if (show !== collBtnShown) { collBtnShown = show; collBtn.style.display = show ? 'block' : 'none'; }
-}
 
 // ============================================================

@@ -9,7 +9,6 @@ const CONFIG = {
   startHealth: 100,
   step: 1 / 120,           // fixed physics timestep (s)
   maxFrame: 0.1,           // dt clamp (s)
-  footerFrac: 0.19,        // footer HUD band height as fraction of viewport
   edgeLossBase: 1.0,
   edgeBase: 4.5,           // edge-loss base rate (independent of the distance-loss slider)       // edge loss = tuned lossRate*edgeMult*edgeLossBase per s
   stageNames: ['CALM', 'PULSE', 'HEAT', 'REDLINE', 'TOXIC', 'SOLAR', 'VOID', 'BULLSEYE'],

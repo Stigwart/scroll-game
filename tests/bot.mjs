@@ -7,11 +7,12 @@ const code = html.match(/<script>([\s\S]*)<\/script>/)[1];
 function stub() { const f = function () {}; return new Proxy(f, { get(_, k) { if (k === Symbol.toPrimitive) return () => 0; if (typeof k === 'symbol' || k === 'then') return undefined; if (k === 'length') return 0; if (k === 'checked') return true; return stub(); }, set() { return true; }, apply() { return stub(); }, construct() { return stub(); } }); }
 function load() {
   const store = {};
-  const win = { innerWidth: 450, innerHeight: 800, devicePixelRatio: 1, addEventListener() {}, screen: { width: 450, height: 800 }, requestAnimationFrame() {}, location: { search: '' } };
+  const win = { innerWidth: 450, innerHeight: 648, devicePixelRatio: 1, addEventListener() {}, screen: { width: 450, height: 800 }, requestAnimationFrame() {}, location: { search: '' } };
   const ctx = vm.createContext({ window: win, document: { getElementById: stub, createElement: stub, querySelectorAll: () => [], querySelector: stub, addEventListener() {}, body: stub(), hidden: false }, navigator: { userAgent: 'node' }, performance: { now: () => 0 },
     localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: k => delete store[k] }, getComputedStyle: stub, requestAnimationFrame() {}, fetch: () => Promise.reject(), location: { search: '?notel=1' }, crypto: { getRandomValues: a => a }, console, Math, JSON, Date, setTimeout() {}, setInterval() {}, clearTimeout() {} });
   Object.assign(ctx, win, { window: ctx });
-  vm.runInContext(code + '\n;globalThis.__t={game,update,resetRun,seedSim,meta,UPG,upgCost,applyMods,playerLvl,prog};', ctx);
+  const F = (process.env.FIELD || '').split('x').map(Number); // FIELD=1152x648 simulates the wide layout
+  vm.runInContext(code + '\n;' + (F.length === 2 ? `W=${F[0]};H=${F[1]};PH=${F[1]};FH=0;` : '') + 'globalThis.__t={game,update,resetRun,seedSim,meta,UPG,upgCost,applyMods,playerLvl,prog};', ctx);
   return ctx.__t;
 }
 // skill: finger speed (px/s), reaction delay (s), aim noise (px), lead (s)

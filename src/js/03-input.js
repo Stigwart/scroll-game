@@ -18,21 +18,17 @@ function onDown(e) {
 }
 function resumeGame() { game.paused = false; telClearInProg(); }
 // Desktop mouse: ring follows the cursor (absolute position), no click needed
-let mouseTravel = 0, mouseLast = null;
 function mouseFollow(e) {
   const r = canvas.getBoundingClientRect(); if (!r.width) return;
   game.mouseGoal = { x: clamp((e.clientX - r.left) / r.width * W, 0, W), y: clamp((e.clientY - r.top) / r.height * H, 0, PH) };
 }
 function onMove(e) {
-  if (e.pointerType === 'mouse' && e.target === canvas && !panelOpen && !collOpen && !game.paused) {
+  if (e.pointerType === 'mouse') { // ring follows the cursor anywhere in the frame (clamped to the field), not only over the canvas
+    if (panelOpen || collOpen || game.paused) return;
     lastPtr = 'mouse';
-    if (mouseLast) mouseTravel += Math.hypot(e.clientX - mouseLast.x, e.clientY - mouseLast.y);
-    mouseLast = { x: e.clientX, y: e.clientY };
-    if (game.state === 'start' && mouseTravel > 8 && matchMedia('(pointer: fine)').matches) { Audio_.unlock(); startRun(); }
-    if (game.state === 'play') { mouseFollow(e); }
+    if (game.state === 'play') mouseFollow(e);
     return;
   }
-  if (e.pointerType === 'mouse') return;
   if (!drag || e.pointerId !== drag.id) return;
   e.preventDefault();
   if (game.state === 'play' && !game.paused && !panelOpen && game.target) {

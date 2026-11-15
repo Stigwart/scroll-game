@@ -17,10 +17,6 @@
   #panel button.reset { margin-top:14px; padding:10px 16px; background:#201030; color:#f8f;
     border:1px solid #f8f8; border-radius:6px; font-size:15px; }
   #panel .hint { color:#889; font-size:12px; margin-top:10px; }
-  #collBtn { position:absolute; left:50%; transform:translateX(-50%); bottom:52px; /* centred in the 152px action footer */
-    min-height:48px; padding:0 26px; border-radius:24px; border:1px solid #6ff; background:#0a1020dd; color:#8ff;
-    font:bold 17px/1 "Trebuchet MS", system-ui, sans-serif; letter-spacing:1px; z-index:3; display:none;
-    box-shadow:0 0 14px #0ff5; cursor:pointer; }
   #coll { position:absolute; inset:0; z-index:6; background:linear-gradient(#06061a,#14083a); display:none;
     flex-direction:column; padding:max(12px, 0px) 16px 0; box-sizing:border-box; }
   #coll.open { display:flex; }
@@ -53,7 +49,7 @@
 
   /* Fixed logical stage (STAGE_W x STAGE_H), scaled to fit and letterboxed. --s = current scale. */
   html, body { background: radial-gradient(ellipse at center, #120a2a 0%, #05030d 70%); }
-  #stage { position:fixed; left:0; top:0; width:450px; height:800px; transform-origin:0 0; overflow:hidden; background:#05030d; --s:1; }
+  #stage { position:fixed; left:0; top:0; width:450px; height:648px; transform-origin:0 0; overflow:hidden; background:#05030d; --s:1; }
   /* keep small DOM text >= ~12 screen px when the stage is scaled down */
   .tile .st, .tile .nm, #telStat, #panel .hint, .row { font-size:max(12px, calc(12px / var(--s))); }
 
@@ -73,7 +69,6 @@
   #rail .dot.on { display:block; }
   #stage[data-st=play] #rail .rb:not(.keep) { display:none; }
   #rail #rPause { display:none; } #stage[data-st=play] #rail #rPause { display:block; }
-  #collBtn { display:none !important; }
 
   .mrow svg.up { flex:none; width:56px; height:40px; }
   .cal { grid-column:1/-1; display:grid; grid-template-columns:repeat(6,1fr); gap:5px; }
@@ -101,11 +96,6 @@
   /* wide screens: neon letterbox + side panels (the 450x800 stage is unchanged) */
   body::before { content:""; position:fixed; inset:0; pointer-events:none; background-image:linear-gradient(#6ff1 1px, transparent 1px), linear-gradient(90deg, #6ff1 1px, transparent 1px); background-size:64px 64px; -webkit-mask-image:radial-gradient(ellipse at center, #000 5%, transparent 75%); mask-image:radial-gradient(ellipse at center, #000 5%, transparent 75%); }
   #stage { box-shadow:0 0 0 1px #6ff5, 0 0 70px #0ff3, 0 0 160px #a3f2; }
-  .side { position:fixed; top:0; bottom:0; width:var(--lb, 0px); display:none; flex-direction:column; justify-content:center; align-items:center; gap:10px; padding:0 14px; box-sizing:border-box; text-align:center; pointer-events:none; color:#9cd; font:15px/1.4 "Trebuchet MS", system-ui, sans-serif; }
-  .side.on { display:flex; } #sideL { left:0; } #sideR { right:0; }
-  .side h3 { margin:0; font-size:26px; letter-spacing:4px; color:#6ff; text-shadow:0 0 18px #0ff; }
-  .side .k { font-size:12px; letter-spacing:2px; color:#789; } .side .v { font-size:28px; color:#fff; text-shadow:0 0 12px #6ff8; font-weight:bold; }
-  .side kbd { display:inline-block; min-width:22px; padding:1px 6px; border:1px solid #6ff6; border-radius:6px; color:#8ff; font:bold 13px sans-serif; }
 
   #pw { position:absolute; left:8px; top:170px; display:none; flex-direction:column; gap:14px; z-index:3; }
   #pw.r { left:auto; right:8px; }
@@ -116,3 +106,7 @@
 #priv { position:absolute; left:8px; bottom:8px; width:236px; z-index:6; display:none; background:#0a1020ee; border:1px solid #6ff6; border-radius:10px; padding:8px 10px; font:11px/1.3 system-ui,sans-serif; color:#cde; opacity:.92; }
 #stage[data-st=play] #priv { display:none !important; }
 #priv a { color:#6ff; } #priv button { margin-left:6px; padding:3px 12px; border-radius:6px; border:1px solid #6ff8; background:#123; color:#8ff; font-size:12px; cursor:pointer; }
+
+#safe { position:fixed; visibility:hidden; pointer-events:none; padding:env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+/* wide field: keep sheets and the collection at a readable column width */
+#coll { align-items:center; } #coll > * { width:100%; max-width:560px; box-sizing:border-box; }

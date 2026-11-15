@@ -10,8 +10,21 @@ function obstacleGap(b, o) {
   }
   return Math.hypot(b.x - o.x, b.y - o.y) - (o.kind === 'tri' ? o.r * 0.8 : o.r) - b.r;
 }
+// Obstacle density stays constant when the play field is larger than the 450x648 reference (wide layout)
+const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, 0.8, clamp((W - REF_W) / (MAX_W - REF_W), 0, 1));
+// Opening hold: the ball rides in the ring until GO, so every run starts from control (run 1 waits for the player to move)
+const HOLD_S = 0.8, HOLD_TUT_MAX = 8;
 function step(dt) {
   const g = game, b = g.ball, tg = g.target, L = level();
+  if (g.hold) {
+    const px = tg.x, py = tg.y, kd0 = kbDir();
+    if (kd0.x || kd0.y) { const n = Math.hypot(kd0.x, kd0.y); tg.x = clamp(tg.x + kd0.x / n * KSPEED * dt, 0, W); tg.y = clamp(tg.y + kd0.y / n * KSPEED * dt, 0, PH); }
+    g.holdMove += Math.hypot(tg.x - (g.holdPx === undefined ? px : g.holdPx), tg.y - (g.holdPy === undefined ? py : g.holdPy)); g.holdPx = tg.x; g.holdPy = tg.y;
+    const k0 = 1 - Math.exp(-dt * 16); b.x += (clamp(tg.x, b.r, W - b.r) - b.x) * k0; b.y += (clamp(tg.y, b.r, PH - b.r) - b.y) * k0; b.vx = b.vy = 0;
+    g.holdT += dt; if (g.tutRun) g.tutorial = 'move';
+    if (g.holdT >= (g.tutRun ? HOLD_TUT_MAX : HOLD_S) || (g.tutRun && g.holdT >= HOLD_S && g.holdMove > 90)) { g.hold = false; g.holdPx = g.holdPy = undefined; fxe('go'); }
+    return;
+  }
   g.t += dt; pwTick(g, dt);
   const rm = g.reduceMotion;
   // Stage tracking, milestones, new-best crossing (events are cosmetic; no RNG)
@@ -64,7 +77,7 @@ function step(dt) {
     if (g.tutRun && g.tutSpawnAt < 0) { // first obstacle of run 1: gentle, and flagged for the 'dodge' hint
       g.tutSpawnAt = g.t; const fo = g.obstacles[g.obstacles.length - 1]; fo.vx *= 0.7; fo.vy *= 0.7;
     }
-    g.spawnTimer = srand(1.4, 2.4) / (T.spawn * (1 + 0.7 * L)); }
+    g.spawnTimer = srand(1.4, 2.4) / (T.spawn * (1 + 0.7 * L) * fieldK()); }
   for (let i = g.obstacles.length - 1; i >= 0; i--) {
     const o = g.obstacles[i];
     o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.spin * dt;

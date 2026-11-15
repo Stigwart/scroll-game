@@ -12,9 +12,9 @@ function stub() {
       if (k === 'length') return 0; if (k === 'checked') return true; return stub(); },
     set() { return true; }, apply() { return stub(); }, construct() { return stub(); } });
 }
-function load() {
+function load(field) {
   const store = {};
-  const win = { innerWidth: 450, innerHeight: 800, devicePixelRatio: 1, addEventListener() {}, screen: { width: 450, height: 800 },
+  const win = { innerWidth: 450, innerHeight: 648, devicePixelRatio: 1, addEventListener() {}, screen: { width: 450, height: 800 },
     requestAnimationFrame() {}, location: { search: '' } };
   const ctx = vm.createContext({ window: win, document: { getElementById: stub, createElement: stub, querySelectorAll: () => [], querySelector: stub,
       addEventListener() {}, body: stub(), hidden: false }, navigator: { userAgent: 'node' }, performance: { now: () => 0 },
@@ -23,7 +23,7 @@ function load() {
     crypto: { getRandomValues: a => a }, console, Math, JSON, Date, setTimeout() {}, setInterval() {}, clearTimeout() {} });
   Object.assign(ctx, win, { window: ctx });
   // Wrap step() so scripted input is applied per SIM step (the same instants at every refresh rate) and checkpoints are exact.
-  vm.runInContext(code + `
+  vm.runInContext(code + (field ? `;W=${field[0]};H=PH=${field[1]};` : '') + `
 ;globalThis.__t = { game, update, resetRun, seedSim, meta, usePw, PWS, prog, log: [], script: null };
 { const _step = step; let n = 0;
   step = function (dt) { const T_ = globalThis.__t; if (T_.script) T_.script(game, n); _step(dt); n++;
@@ -34,8 +34,8 @@ function load() {
   return ctx.__t;
 }
 // mode 'idle': no input. mode 'play': the ring chases the ball at a capped speed and fires each power-up on a schedule.
-function run(hz, seed, secs, mode, reduceMotion, veteran) {
-  const H = load(), g = H.game;
+function run(hz, seed, secs, mode, reduceMotion, veteran, field) {
+  const H = load(field), g = H.game;
   if (veteran) H.prog.runs = 9;                     // skip new-player assists so the plain sim is covered too
   for (const p of H.PWS) H.meta.pw[p.id] = 1;
   g.reduceMotion = !!reduceMotion;
@@ -52,9 +52,9 @@ function run(hz, seed, secs, mode, reduceMotion, veteran) {
 }
 let bad = 0;
 const HZ = [60, 120, 144, 165];
-function check(label, seed, secs, mode, veteran) {
-  const rs = HZ.map(hz => run(hz, seed, secs, mode, false, veteran));
-  const rm = run(60, seed, secs, mode, true, veteran);
+function check(label, seed, secs, mode, veteran, field) {
+  const rs = HZ.map(hz => run(hz, seed, secs, mode, false, veteran, field));
+  const rm = run(60, seed, secs, mode, true, veteran, field);
   // Checkpoints (every 10 s of sim time) must match exactly; the end time may differ by the final partial frame only.
   const n = Math.min(...rs.map(r => r.log.split('|').length), rm.log.split('|').length);
   const cut = r => r.log.split('|').slice(0, n).join('|');
@@ -66,4 +66,6 @@ function check(label, seed, secs, mode, veteran) {
 for (const seed of [1, 2, 3]) check('idle', seed, 60, 'idle', false);
 for (const seed of [1, 2, 3]) check('play new player', seed, 95, 'play', false);
 for (const seed of [4, 5, 6]) check('play veteran', seed, 125, 'play', true);
+for (const seed of [7, 8]) check('wide veteran', seed, 125, 'play', true, [1152, 648]);
+for (const seed of [9]) check('tall veteran', seed, 125, 'play', true, [450, 800]);
 process.exit(bad ? 1 : 0);
