@@ -96,6 +96,91 @@ const BALLS = [
     c.strokeStyle = 'rgba(255,255,255,0.7)'; c.lineWidth = 1.5; circ(c, x, y, r); c.stroke();
     c.fillStyle = '#fff'; c.shadowColor = '#fff'; c.shadowBlur = 8;
     const ga = t * 2.2; star4(c, x + Math.cos(ga) * r * 0.5, y + Math.sin(ga) * r * 0.5, r * (0.3 + 0.25 * Math.sin(t * 7)));
+  } },
+  { id: 'comet', name: 'Comet', unlock: { type: 'level', v: 5 }, draw(c, x, y, r, t, a, col) {
+    c.translate(x, y); c.rotate(a);
+    const L = r * (2.8 + 0.4 * Math.sin(t * 18)), g = c.createLinearGradient(0, 0, -L, 0);
+    g.addColorStop(0, '#fff6c0'); g.addColorStop(0.35, '#ff9a3a'); g.addColorStop(1, rgba(col, 0));
+    c.fillStyle = g; c.beginPath(); c.moveTo(0, -r * 0.8); c.quadraticCurveTo(-L * 0.5, -r * 0.7, -L, 0);
+    c.quadraticCurveTo(-L * 0.5, r * 0.7, 0, r * 0.8); c.closePath(); c.fill();
+    c.shadowColor = '#fff'; c.shadowBlur = 18;
+    const h = c.createRadialGradient(-r * 0.2, -r * 0.2, 1, 0, 0, r * 0.85);
+    h.addColorStop(0, '#fff'); h.addColorStop(0.6, '#fffbe0'); h.addColorStop(1, '#ffc060');
+    c.fillStyle = h; circ(c, 0, 0, r * 0.85); c.fill();
+  } },
+  { id: 'gem', name: 'Gem', unlock: { type: 'buy', v: 150 }, draw(c, x, y, r, t) {
+    c.translate(x, y); c.rotate(t * 0.7);
+    const P = (k, q) => [Math.cos(k * 1.0472) * r * q, Math.sin(k * 1.0472) * r * q];
+    c.shadowColor = '#ff5ad0'; c.shadowBlur = 16;
+    const g = c.createLinearGradient(-r, -r, r, r); g.addColorStop(0, '#ffd6fb'); g.addColorStop(0.5, '#ff4fd0'); g.addColorStop(1, '#6a1fd0');
+    c.fillStyle = g; c.beginPath();
+    for (let k = 0; k < 6; k++) { const p = P(k, 1); k ? c.lineTo(p[0], p[1]) : c.moveTo(p[0], p[1]); }
+    c.closePath(); c.fill(); c.shadowBlur = 0;
+    c.strokeStyle = 'rgba(255,255,255,0.85)'; c.lineWidth = 1.2; c.beginPath();
+    for (let k = 0; k < 6; k++) { const p = P(k, 0.5), q = P(k, 1); c.moveTo(p[0], p[1]); c.lineTo(q[0], q[1]); k ? c.lineTo(P(k - 1, 0.5)[0], P(k - 1, 0.5)[1]) : 0; }
+    c.stroke();
+    c.fillStyle = 'rgba(255,255,255,0.55)'; c.beginPath(); c.moveTo(P(4, 0.5)[0], P(4, 0.5)[1]); c.lineTo(P(5, 0.5)[0], P(5, 0.5)[1]); c.lineTo(0, 0); c.fill();
+  } },
+  { id: 'yinyang', name: 'Balance', unlock: { type: 'sweet', v: 20 }, draw(c, x, y, r, t) {
+    c.translate(x, y); c.rotate(t * 2.2);
+    c.shadowColor = '#9ff'; c.shadowBlur = 14; c.fillStyle = '#e8fdff'; circ(c, 0, 0, r); c.fill(); c.shadowBlur = 0;
+    c.fillStyle = '#ff3df0'; c.beginPath(); c.arc(0, 0, r, -1.5708, 1.5708); c.fill();
+    c.fillStyle = '#e8fdff'; circ(c, 0, -r / 2, r / 2); c.fill();
+    c.fillStyle = '#ff3df0'; circ(c, 0, r / 2, r / 2); c.fill();
+    c.fillStyle = '#ff3df0'; circ(c, 0, -r / 2, r * 0.14); c.fill();
+    c.fillStyle = '#e8fdff'; circ(c, 0, r / 2, r * 0.14); c.fill();
+    c.strokeStyle = 'rgba(255,255,255,0.8)'; c.lineWidth = 1.2; circ(c, 0, 0, r - 0.5); c.stroke();
+  } },
+  { id: 'moon', name: 'Moon', unlock: { type: 'time', v: 60 }, draw(c, x, y, r) {
+    c.shadowColor = '#b8c8ff'; c.shadowBlur = 20;
+    const g = c.createRadialGradient(x - r * 0.35, y - r * 0.35, 1, x, y, r); g.addColorStop(0, '#fffdf0'); g.addColorStop(1, '#c9cfe6');
+    c.fillStyle = g; circ(c, x, y, r); c.fill(); c.shadowBlur = 0;
+    c.fillStyle = 'rgba(120,128,160,0.45)';
+    circ(c, x - r * 0.35, y - r * 0.2, r * 0.25); c.fill(); circ(c, x + r * 0.35, y + r * 0.3, r * 0.2); c.fill();
+    circ(c, x + r * 0.2, y - r * 0.5, r * 0.13); c.fill(); circ(c, x - r * 0.25, y + r * 0.5, r * 0.1); c.fill();
+  } },
+  { id: 'target', name: 'Bullseye', unlock: { type: 'stage', v: 7 }, draw(c, x, y, r, t, a, col) {
+    c.shadowColor = col; c.shadowBlur = 14;
+    c.fillStyle = '#fff'; circ(c, x, y, r); c.fill(); c.shadowBlur = 0;
+    c.fillStyle = col; circ(c, x, y, r * 0.73); c.fill();
+    c.fillStyle = '#fff'; circ(c, x, y, r * 0.47); c.fill();
+    c.fillStyle = col; circ(c, x, y, r * 0.22); c.fill();
+    c.strokeStyle = 'rgba(0,0,40,0.35)'; c.lineWidth = 1; circ(c, x, y, r * 0.73); c.stroke();
+  } },
+  { id: 'sun', name: 'Sun', unlock: { type: 'buy', v: 400 }, draw(c, x, y, r, t) {
+    c.translate(x, y); c.rotate(t * 0.8);
+    c.shadowColor = '#ffb020'; c.shadowBlur = 16;
+    c.strokeStyle = '#ffd24a'; c.lineWidth = 2; c.lineCap = 'round'; c.beginPath();
+    for (let k = 0; k < 10; k++) {
+      const an = k * 0.6283, o = r * (1.2 + 0.28 * Math.sin(t * 6 + k * 1.3));
+      c.moveTo(Math.cos(an) * r * 0.82, Math.sin(an) * r * 0.82); c.lineTo(Math.cos(an) * o, Math.sin(an) * o);
+    }
+    c.stroke(); c.shadowBlur = 0;
+    const g = c.createRadialGradient(-r * 0.2, -r * 0.2, 1, 0, 0, r * 0.8); g.addColorStop(0, '#fffbd0'); g.addColorStop(0.6, '#ffd23a'); g.addColorStop(1, '#ff9a1a');
+    c.fillStyle = g; circ(c, 0, 0, r * 0.75); c.fill();
+  } },
+  { id: 'atom', name: 'Atom', unlock: { type: 'level', v: 12 }, draw(c, x, y, r, t) {
+    c.translate(x, y); c.rotate(t * 0.4);
+    c.lineWidth = 1.2; c.shadowColor = '#7dffe0'; c.shadowBlur = 12;
+    for (let i = 0; i < 3; i++) {
+      c.strokeStyle = 'rgba(190,255,240,0.75)'; c.beginPath(); c.ellipse(0, 0, r * 1.15, r * 0.42, 0, 0, 6.283); c.stroke();
+      const u = t * (3 + i) + i * 2; c.fillStyle = i === 1 ? '#ffe27a' : '#fff';
+      circ(c, Math.cos(u) * r * 1.15, Math.sin(u) * r * 0.42, r * 0.17); c.fill();
+      c.rotate(1.0472);
+    }
+    const g = c.createRadialGradient(-r * 0.1, -r * 0.1, 1, 0, 0, r * 0.45); g.addColorStop(0, '#fff'); g.addColorStop(1, '#ff6a9a');
+    c.fillStyle = g; circ(c, 0, 0, r * 0.42); c.fill();
+  } },
+  { id: 'crown', name: 'Royal', unlock: { type: 'streak', v: 7 }, draw(c, x, y, r, t) {
+    c.shadowColor = '#a24dff'; c.shadowBlur = 16;
+    const g = c.createRadialGradient(x - r * 0.3, y - r * 0.3, 1, x, y, r); g.addColorStop(0, '#c88cff'); g.addColorStop(0.55, '#7a2be0'); g.addColorStop(1, '#2c0a66');
+    c.fillStyle = g; circ(c, x, y + r * 0.1, r * 0.9); c.fill(); c.shadowBlur = 0;
+    const w = r * 0.55, b = y - r * 0.55, h = r * 0.6;
+    c.fillStyle = '#ffd24a'; c.strokeStyle = '#a86a00'; c.lineWidth = 1; c.beginPath();
+    c.moveTo(x - w, b); c.lineTo(x - w, b - h * 0.75); c.lineTo(x - w * 0.5, b - h * 0.4); c.lineTo(x, b - h);
+    c.lineTo(x + w * 0.5, b - h * 0.4); c.lineTo(x + w, b - h * 0.75); c.lineTo(x + w, b); c.closePath(); c.fill(); c.stroke();
+    c.fillStyle = '#ff4a6a'; circ(c, x, b - h * 0.3, r * 0.1); c.fill();
+    c.fillStyle = '#fff'; star4(c, x + r * 0.55, y + r * 0.1, r * (0.3 + 0.2 * Math.sin(t * 5)));
   } }
 ];
 const TRAILS = [
@@ -104,11 +189,15 @@ const TRAILS = [
   { id: 'sparks', name: 'Sparks', unlock: { type: 'runs', v: 4 } },
   { id: 'ribbon', name: 'Ribbon', unlock: { type: 'stage', v: 3 } },
   { id: 'bubbles', name: 'Bubbles', unlock: { type: 'sweet', v: 10 } },
+  { id: 'comet', name: 'Comet Tail', unlock: { type: 'near', v: 8 } },
+  { id: 'stars', name: 'Stardust', unlock: { type: 'buy', v: 250 } },
+  { id: 'pixels', name: 'Pixels', unlock: { type: 'level', v: 9 } },
+  { id: 'echo', name: 'Echo', unlock: { type: 'time', v: 90 } },
   { id: 'none', name: 'None', unlock: null }
 ];
 const LISTS = { balls: BALLS, trails: TRAILS };
 const LABELS = { balls: 'Balls', trails: 'Trails' };
-const TAB_ICON = { balls: '&#9679;', trails: '&#8779;', upgrades: '&#9650;', daily: '&#9788;' };
+const TAB_ICON = { balls: '&#9679;', trails: '&#8779;', upgrades: '&#9650;', daily: '&#10003;' };
 
 function ballDraw(c, id, x, y, r, t, ang, col) {
   const it = BALLS.find(b => b.id === id) || BALLS[0];
@@ -126,12 +215,18 @@ function trailUpdate(st, id, x, y, dt, active) {
   } else if (active && id === 'bubbles') {
     st.acc += dt;
     while (st.acc > 0.07) { st.acc -= 0.07; st.parts.push({ x: x + rand(-6, 6), y: y + rand(-6, 6), vx: rand(-10, 10), vy: rand(-45, -15), life: 0, max: rand(0.8, 1.4), sz: rand(0.2, 0.42) }); }
+  } else if (active && id === 'stars') {
+    st.acc += dt;
+    while (st.acc > 0.06) { st.acc -= 0.06; st.parts.push({ x: x + rand(-6, 6), y: y + rand(-6, 6), vx: rand(-25, 25), vy: rand(-30, 10), life: 0, max: rand(0.6, 1.1), sz: rand(0.35, 0.6), ph: rand(0, 6.28) }); }
+  } else if (active && id === 'echo') {
+    st.acc += dt;
+    while (st.acc > 0.1) { st.acc -= 0.1; st.parts.push({ x, y, vx: 0, vy: 0, life: 0, max: 0.55, sz: 1 }); }
   }
   for (let i = st.parts.length - 1; i >= 0; i--) {
     const p = st.parts[i]; p.life += dt; p.x += p.vx * dt; p.y += p.vy * dt;
     if (p.life > p.max) st.parts.splice(i, 1);
   }
-  if (id !== 'sparks' && id !== 'bubbles') st.parts.length = 0;
+  if (id !== 'sparks' && id !== 'bubbles' && id !== 'stars' && id !== 'echo') st.parts.length = 0;
 }
 function trailDraw(c, st, id, r, col) {
   if (id === 'none') return;
@@ -167,6 +262,30 @@ function trailDraw(c, st, id, r, col) {
       circ(c, p.x, p.y, br); c.fill(); c.stroke();
       c.fillStyle = rgba('#ffffff', a * 0.8); circ(c, p.x - br * 0.35, p.y - br * 0.35, Math.max(0.8, br * 0.18)); c.fill();
     }
+  } else if (id === 'comet') {
+    c.lineCap = 'round';
+    for (let i = 1; i < pts.length; i++) {
+      const f = pts[i].age / TRAIL_LIFE, a = 1 - f;
+      c.strokeStyle = rgba(f < 0.3 ? '#ffffff' : col, 0.15 + 0.8 * a); c.lineWidth = Math.max(0.5, r * 1.4 * a * a);
+      c.beginPath(); c.moveTo(pts[i - 1].x, pts[i - 1].y); c.lineTo(pts[i].x, pts[i].y); c.stroke();
+    }
+  } else if (id === 'stars') {
+    c.shadowColor = '#fff'; c.shadowBlur = 6;
+    for (const p of st.parts) {
+      const a = 1 - p.life / p.max, tw = 0.6 + 0.4 * Math.sin(p.life * 22 + p.ph);
+      c.fillStyle = rgba(p.ph > 3.14 ? '#ffffff' : '#fff2a8', a); star4(c, p.x, p.y, r * p.sz * (0.5 + a) * tw);
+    }
+  } else if (id === 'pixels') {
+    c.fillStyle = col;
+    for (const p of pts) {
+      const a = 1 - p.age / TRAIL_LIFE, s = Math.max(1, Math.round(r * 0.9 * a / 2) * 2);
+      c.globalAlpha = 0.3 + 0.7 * a; c.fillRect(Math.round(p.x / 4) * 4 - s / 2, Math.round(p.y / 4) * 4 - s / 2, s, s);
+    }
+  } else if (id === 'echo') {
+    c.lineWidth = 2;
+    for (const p of st.parts) {
+      const f = p.life / p.max; c.strokeStyle = rgba(f < 0.3 ? '#ffffff' : col, (1 - f) * 0.8); circ(c, p.x, p.y, r * (0.4 + 1.5 * f)); c.stroke();
+    }
   }
   c.restore();
 }
@@ -183,12 +302,15 @@ const isUnlocked = (kind, it) => !it.unlock || unlocked.has(ukey(kind, it));
 function selItem(kind) { const l = LISTS[kind], it = l.find(i => i.id === sel[kind]); return it && isUnlocked(kind, it) ? it : l[0]; }
 function unlockText(it) {
   const u = it.unlock;
+  if (u.type === 'buy') return 'Buy  \u25c6 ' + u.v; if (u.type === 'streak') return u.v + '-day streak reward';
   return u.type === 'level' ? 'Reach level ' + u.v : u.type === 'time' ? 'Survive ' + u.v + 's' : u.type === 'near' ? u.v + ' near misses in one run'
     : u.type === 'stage' ? 'Reach Stage ' + u.v + (CONFIG.stageNames && CONFIG.stageNames[u.v - 1] ? ' (' + CONFIG.stageNames[u.v - 1] + ')' : '')
     : u.type === 'sweet' ? u.v + 's in the sweet spot, one run' : 'Play ' + u.v + ' runs';
 }
 function unlockMet(it) {
   const u = it.unlock; if (!u) return true;
+  if (u.type === 'buy') return false;                       // bought with shards in the collection
+  if (u.type === 'streak') return meta.streak >= u.v;
   return u.type === 'level' ? playerLvl() >= u.v : u.type === 'time' ? prog.best >= u.v : u.type === 'near' ? prog.nearMissBest >= u.v
     : u.type === 'stage' ? prog.stageMax + 1 >= u.v : u.type === 'sweet' ? prog.sweetBest >= u.v : prog.runs >= u.v;
 }
@@ -236,6 +358,7 @@ function renderColl() {
   document.getElementById('collTitle').textContent = collTab === 'upgrades' ? 'UPGRADES' : collTab === 'daily' ? 'DAILY' : 'COLLECTION';
   gridEl.innerHTML = ''; tiles = [];
   if (!LISTS[collTab]) { renderMeta(gridEl, collTab); gridEl.scrollTop = top; return; }
+  metaHead(gridEl);
   const kind = collTab, chosen = selItem(kind);
   for (const it of LISTS[kind]) {
     const un = isUnlocked(kind, it), on = un && chosen === it;
@@ -245,7 +368,12 @@ function renderColl() {
     b.querySelector('.nm').textContent = it.name;
     b.querySelector('.st').textContent = on ? 'Selected' : un ? 'Tap to select' : unlockText(it);
     if (!un) b.querySelector('.st').classList.add('need');
-    b.addEventListener('click', () => { if (un) { sel[kind] = it.id; saveCosm(); renderColl(); } });
+    const buyable = !un && it.unlock.type === 'buy';
+    if (buyable && meta.shards >= it.unlock.v) b.classList.add('can');
+    b.addEventListener('click', () => {
+      if (un) { sel[kind] = it.id; saveCosm(); renderColl(); }
+      else if (buyable && meta.shards >= it.unlock.v) { meta.shards -= it.unlock.v; metaSave(); unlocked.add(ukey(kind, it)); sel[kind] = it.id; saveCosm(); Audio_.sfx('buy'); renderColl(); }
+    });
     gridEl.appendChild(b);
     tiles.push({ cv: b.querySelector('canvas'), kind, it, st: newTrailSt() });
   }

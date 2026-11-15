@@ -112,6 +112,7 @@ function drawObstacles(pal, alpha) {
     ctx.strokeStyle = rgba(col, 0.22); ctx.lineWidth = 9; ctx.stroke();               // soft glow without a shadow blur
     ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();                          // colour stroke
     obstaclePath(o, 5); ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1; ctx.stroke(); // inner stroke
+    if (o.pulse) { ctx.setLineDash([4, 5]); ctx.strokeStyle = col; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.arc(o.x, o.y, o.r0 * 1.24, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); } // shows how far a pulsing circle grows
   }
   ctx.restore();
 }

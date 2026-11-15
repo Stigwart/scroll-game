@@ -89,8 +89,16 @@ document.getElementById('gear').addEventListener('pointerdown', e => e.stopPropa
 // ============================================================
 // Obstacles
 // ============================================================
+// Later stages add behaviours to the same shapes: pulsing circles from stage 3 (HEAT), wall pairs with a gap from stage 5 (TOXIC)
+function spawnGate(L) {
+  const speed = srand(42, 62) * (1 + 0.3 * L), th = 20, gap = Math.max(118, 168 - 14 * L), span = Math.min(W, 560);
+  const cx = srand(span / 2, W - span / 2), gx = cx + srand(-span / 2 + gap, span / 2 - gap), x0 = cx - span / 2, x1 = cx + span / 2;
+  for (const [a, b] of [[x0, gx - gap / 2], [gx + gap / 2, x1]]) if (b - a > 24)
+    game.obstacles.push({ kind: 'rect', x: (a + b) / 2, y: -40, vx: 0, vy: speed, rot: 0, spin: 0, seen: false, hue: 0.9, w: b - a, h: th, gate: true });
+}
 function spawnObstacle() {
-  const L = level(), r = srng();
+  const L = level(), r = srng(), si = Math.min(7, Math.floor(game.stageF()));
+  if (si >= 4 && srng() < 0.13) { spawnGate(L); return 1.6; }
   const kind = r < 0.4 ? 'circle' : r < 0.75 ? 'rect' : 'tri';
   const sizeMul = 1 + 0.5 * L;
   const speed = srand(45, 80) * (1 + 0.45 * L);
@@ -105,8 +113,8 @@ function spawnObstacle() {
   if (kind === 'rect') { // wall (axis-aligned for collision)
     const horiz = srng() < 0.5, len = srand(90, 170) * sizeMul, th = srand(16, 24) * Math.min(sizeMul, 1.8);
     o.w = horiz ? len : th; o.h = horiz ? th : len; o.spin = 0; o.rot = 0;
-  } else { o.r = srand(24, 42) * sizeMul; }
-  game.obstacles.push(o);
+  } else { o.r = srand(24, 42) * sizeMul; if (kind === 'circle' && si >= 2 && srng() < 0.3) { o.pulse = srand(2.2, 3.2); o.r0 = o.r; } }
+  game.obstacles.push(o); return 1;
 }
 function collideObstacle(b, o) {
   let nx, ny, pen;

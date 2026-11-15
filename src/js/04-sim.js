@@ -11,7 +11,9 @@ function obstacleGap(b, o) {
   return Math.hypot(b.x - o.x, b.y - o.y) - (o.kind === 'tri' ? o.r * 0.8 : o.r) - b.r;
 }
 // Obstacle density stays constant when the play field is larger than the 450x648 reference (wide layout)
-const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, 0.8, clamp((W - REF_W) / (MAX_W - REF_W), 0, 1));
+// Wide fields get 20% fewer shapes per area (40% fewer on a player's first three runs, when a slow hand lets the ball roam further).
+const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, (typeof prog !== 'undefined' && prog.runs < 3) ? WIDE_NEW : 0.8, clamp((W - REF_W) / (MAX_W - REF_W), 0, 1));
+const WIDE_NEW = typeof WIDE_NEW_OVERRIDE === 'number' ? WIDE_NEW_OVERRIDE : 0.6;
 // Opening hold: the ball rides in the ring until GO, so every run starts from control (run 1 waits for the player to move)
 const HOLD_S = 0.8, HOLD_TUT_MAX = 8;
 // Second chance: on a player's first SHIELD_RUNS runs the first lethal hit refills health instead (fraction by run number)
@@ -75,14 +77,15 @@ function step(dt) {
   // Obstacles (e): move, collide, cull
   if (!(g.tutRun && g.t < 5)) g.spawnTimer -= g.t < g.breatherUntil ? dt * 0.25 : dt;
   if (g.spawnTimer <= 0) {
-    spawnObstacle();
+    const cost = spawnObstacle();
     if (g.tutRun && g.tutSpawnAt < 0) { // first obstacle of run 1: gentle, and flagged for the 'dodge' hint
       g.tutSpawnAt = g.t; const fo = g.obstacles[g.obstacles.length - 1]; fo.vx *= 0.7; fo.vy *= 0.7;
     }
-    g.spawnTimer = srand(1.4, 2.4) / (T.spawn * (1 + 0.7 * L) * fieldK()); }
+    g.spawnTimer = cost * srand(1.4, 2.4) / (T.spawn * (1 + 0.7 * L) * fieldK()); }
   for (let i = g.obstacles.length - 1; i >= 0; i--) {
     const o = g.obstacles[i];
     o.x += o.vx * dt; o.y += o.vy * dt; o.rot += o.spin * dt;
+    if (o.pulse) o.r = o.r0 * (1 + 0.24 * Math.sin((o.age || 0) * o.pulse));
     const m = (o.kind === 'rect' ? Math.max(o.w, o.h) : o.r) + 140;
     if (o.x < -m || o.x > W + m || o.y < -m || o.y > PH + m) {
       if (o.seen || o.age > 8) { g.obstacles.splice(i, 1); continue; }

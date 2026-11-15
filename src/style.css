@@ -124,3 +124,7 @@
 #collBack { border-color:#6ff8; background:#0e3a4a; color:#fff; font-size:14px; }
 .cal .dc small { font-size:max(11px, calc(12px / var(--s))); } .cal .dc b { font-size:max(14px, calc(12px / var(--s))); }
 #stage.wide .cal .dc small { font-size:12px; }
+.tile.can { border-style:solid; border-color:#ffd84d; box-shadow:0 0 10px #fd45; } .tile.can .st.need { font-weight:bold; }
+.tile { font-family:var(--ui); } .tile .nm { font-family:var(--disp); font-weight:normal; font-size:max(13px, calc(12px / var(--s))); letter-spacing:.5px; }
+.mhead.sub { color:#9cd; font-size:max(12px, calc(12px / var(--s))); margin-top:6px; } .mhead.sub span:first-child { font-family:var(--disp); color:#6ff; letter-spacing:1.5px; }
+#stage.wide #grid { grid-template-columns:repeat(3, 1fr); }
