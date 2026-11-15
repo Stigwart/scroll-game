@@ -24,6 +24,7 @@ for (const [name, w, h, input, full] of SIZES) {
   const ctx = await browser.newContext({ viewport: { width: w, height: h }, deviceScaleFactor: 1, hasTouch: input === 'touch', isMobile: input === 'touch' });
   const page = await ctx.newPage(); const errs = [];
   page.on('console', m => { if (m.type() === 'error') errs.push(m.text()); }); page.on('pageerror', e => errs.push(String(e)));
+  await page.route('https://sdk.crazygames.com/**', r => r.fulfill({ contentType: 'application/javascript', body: 'window.CrazyGames={SDK:{init:async()=>{},game:{loadingStart(){},loadingStop(){},gameplayStart(){},gameplayStop(){}}}};' }));   // stub SDK outside CrazyGames
   const cdp = await ctx.newCDPSession(page);
   const shot = n => page.screenshot({ path: `${out}/${name}-${n}.jpg`, type: 'jpeg', quality: 82 });
   const t0 = Date.now(); await page.goto(URL_); await page.waitForFunction(() => window.__TEST_HOOKS); const loadMs = Date.now() - t0;

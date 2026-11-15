@@ -1,0 +1,511 @@
+[
+ {
+  "name": "d-821x462",
+  "retryMs": 3
+ },
+ {
+  "name": "d-821x462",
+  "input": "mouse",
+  "modalOnFirstLoad": false,
+  "loadMs": 62,
+  "startDelay": 297,
+  "died": 72.6,
+  "frameMs": {
+   "n": 4422,
+   "p50": 16.69999999999709,
+   "p95": 16.70000000001164,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "SPAN",
+    "Upgrades",
+    57
+   ],
+   [
+    12,
+    "SPAN",
+    "Balls",
+    28
+   ],
+   [
+    12,
+    "SPAN",
+    "Daily",
+    29
+   ],
+   [
+    12,
+    "SPAN",
+    "Settings",
+    49
+   ]
+  ]
+ },
+ {
+  "name": "d-907x510",
+  "input": "mouse",
+  "modalOnFirstLoad": false,
+  "loadMs": 36,
+  "startDelay": 194,
+  "died": 49.5,
+  "frameMs": {
+   "n": 3017,
+   "p50": 16.69999999999709,
+   "p95": 16.700000000004366,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "SPAN",
+    "Upgrades",
+    58
+   ],
+   [
+    12,
+    "SPAN",
+    "Balls",
+    29
+   ],
+   [
+    12,
+    "SPAN",
+    "Daily",
+    30
+   ],
+   [
+    12,
+    "SPAN",
+    "Settings",
+    50
+   ],
+   [
+    12.6,
+    "goUp",
+    "UPGRADE READY: SWEET SPO",
+    314
+   ]
+  ]
+ },
+ {
+  "name": "d-1077x606",
+  "input": "key",
+  "modalOnFirstLoad": false,
+  "loadMs": 38,
+  "startDelay": 13,
+  "died": 49,
+  "frameMs": {
+   "n": 3445,
+   "p50": 16.69999999999709,
+   "p95": 16.700000000004366,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "SPAN",
+    "Upgrades",
+    59
+   ],
+   [
+    12,
+    "SPAN",
+    "Balls",
+    30
+   ],
+   [
+    12,
+    "SPAN",
+    "Daily",
+    30
+   ],
+   [
+    12,
+    "SPAN",
+    "Settings",
+    51
+   ],
+   [
+    15,
+    "goUp",
+    "UPGRADE READY: SWEET SPO",
+    373
+   ]
+  ]
+ },
+ {
+  "name": "d-1216x684",
+  "input": "mouse",
+  "modalOnFirstLoad": false,
+  "loadMs": 51,
+  "startDelay": 212,
+  "died": 47.9,
+  "frameMs": {
+   "n": 2879,
+   "p50": 16.69999999999709,
+   "p95": 16.799999999999272,
+   "p99": 33.30000000000018
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "SPAN",
+    "Upgrades",
+    60
+   ],
+   [
+    12,
+    "SPAN",
+    "Balls",
+    30
+   ],
+   [
+    12,
+    "SPAN",
+    "Daily",
+    31
+   ],
+   [
+    12,
+    "SPAN",
+    "Settings",
+    52
+   ],
+   [
+    16.9,
+    "goUp",
+    "UPGRADE READY: SWEET SPO",
+    421
+   ]
+  ]
+ },
+ {
+  "name": "f-1280x720",
+  "input": "mouse",
+  "modalOnFirstLoad": false,
+  "loadMs": 24,
+  "startDelay": 221,
+  "died": 47.8,
+  "frameMs": {
+   "n": 2836,
+   "p50": 16.69999999999709,
+   "p95": 16.800000000000182,
+   "p99": 33.399999999999636
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12.2,
+    "SPAN",
+    "Upgrades",
+    62
+   ],
+   [
+    12.2,
+    "SPAN",
+    "Balls",
+    31
+   ],
+   [
+    12.2,
+    "SPAN",
+    "Daily",
+    32
+   ],
+   [
+    12.2,
+    "SPAN",
+    "Settings",
+    54
+   ],
+   [
+    17.8,
+    "goUp",
+    "UPGRADE READY: SWEET SPO",
+    444
+   ]
+  ]
+ },
+ {
+  "name": "f-1366x768",
+  "input": "key",
+  "modalOnFirstLoad": false,
+  "loadMs": 72,
+  "startDelay": 19,
+  "died": 51.1,
+  "frameMs": {
+   "n": 3556,
+   "p50": 16.69999999999709,
+   "p95": 16.799999999995634,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    13,
+    "SPAN",
+    "Upgrades",
+    66
+   ],
+   [
+    13,
+    "SPAN",
+    "Balls",
+    33
+   ],
+   [
+    13,
+    "SPAN",
+    "Daily",
+    34
+   ],
+   [
+    13,
+    "SPAN",
+    "Settings",
+    57
+   ],
+   [
+    19,
+    "goUp",
+    "UPGRADE READY: SWEET SPO",
+    473
+   ]
+  ]
+ },
+ {
+  "name": "f-1536x864",
+  "input": "mouse",
+  "modalOnFirstLoad": false,
+  "loadMs": 101,
+  "startDelay": 290,
+  "died": 48.5,
+  "frameMs": {
+   "n": 2791,
+   "p50": 16.69999999999709,
+   "p95": 33.29999999999927,
+   "p99": 33.400000000001455
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    14.7,
+    "SPAN",
+    "Upgrades",
+    74
+   ],
+   [
+    14.7,
+    "SPAN",
+    "Balls",
+    37
+   ],
+   [
+    14.7,
+    "SPAN",
+    "Daily",
+    38
+   ],
+   [
+    14.7,
+    "SPAN",
+    "Settings",
+    64
+   ],
+   [
+    21.3,
+    "goUp",
+    "UPGRADE READY: SWEET SPO",
+    532
+   ]
+  ]
+ },
+ {
+  "name": "f-1920x1080",
+  "retryMs": 16
+ },
+ {
+  "name": "f-1920x1080",
+  "input": "mouse",
+  "modalOnFirstLoad": false,
+  "loadMs": 136,
+  "startDelay": 382,
+  "died": 71,
+  "frameMs": {
+   "n": 3920,
+   "p50": 16.69999999999709,
+   "p95": 33.30000000000291,
+   "p99": 33.400000000001455
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    18.3,
+    "SPAN",
+    "Upgrades",
+    93
+   ],
+   [
+    18.3,
+    "SPAN",
+    "Balls",
+    47
+   ],
+   [
+    18.3,
+    "SPAN",
+    "Daily",
+    48
+   ],
+   [
+    18.3,
+    "SPAN",
+    "Settings",
+    80
+   ]
+  ]
+ },
+ {
+  "name": "m-800x450",
+  "retryMs": 14
+ },
+ {
+  "name": "m-800x450",
+  "input": "touch",
+  "modalOnFirstLoad": false,
+  "loadMs": 35,
+  "startDelay": 20,
+  "died": 75.8,
+  "frameMs": {
+   "n": 5015,
+   "p50": 16.69999999999709,
+   "p95": 16.799999999995634,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "SPAN",
+    "Upgrades",
+    57
+   ],
+   [
+    12,
+    "SPAN",
+    "Balls",
+    28
+   ],
+   [
+    12,
+    "SPAN",
+    "Daily",
+    29
+   ],
+   [
+    12,
+    "SPAN",
+    "Settings",
+    49
+   ]
+  ]
+ },
+ {
+  "name": "t-1080x607",
+  "input": "touch",
+  "modalOnFirstLoad": false,
+  "loadMs": 53,
+  "startDelay": 36,
+  "died": 52.7,
+  "frameMs": {
+   "n": 3664,
+   "p50": 16.69999999999709,
+   "p95": 16.799999999995634,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "SPAN",
+    "Upgrades",
+    59
+   ],
+   [
+    12,
+    "SPAN",
+    "Balls",
+    30
+   ],
+   [
+    12,
+    "SPAN",
+    "Daily",
+    31
+   ],
+   [
+    12,
+    "SPAN",
+    "Settings",
+    51
+   ],
+   [
+    15,
+    "goUp",
+    "UPGRADE READY: SWEET SPO",
+    374
+   ]
+  ]
+ },
+ {
+  "name": "p-390x844",
+  "retryMs": 15
+ },
+ {
+  "name": "p-390x844",
+  "input": "touch",
+  "modalOnFirstLoad": false,
+  "loadMs": 36,
+  "startDelay": 17,
+  "died": 61.2,
+  "frameMs": {
+   "n": 4148,
+   "p50": 16.69999999999709,
+   "p95": 16.70000000001164,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "SPAN",
+    "Upgrades",
+    59
+   ],
+   [
+    12,
+    "SPAN",
+    "Balls",
+    29
+   ],
+   [
+    12,
+    "SPAN",
+    "Daily",
+    30
+   ],
+   [
+    12,
+    "SPAN",
+    "Settings",
+    51
+   ]
+  ]
+ }
+]

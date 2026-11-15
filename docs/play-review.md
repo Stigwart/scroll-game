@@ -146,31 +146,39 @@ Order: P18 first (safety net), then P6 (everything else is laid out on it), P1�
 | 6 | Nice-to-haves | **Include N1–N4 before submission.** N5 is Full Launch work (ads are not allowed in Basic Launch) and stays out. |
 | 7 | Full-frame playable area on tablet and desktop | **Investigate; include if it plays well** (item P21) |
 
-## Phase 3 checklist
+## Phase 3 checklist (all built, 15 Nov 2026)
 
-- [ ] P18 determinism test
-- [ ] P6 footer removal and re-layout
-- [ ] P1 no modal on first session
-- [ ] P2 deliberate start and opening hold
-- [ ] P3 cursor follow outside stage
-- [ ] P4 input-aware visual tutorial
-- [ ] P5 first-minute protection (bot target met)
-- [ ] P9 resume countdown
-- [ ] P10 game-over screen
-- [ ] P11 shop screen
-- [ ] P7 side panels
-- [ ] P8 portrait layout
-- [ ] P12 display font and wordmark
-- [ ] P13 icons and colour roles
-- [ ] P14 stage banner
-- [ ] P15 performance pass
-- [ ] P21 full-frame landscape playfield: investigate, include if playable
-- [ ] P16 content ladder and missions
-- [ ] N1 new obstacle behaviours
-- [ ] N2 music layers
-- [ ] N3 background themes
-- [ ] N4 "so close" line
-- [ ] P17 compliance fixes
-- [ ] P19 audio mix
-- [ ] Phase 4 QA record
-- [ ] P20 name, covers, videos, listing
+- [x] P18 determinism test: scripted steering, stages, power-ups, effects on/off, portrait/wide/tall fields
+- [x] P6 footer removed, every screen re-laid out
+- [x] P21 full-frame play field: playable, balanced with the bots, included (field 450–1152 wide)
+- [x] P1 no modal on a first session
+- [x] P2 click/tap/key to start; ball rides the ring until GO
+- [x] P3 ring follows the cursor anywhere in the frame
+- [x] P4 input-matched animated tutorial
+- [x] P5 first-minute protection: second-chance shield, softer edges on runs 1–2 (novice bots: 100% portrait, 60% wide; was 17%)
+- [x] P9 3-2-1 resume
+- [x] P10 game-over screen with stage strip, all unlocks, next upgrade, inline upgrade button, "so close" line (N4)
+- [x] P11 upgrades in plain language behind a labelled icon; power-ups listed separately
+- [x] P7 side panels: removed, since the field now fills the frame; goals moved onto the title and game-over screens
+- [x] P8 portrait layout: field up to 800 high, safe-area insets, rail clear of the logo
+- [x] P12 own display typeface (NB Display, 4 KB) and wordmark
+- [x] P13 SVG icon set with labels; fixed colour roles
+- [x] P14 stage banner on a plate in the top third
+- [x] P15 performance: background at 1/8 scale, no shadow blur on shapes, resolution cap, adaptive quality (60 fps at 1080p in software)
+- [x] P16 16 balls, 10 trails, shard-bought and streak cosmetics, three mission ladders
+- [x] N1 pulsing circles (stage 3+), gated wall pairs (stage 5+)
+- [x] N2 one music layer per stage
+- [x] N3 four colour themes
+- [x] N4 "so close" line
+- [x] P17 Escape unbound, SDK events around every pause, `user-select` prefixes, no telemetry or privacy page in the CrazyGames build
+- [x] P19 audio levels measured and balanced, limiter, ducking (final listen is Stuart's)
+- [x] Phase 4 QA record: [qa-record.md](qa-record.md)
+- [x] P20 name, covers, videos, listing: [store/](../store/README.md), [crazygames-listing.md](crazygames-listing.md)
+
+### Changes from the proposal
+
+- P2: every run opens with a 0.8 s hold (not 2 s), so retry stays fast. Run 1 holds until the player moves, up to 8 s.
+- P7 was dropped in favour of the full-frame field.
+- Missions pay one step per ladder per run, so a strong first run does not empty the ladder.
+- On wide fields, a player's first three runs get fewer shapes, and shapes stop growing after about 110 s so late stages stay readable.
+- N5 (Full Launch work) is not done, as agreed.

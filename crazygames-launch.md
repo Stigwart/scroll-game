@@ -86,10 +86,12 @@ Everything in §3.1, plus:
 ### 3.3 Store listing assets
 
 - [ ] Description and controls text
-- [ ] Three covers: landscape 1920×1080, portrait 800×1200, square 800×800. Title only (no "New", "Play now"), no borders, no icons or store logos, not a plain gameplay screenshot, stylised font
+- [ ] Three covers: landscape 1920×1080, portrait 800×1200, square 800×800. Title only (no "New", "Play now"), no borders, no icons or store logos, not a plain gameplay screenshot, stylised font. *From 23 Nov 2026 thumbnail click-through rate is a fourth Basic Launch metric.*
 - [ ] Preview videos, 15–20 seconds, ≤ 50 MB, silent, both 1080p landscape (16:9) and 1080p portrait (2:3). Start on the static cover; no black bars, no mouse cursor, no promo text, no fast-forwarding
 
 ## 4. Gap check: prototype v0.4.0
+
+> **Out of date.** This table describes the first prototype. Current status is in [docs/handoff/launch-status.md](docs/handoff/launch-status.md) and [docs/qa-record.md](docs/qa-record.md).
 
 | Area | Status | Notes |
 |---|---|---|

@@ -1,98 +1,81 @@
-# Bullseye: launch status at handoff
+# Neon Bullseye: launch status
 
-*Snapshot: 15 Nov 2026, commit `102334f` on `main`. Written for the agent taking the game to CrazyGames submission. Facts below were checked against the code and a live run on that date; re-verify anything you rely on.*
+*Updated 15 Nov 2026, build 1.0.0. Status: **ready to submit, waiting for Stuart's review of the store assets and a go-ahead.** Nothing has been pushed or submitted.*
 
 ---
 
 ## 1. What the game is
 
-A one-gesture neon arcade game. The player drags (touch), moves the mouse (desktop) or uses arrows/WASD to move a target ring, and keeps a drifting ball balanced in its centre while obstacles push it about. Score is time survived. Between runs, shards and XP buy upgrades, power-ups and cosmetic balls and trails.
+A one-move neon arcade game. The player moves a target ring (mouse, arrow keys/WASD, or touch drag) to keep a drifting ball centred while shapes push it about. Score is time survived. Between runs, shards buy upgrades, power-ups and cosmetics; missions, daily quests and a seven-day streak give reasons to return.
 
-- Design intent and pillars: [docs/brief.md](../brief.md) (§3 pillars are binding).
-- CrazyGames requirements, targets and launch process: [crazygames-launch.md](../../crazygames-launch.md). Its §4 gap table describes prototype v0.4 and is **out of date**; use this file for current status.
-- UX review and design direction: [docs/ux-design-review.md](../ux-design-review.md). Most of it is now implemented (see §3).
-- Listing draft and docs findings: [docs/crazygames-listing.md](../crazygames-listing.md).
+- Design pillars: [docs/brief.md](../brief.md) §3 (binding).
+- What was reviewed, proposed and built: [docs/play-review.md](../play-review.md).
+- QA evidence and what still needs a human: [docs/qa-record.md](../qa-record.md).
+- Listing copy: [docs/crazygames-listing.md](../crazygames-listing.md). Store assets: [store/](../../store/README.md).
+- CrazyGames process and targets: [crazygames-launch.md](../../crazygames-launch.md) (its §4 table describes the old prototype).
 
-## 2. How the code is built and tested
+## 2. Build and test
 
 | Item | Detail |
 |---|---|
-| Source | `src/` → plain concatenation, no dependencies. `src/js/NN-*.js` files are joined in sort order into one inline `<script>`. |
-| Build | `node scripts/build.mjs` → `dist/web/` (playtest, dev UI on) and `dist/crazygames/` (dev UI removed, SDK v3 script tag). Each is a single `index.html` (~130 KB) + `privacy.html`. |
-| Determinism test | `node tests/determinism.mjs`: same seed gives identical runs at 60/120/144/165 Hz. **Must stay green.** |
-| Bot pacing test | `node tests/bot.mjs [n]`: four skill levels play simulated 10-minute sittings; reports first-run length, run length percentiles, runs per 10 min, level reached. |
-| Local preview | `.claude/launch.json` defines `bullseye-web` (python http.server on :8765 serving `dist/web`). Add `?notel=1` to disable telemetry while testing. |
-| Test hooks | `window.__TEST_HOOKS` exposes `game`, `meta`, `update`, `render`, `area()`, etc. for Playwright-style checks. |
-| Playtest site | `node scripts/publish-play.mjs [--commit] [--push]` copies builds into `play/` (GitHub Pages: `/play/` and `/play/cg/`). |
-| Telemetry | Supabase, per-run records (`src/js/07-telemetry.js`, `supabase/schema.sql`, `supabase/metrics.sql`). Kill switch `?notel=1` or `telemetry:false` in `scripts/build.mjs`. |
-| Tooling on this Mac | Node 25, ffmpeg (`/opt/homebrew/bin/ffmpeg`), Playwright Chromium in `~/Library/Caches/ms-playwright` (use via `npx playwright`), python3. |
+| Source | `src/` → plain concatenation, no dependencies, one `index.html` per build (about 165 KB). |
+| Builds | `node scripts/build.mjs` → `dist/web` (playtest: dev tuning UI, Supabase telemetry, privacy notice) and `dist/crazygames` (SDK v3, no dev UI, no telemetry, no links). |
+| Upload | `node scripts/package.mjs` → `store/neon-bullseye-crazygames.zip`, with checks on paths and external URLs. |
+| Tests | `tests/determinism.mjs` (must stay green), `tests/bot.mjs`, and browser tests `tests/qa.mjs`, `tests/shots.mjs`, `tests/perf.mjs`, `tests/audio-levels.mjs` (need Playwright via `PW_DIR`). |
+| Store assets | `scripts/store-assets.mjs` renders covers and videos from the game; needs Playwright and ffmpeg. |
+| Font | `scripts/font.py` builds the game's own typeface into `src/font.woff` (needs `fonttools`; output is committed). |
+| Local preview | `.claude/launch.json` → `bullseye-web` on port 8765. Add `?notel=1` to stop telemetry in the playtest build. |
 
-## 3. Implemented so far
+## 3. Decisions taken (15 Nov 2026)
 
-- **Core:** fixed 450×800 stage, letterboxed; fixed 120 Hz sim step with seeded RNG; obstacles cost health (scales with level); edge contact drains health; distance drain off by default.
-- **Input:** touch drag, desktop mouse-follow (no click needed; moving the mouse on the title starts a run), arrows/WASD by physical key, Space/Enter start/retry, 1–3 power-ups, M mute, pause on blur/visibility.
-- **Onboarding:** run 1 has 8 s with no obstacles plus "keep the ball near the circle" and "dodge" hints; first runs ramp slower and take less damage (`assist()`).
-- **Juice (`08-fx.js`):** hit-stop, shake, spark bursts, ring cracks, edge flashes, near-miss "CLOSE!" pop with slow-mo, stage wipe and banner, milestone banners, new-best confetti, death shatter, vibration, reduce-motion setting.
-- **In-run pacing:** 8 named stages (CALM → BULLSEYE), 30 s each, 3.5 s breather after each stage change, milestone shard bonuses at 30/60/120/180 s, near-miss bonus shards.
-- **Screens (`11-screens.js`):** title is the live scene with logo, "Drag to play", best, level badge; game-over shows time, best delta, stage reached, shards counting up, one highlight (unlock, level-up or quest) and a RETRY button (retry allowed 300 ms after death); icon rail (mute, collection, daily, settings, pause) with notification dots; settings sheet; daily streak card; desktop side panels with stats and controls.
-- **Meta (`09-meta.js`, `05-cosmetics.js`):** shards, XP levels (`xpNeed = 60 + 30n`), 4 upgrades × 5 levels with SVG effect previews, 3 power-ups (120/200/300 shards), 7-day streak (`DAILY = [30…150]`), daily quests, interrupted-run banking. 8 balls and 6 trails with time/runs/near-miss/level/stage/sweet-spot unlocks.
-- **Audio (`10-audio.js`):** procedural WebAudio SFX and music loop, stage "lift", iOS unlock on gesture.
-- **Platform (`00-platform.js`):** CrazyGames SDK v3 `init`, `loadingStart/Stop`, `gameplayStart` on run start, `gameplayStop` on game over. `adBreak` is a stub. Progress is in `localStorage`.
-- **Compliance done:** `user-select:none`, no custom fullscreen button, relative paths, single file, non-blocking privacy notice + `privacy.html`, dev UI stripped from the CrazyGames build.
+| Decision | Answer |
+|---|---|
+| Name | **Neon Bullseye** (Stuart). Web search found no game with that exact title; not checked against the CrazyGames catalogue or trademark registers. |
+| Telemetry in the CrazyGames build | Off (recommended; not objected to). Still on in `dist/web`. |
+| Launch path | Basic Launch, no ads (recommended; not objected to). |
+| Music | Procedural, with a measured mix pass (recommended; not objected to). |
+| Click/tap/key to start; first-runs shield | Yes (Stuart). |
+| Nice-to-haves N1–N4 | Included before submission (Stuart). |
+| Full-frame play area on desktop and tablet | Investigated, playable, included (Stuart asked for this). |
 
-## 4. Latest measurements (15 Nov 2026)
+## 4. What changed in this pass
 
-**Determinism:** pass at 60/120/144/165 Hz (3 seeds).
+- **Full-frame play field.** The field is 648 units high and 450–1152 wide, so it fills any frame from 9:16 to 16:9 (portrait phones get up to 800 high). Obstacle count scales with field area. No footer band, no side panels.
+- **First minute.** No modal on a first session; one click, tap or key starts; the ball rides the ring until GO (run 1 waits for the player to move); input-matched animated tutorial; a one-off "second chance" shield on a player's first three runs; softer edge damage on runs 1–2.
+- **Identity.** Own display typeface (NB Display), wordmark, inline SVG icons with labels, fixed colour roles.
+- **Screens.** Title with missions; HUD; stage banners on a plate in the top third; game over with stage strip, every unlock, next-upgrade progress and an inline upgrade button; pause with a 3-2-1 resume.
+- **Content.** 16 balls, 10 trails, 4 colour themes (some bought with shards, one from the day-7 streak); three mission ladders; pulsing circles from stage 3 and gated wall pairs from stage 5; a music layer per stage.
+- **Platform.** `gameplayStop`/`Start` around every pause; Escape unbound; M mutes, P pauses; safe-area insets; adaptive render quality.
+- **Audio.** Levels measured and balanced, output limiter, music ducking.
 
-**Bot simulation** (`node tests/bot.mjs`, default sittings):
+## 5. Measurements
 
-| Skill | First run ≥ 60 s | First-run median | Run length p10/p50/p90 | Runs per 10 min | Level at 10 min |
-|---|---|---|---|---|---|
-| novice | **17%** | 42 s | 21 / 35 / 47 s | 15.7 | 5 |
-| casual | 83% | 83 s | 40 / 61 / 82 s | 9.0 | 5 |
-| average | 100% | 107 s | 50 / 74 / 97 s | 7.7 | 5 |
-| good | 100% | 87 s | 47 / 71 / 98 s | 8.2 | 5 |
+See [docs/qa-record.md](../qa-record.md). Headlines: 38 of 38 automated QA checks pass; determinism holds at 60/120/144/165 Hz; 60 fps at 1920×1080 with software rendering; novice bots pass 60 s on their first run 100% of the time in portrait and 60% on the wide desktop field (17% before).
 
-The bot is a proxy, not a forecast. Treat "novice" as the low end of real first-time players.
+## 6. Open items
 
-**Live check at 821×462** (CrazyGames' smallest desktop iframe): no console errors; game starts and plays; the stage renders about 255 px wide with neon side panels either side.
+1. **Stuart to review** the three covers and two videos in `store/`, then say whether to submit.
+2. **Device checks** nobody has done yet: list in `docs/qa-record.md` ("Not tested here"). The iPhone and Chromebook checks matter most.
+3. **Listen to the audio.** Levels are measured, not heard.
+4. **Name check** in the CrazyGames catalogue.
+5. `store/` adds about 43 MB of video to the repository. If that is unwelcome, remove the two `.mp4` files from git and regenerate them when needed.
+6. Not pushed. `play/` (GitHub Pages copy) has not been refreshed; run `node scripts/publish-play.mjs --commit` when you want testers on the new build.
 
-## 5. Known gaps and findings (not yet fixed)
+## 7. Submission steps (developer.crazygames.com, Stuart's account)
 
-### 5.1 Blocking for Basic Launch submission
-1. **Store assets not started.** 3 covers (1920×1080, 800×1200, 800×800) and 2 preview videos (15–20 s, silent, 1080p 16:9 and 2:3). Rules in `crazygames-launch.md` §3.3.
-2. **Name not cleared.** "Bullseye" is a common game name (darts games especially). CrazyGames requires an original, non-confusable name. Search the CrazyGames catalogue and app stores before producing covers. Stuart decides the final name.
-3. **Small-window readability.** At 821×462 secondary text (title hint "Mouse / arrows / WASD", tutorial sub-line, privacy toast) is roughly 8–9 px on screen. The empty footer band (`CONFIG.footerFrac = 0.19`, 152 of 800 px) still takes stage height during play and shows nothing. Requirement: readable at DPR 1 at all sizes in `crazygames-launch.md` §3.1.
-4. **Tutorial copy is touch-only.** It says "drag anywhere to steer" even on desktop, where the ring follows the mouse. Copy should match the active input.
-5. **Escape is used** to close the settings and streak sheets (`src/js/11-screens.js:136`). CrazyGames lists Escape as a restricted key (it exits fullscreen). Remove it.
-6. **SDK gameplay events around pauses.** `autoPause()` (`src/js/07-telemetry.js:124`) and opening the collection or settings mid-run do not call `PLATFORM.gameplayStop()` / `gameplayStart()` on resume.
-7. **Telemetry decision outstanding** (`crazygames-launch.md` §6.4): the CrazyGames build still sends Supabase stats behind the privacy notice. Keep it (and check `privacy.html` covers it) or turn it off for that build.
-8. **Device testing not done:** Safari/iOS (audio unlock, safe areas, CrazyGames app fullscreen), touch on Android, a low-end Chromebook (60 fps with particles), 144 Hz monitor, CrazyGames' developer preview/QA tool.
+Stuart signs in. The agent does not enter passwords, accept terms or create accounts, and presses Submit only after an explicit yes.
 
-### 5.2 Engagement risks
-- **Conversion (target 80%+ play ≥ 1 min):** novice bots survive 60 s on run 1 only 17% of the time. A death under 60 s on the first run is a lost conversion.
-- **D1 retention (target 10–15%):** the content ladder is short. 8 balls + 6 trails, highest unlock at level 8, bots reach level 5 in 10 minutes. Most of the collection is gone within two sittings, so there is little to come back for on day 2.
-- **Playtime (target 10+ min):** bots reach 8–9 runs per 10 minutes at a 60–75 s median, which is on target only if retry stays instant and every run feels like progress.
-- **Game-over screen is minimal** ("Option A"): it does not show progress to the next upgrade or unlock, which the UX review recommended as the main "one more run" hook.
+1. New game → upload `store/neon-bullseye-crazygames.zip` (HTML5; `index.html` at the root).
+2. Fill the form from `docs/crazygames-listing.md`: title, description, controls, category, tags, orientation, devices.
+3. Upload `cover-1920x1080.png`, `cover-800x1200.png`, `cover-800x800.png`, `preview-1920x1080.mp4`, `preview-1080x1620.mp4`.
+4. Use the portal's preview to play one run and confirm the SDK events register.
+5. Stuart reviews the completed form, then submit.
 
-### 5.3 Full Launch only (after Basic Launch metrics pass)
-- Progress save through the CrazyGames SDK **Data module** (currently `localStorage`).
-- Ads decision (`crazygames-launch.md` §6.1): midgame ad after game over via `PLATFORM.adBreak`, pause and mute during it, continue if no fill; rewarded ad optional.
-- Optional: CrazyGames username/avatar; SDK locale (game is English-only).
+## 8. After submission
 
-## 6. Decisions only Stuart can make
-
-| Decision | Options / context | Default if no answer |
-|---|---|---|
-| Final game name | Must be original and searchable; covers depend on it | Do not produce final covers until decided |
-| Telemetry in CrazyGames build | Keep with notice, or off and rely on CrazyGames dashboard | Keep (current behaviour) |
-| Launch path | Basic Launch as playtest only, or aim for Full Launch with ads | Basic Launch first; Full Launch work after metrics |
-| Music | Keep procedural, or licensed royalty-free tracks (check licences/attribution) | Keep procedural |
-| Anything that changes a design pillar | Brief §3 | Don't |
-
-## 7. Submission mechanics
-
-- Submission is through the CrazyGames **developer portal**, under Stuart's account. Stuart does the sign-in; the agent must not enter passwords or accept terms for Stuart.
-- Upload: a zip of `dist/crazygames/` with `index.html` at the root (relative paths only, ≤ 1,500 files).
-- The form needs: title, description, controls, category and tags, orientation, devices, covers, videos. Draft copy is in `docs/crazygames-listing.md`.
-- After submission: QA feedback usually in 1–2 days, then Basic Launch (7–21 days, ≥ 500 plays). Updates during Basic Launch go live instantly.
+- **QA feedback:** usually 1–2 days. Fixes can be uploaded straight away.
+- **Basic Launch:** at least 7 days and 500 plays; ends automatically at 21 days. No ads, no revenue. Updates go live at once and show in the next daily refresh.
+- **Where to look:** developer.crazygames.com dashboard, refreshed daily; day-1 retention appears a day late.
+- **What is scored:** average playtime (target 10+ min), day-1 retention (10–15%), conversion (80%+ play at least a minute) and, for launches starting on or after 23 Nov 2026, thumbnail click-through rate (top 20% of the category).
+- **If a metric is weak:** conversion → look at first-run length and time to first input; playtime → runs per sitting and retry rate; D1 → mission and streak pacing; CTR → covers and the first two seconds of the video. The CrazyGames build has no telemetry of its own, so the dashboard is the only source.
+- **Full Launch (only if invited):** save through the SDK Data module instead of `localStorage`; decide on ads (`PLATFORM.adBreak` is a stub; rules in `crazygames-launch.md` §3.2); optional username and locale.
