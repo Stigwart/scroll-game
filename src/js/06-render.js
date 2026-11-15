@@ -125,7 +125,7 @@ function ringColor(ratio) { // green -> yellow -> red
 
 // ---- Target: a repulsor. Empty still zone in the middle (no force), ripples flowing outward from its edge,
 // and the ripples brighten on the ball's side in proportion to the push. Outer segmented ring = health only. ----
-const RING_SEGS = 24, RIPPLES = 3, RIPPLE_SPAN = 46, C_FIELD = '#8fefff', C_PUSH = '#ffe36b';
+const RIPPLES = 3, RIPPLE_SPAN = 46, C_FIELD = '#8fefff', C_PUSH = '#ffe36b';
 function drawTarget() {
   const g = game, tg = g.target, b = g.ball, R = CONFIG.ringRadius;
   const dx = b.x - tg.x, dy = b.y - tg.y, d = Math.hypot(dx, dy), sr = sweetR();
@@ -151,22 +151,20 @@ function drawTarget() {
   if (push > 0.02) { ctx.strokeStyle = C_PUSH; ctx.globalAlpha = push; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, sr, ang - 0.5, ang + 0.5); ctx.stroke(); }
   if (fx.zonePulse > 0.02) { ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = fx.zonePulse * 0.8; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, sr + (1 - fx.zonePulse) * 26, 0, 6.283); ctx.stroke(); }
   ctx.globalAlpha = 1;
-  // Health arc: segmented, drops segments, pulses red when low (colour means health only)
-  const lit = Math.ceil(hp * RING_SEGS - 1e-6), shown = Math.ceil(clamp(fx.hpShown, 0, 1) * RING_SEGS - 1e-6), span = 6.283 / RING_SEGS, gap = 0.07;
-  ctx.lineCap = 'butt'; ctx.lineWidth = 5;
-  ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.beginPath();
-  for (let i = lit; i < RING_SEGS; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
-  ctx.stroke();
-  if (shown > lit) { // segments just lost: flash then fade
-    ctx.strokeStyle = '#ff4060'; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(fx.t * 30); ctx.beginPath();
-    for (let i = lit; i < shown; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
-    ctx.stroke(); ctx.globalAlpha = 1;
+  // Health: one thin, quiet arc that empties clockwise. It thickens and brightens for a moment when health is lost
+  // and pulses red when low, so it only asks for attention when something happened.
+  const shownHp = clamp(fx.hpShown, 0, 1), A0 = -1.571, hit = clamp(fx.hpPulse, 0, 1);
+  ctx.lineCap = 'butt';
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.283); ctx.stroke();
+  if (shownHp > hp + 0.002) { // the chunk just lost: flashes, then drains away
+    ctx.strokeStyle = '#ff4060'; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(fx.t * 30); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, R, A0 + hp * 6.283, A0 + shownHp * 6.283); ctx.stroke(); ctx.globalAlpha = 1;
   }
-  const hc = low ? '#ff2a3a' : ringColor(1 - hp);
-  ctx.globalAlpha = low ? 0.55 + 0.45 * pulse : 1;
-  glow(hc, low ? 10 + 12 * pulse : 14); ctx.strokeStyle = hc; ctx.beginPath();
-  for (let i = 0; i < lit; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
-  ctx.stroke(); noGlow(); ctx.globalAlpha = 1;
+  if (hp > 0.002) {
+    const hc = low ? '#ff2a3a' : ringColor(1 - hp);
+    ctx.strokeStyle = hc; ctx.lineWidth = 2 + 2.5 * hit + (low ? 1.5 * pulse : 0); ctx.globalAlpha = low ? 0.6 + 0.4 * pulse : 0.5 + 0.5 * hit;
+    if (hit > 0.3 || low) glow(hc, 10);
+    ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, 0, R, A0, A0 + hp * 6.283); ctx.stroke(); noGlow(); ctx.lineCap = 'butt'; ctx.globalAlpha = 1;
+  }
   // Hit cracks across the ring
   if (fx.cracks.length) {
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;

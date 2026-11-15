@@ -12,7 +12,7 @@ function load() {
     localStorage: { getItem: k => store[k] ?? null, setItem: (k, v) => { store[k] = String(v); }, removeItem: k => delete store[k] }, getComputedStyle: stub, requestAnimationFrame() {}, fetch: () => Promise.reject(), location: { search: '?notel=1' }, crypto: { getRandomValues: a => a }, console, Math, JSON, Date, setTimeout() {}, setInterval() {}, clearTimeout() {} });
   Object.assign(ctx, win, { window: ctx });
   const F = (process.env.FIELD || '').split('x').map(Number); // FIELD=1152x648 simulates the wide layout
-  vm.runInContext((process.env.WN ? `var WIDE_NEW_OVERRIDE=${+process.env.WN};` : '') + (process.env.EA ? `var EDGE_ASSIST_OVERRIDE=${+process.env.EA};` : '') + code + '\n;' + (F.length === 2 ? `W=${F[0]};H=${F[1]};PH=${F[1]};FH=0;` : '') + 'globalThis.__t={game,update,resetRun,seedSim,meta,UPG,upgCost,applyMods,playerLvl,prog};', ctx);
+  vm.runInContext((process.env.WN ? `var WIDE_NEW_OVERRIDE=${+process.env.WN};` : '') + (process.env.EA ? `var EDGE_ASSIST_OVERRIDE=${+process.env.EA};` : '') + (process.env.PA ? `var PUSH_ASSIST_OVERRIDE=${+process.env.PA};` : '') + code + '\n;' + (F.length === 2 ? `W=${F[0]};H=${F[1]};PH=${F[1]};FH=0;` : '') + 'globalThis.__t={game,update,resetRun,seedSim,meta,UPG,upgCost,applyMods,playerLvl,prog};', ctx);
   return ctx.__t;
 }
 // skill: finger speed (px/s), reaction delay (s), aim noise (px), lead (s)

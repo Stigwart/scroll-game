@@ -199,4 +199,9 @@ Order: P18 first (safety net), then P6 (everything else is laid out on it), P1â€
 
 The simulation rules are unchanged. Bot note: the bots keep the ball centred and never push to the star, so their first runs now include up to 14 s of lesson with no shapes; their first-run numbers are inflated by that and are not comparable with earlier tables.
 
-**Not done:** this build (1.0.1) is not uploaded to CrazyGames; the submission under review is 1.0.0 with the old target.
+**Second round of feedback (Stuart, same day), build 1.0.2:**
+
+- [x] The still zone is back to its original size for everyone. New players no longer get a larger one; instead the push is 40% gentler on run 1 and 20% on run 2 (novice bots: 100% pass 60 s on run 1 on both fields; without the compensation the wide-field figure fell to 20%).
+- [x] The health ring is now one thin, quiet arc that empties clockwise. It thickens and brightens briefly when health is lost and pulses red when low. The thick dashed green ring is gone.
+
+**Not done:** 1.0.2 is not uploaded to CrazyGames; the submission under review is 1.0.0 with the old target.

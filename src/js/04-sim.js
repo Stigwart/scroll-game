@@ -15,6 +15,7 @@ function obstacleGap(b, o) {
 const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, (typeof prog !== 'undefined' && prog.runs < 3) ? WIDE_NEW : 0.8, clamp((W - REF_W) / (MAX_W - REF_W), 0, 1));
 const WIDE_NEW = typeof WIDE_NEW_OVERRIDE === 'number' ? WIDE_NEW_OVERRIDE : 0.6;
 // Opening hold: the ball rides in the ring until GO, so every run starts from control (run 1 waits for the player to move)
+const PUSH_ASSIST = typeof PUSH_ASSIST_OVERRIDE === 'number' ? PUSH_ASSIST_OVERRIDE : 0.4;
 const EDGE_ASSIST = typeof EDGE_ASSIST_OVERRIDE === 'number' ? EDGE_ASSIST_OVERRIDE : 0.85;
 const TUT_GOAL_MAX = 14;   // seconds the push lesson waits before giving up and starting the run proper
 const HOLD_S = 0.8, HOLD_TUT_MAX = 8;
@@ -72,7 +73,7 @@ function step(dt) {
   const dx = b.x - tg.x, dy = b.y - tg.y, d = Math.hypot(dx, dy) || 1e-6;
   const excess = Math.max(0, d - sweetR());
   if (d <= sweetR()) g.stats.sweetTime += dt;
-  const repel = T.repel * MOD.calm * (1 + 0.55 * L) * CONFIG.repulsionUnit * excess;   // (a) away from target
+  const repel = T.repel * MOD.calm * (1 + 0.55 * L) * CONFIG.repulsionUnit * excess * (1 - PUSH_ASSIST * assist());   // gentler push on a player's first two runs   // (a) away from target
   ax += dx / d * repel; ay += dy / d * repel;
   ax += (W / 2 - b.x) * T.pull; ay += (PH * 0.5 - b.y) * T.pull;             // (b) towards screen centre
   ay -= T.up;                                                                // (c) upward bias
