@@ -12,9 +12,11 @@ if (!BUILD.devUI) ['gear', 'panel'].forEach(i => { const n = document.getElement
 ['touchend', 'click'].forEach(ev => document.addEventListener(ev, () => Audio_.unlock(), { capture: true, passive: true }));
 // Main loop
 // ============================================================
-let last = performance.now();
+let last = performance.now(), _ema = 16, _slow = 0;
 function frame(now) {
   const dt = Math.min((now - last) / 1000, CONFIG.maxFrame); last = now;
+  // Adaptive quality: if frames stay slow (EMA > 21 ms for ~1.5 s of play), step the render resolution down; step 2 also drops glows
+  if (game.state === 'play' && !game.paused && dt < 0.1) { _ema += (dt * 1000 - _ema) * 0.05; if (_ema > 21) { if ((_slow += dt) > 1.5 && game.q < QUALITY.length - 1) { game.q++; game.lowFx = game.q >= 2; _slow = 0; _ema = 16; resize(); } } else _slow = 0; }
   update(dt); render(); syncPw(); syncScreens();
   requestAnimationFrame(frame);
 }

@@ -4,6 +4,8 @@ const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 // Logical play field. Height 648 with width 450..1152 on landscape frames (fills 16:9), width 450 with height 648..800 on portrait.
 // Physics units are the same everywhere; obstacle density is normalised by fieldK() (04-sim.js).
+// Render quality steps (canvas resolution multiplier). 99-main.js steps down when frames stay slow; step 2 also drops glows.
+const QUALITY = [1, 0.75, 0.58];
 const START_Y = 0.42;   // ring/ball start height (fraction of the field)
 const REF_W = 450, REF_H = 648, MAX_W = 1152, MAX_H = 800;
 let W = REF_W, H = REF_H, DPR = 1, SCALE = 1, RS = 1, PH = REF_H, FH = 0, SAFE = { t: 0, r: 0, b: 0, l: 0 }; // PH = play-area height (footer starts at y=PH); RS = DPR*SCALE
@@ -20,7 +22,8 @@ function resize() {
   SAFE = safeInsets();
   const vw = Math.max(50, window.innerWidth - SAFE.l - SAFE.r), vh = Math.max(50, window.innerHeight - SAFE.t - SAFE.b);
   const f = fieldFor(vw, vh); W = f.w; H = f.h; PH = H; FH = 0;
-  SCALE = Math.min(vw / W, vh / H); RS = DPR * SCALE;
+  SCALE = Math.min(vw / W, vh / H);
+  RS = Math.min(DPR * SCALE, 1920 / W, 1920 / H) * QUALITY[game.q || 0];   // backing store: at most 1920 px on the long side, scaled down further in low-effects modes
   stageEl.style.width = W + 'px'; stageEl.style.height = H + 'px';
   stageEl.style.transform = 'translate(' + (SAFE.l + (vw - W * SCALE) / 2) + 'px,' + (SAFE.t + (vh - H * SCALE) / 2) + 'px) scale(' + SCALE + ')';
   stageEl.style.setProperty('--s', SCALE); stageEl.style.setProperty('--oy', Math.round((H - REF_H) / 2) + 'px'); stageEl.classList.toggle('wide', W > 700);
@@ -65,7 +68,7 @@ function rgbToHex(s) {
 // ============================================================
 const game = {
   state: 'start',            // start | play | over
-  paused: false, resumeT: 0,  // visibility/panel pause; resumeT > 0 = 3-2-1 countdown before play continues
+  q: 0, lowFx: false, paused: false, resumeT: 0,  // visibility/panel pause; resumeT > 0 = 3-2-1 countdown before play continues
   t: 0,                      // survival time
   health: CONFIG.startHealth, maxHealth: CONFIG.startHealth, runSum: null,
   best: parseFloat(lsGet(STORE_BEST)) || 0,

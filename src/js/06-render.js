@@ -3,7 +3,7 @@
 const FONT_DISPLAY = '"NB Display","Trebuchet MS",system-ui,sans-serif';   // own display face (scripts/font.py), embedded by the build
 const FONT_UI = 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif';
 try { document.fonts.load('20px "NB Display"').then(() => { for (const k in _dw) delete _dw[k]; }); } catch (e) {}
-function glow(color, blur) { ctx.shadowColor = color; ctx.shadowBlur = blur; }
+function glow(color, blur) { if (game.lowFx) return; ctx.shadowColor = color; ctx.shadowBlur = blur; }
 function noGlow() { ctx.shadowBlur = 0; }
 
 // Text helper. opts: {font:'display'|'ui', align, alpha}
@@ -45,21 +45,26 @@ function polyPath(x, y, r, n, rot) {
   if (!n) { ctx.moveTo(x + r, y); ctx.arc(x, y, r, 0, 6.283); return; }
   for (let i = 0; i <= n; i++) { const a = rot + i * 6.283 / n; if (i) ctx.lineTo(x + Math.cos(a) * r, y + Math.sin(a) * r); else ctx.moveTo(x + Math.cos(a) * r, y + Math.sin(a) * r); }
 }
+let _bg = null, _bgx = null;
 function drawBackground(pal) {
   const g = game, sf = g.stageF();
-  const grd = ctx.createLinearGradient(0, 0, 0, H);
+  // Gradient + soft colour blobs are drawn small (1/8 scale) and stretched: identical look, a fraction of the fill cost
+  if (!_bg) { _bg = document.createElement('canvas'); _bgx = _bg.getContext('2d'); }
+  const bw = Math.max(2, Math.ceil(W / 8)), bh = Math.max(2, Math.ceil(H / 8));
+  if (_bg.width !== bw || _bg.height !== bh) { _bg.width = bw; _bg.height = bh; }
+  const c = _bgx; c.setTransform(bw / W, 0, 0, bh / H, 0, 0); c.globalCompositeOperation = 'source-over';
+  const grd = c.createLinearGradient(0, 0, 0, H);
   grd.addColorStop(0, pal[0]); grd.addColorStop(1, pal[1]);
-  ctx.fillStyle = grd; ctx.fillRect(0, 0, W, H);
-  // Soft drifting colour blobs
-  ctx.globalCompositeOperation = 'lighter';
+  c.fillStyle = grd; c.fillRect(0, 0, W, H);
+  c.globalCompositeOperation = 'lighter';
   for (const bl of g.blobs) {
     const x = bl.x * W, y = bl.y * H, r = bl.r * Math.max(W, H);
-    const rg = ctx.createRadialGradient(x, y, 0, x, y, r);
-    const c = bl.c ? pal[3] : pal[2];
-    rg.addColorStop(0, rgba(c, 0.16 + 0.05 * sf)); rg.addColorStop(1, rgba(c, 0));
-    ctx.fillStyle = rg; ctx.fillRect(x - r, y - r, r * 2, r * 2);
+    const rg = c.createRadialGradient(x, y, 0, x, y, r);
+    const cc = bl.c ? pal[3] : pal[2];
+    rg.addColorStop(0, rgba(cc, 0.16 + 0.05 * sf)); rg.addColorStop(1, rgba(cc, 0));
+    c.fillStyle = rg; c.fillRect(x - r, y - r, r * 2, r * 2);
   }
-  ctx.globalCompositeOperation = 'source-over';
+  ctx.imageSmoothingEnabled = true; ctx.imageSmoothingQuality = 'high'; ctx.drawImage(_bg, 0, 0, W, H);
   // Parallax geometry: 3 slow layers, shape type changes per stage
   if (!PAR) initPar();
   const sides = STAGE_SIDES[Math.min(7, Math.floor(sf))], bx = g.bgOff.x, by = g.bgOff.y;
@@ -104,7 +109,8 @@ function drawObstacles(pal, alpha) {
     ctx.fillStyle = 'rgba(4,2,12,0.55)'; ctx.fill();
     ctx.strokeStyle = 'rgba(0,0,0,0.9)'; ctx.lineWidth = 6; ctx.stroke();            // dark outline
     ctx.fillStyle = rgba(col, 0.2); ctx.fill();
-    glow(col, 9); ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke(); noGlow(); // colour stroke
+    ctx.strokeStyle = rgba(col, 0.22); ctx.lineWidth = 9; ctx.stroke();               // soft glow without a shadow blur
+    ctx.strokeStyle = col; ctx.lineWidth = 2.5; ctx.stroke();                          // colour stroke
     obstaclePath(o, 5); ctx.strokeStyle = 'rgba(255,255,255,0.28)'; ctx.lineWidth = 1; ctx.stroke(); // inner stroke
   }
   ctx.restore();
