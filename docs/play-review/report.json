@@ -1,0 +1,535 @@
+[
+ {
+  "name": "d-821x462",
+  "retryMs": 4
+ },
+ {
+  "name": "d-821x462",
+  "input": "mouse",
+  "modalOnFirstLoad": true,
+  "loadMs": 50,
+  "startDelay": 80,
+  "died": 63.7,
+  "frameMs": {
+   "n": 3845,
+   "p50": 16.69999999999709,
+   "p95": 16.700000000004366,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    11,
+    "mute",
+    "🔊",
+    24
+   ],
+   [
+    11,
+    "rCol",
+    "◈",
+    24
+   ],
+   [
+    11,
+    "rDaily",
+    "☼",
+    24
+   ],
+   [
+    11,
+    "rSet",
+    "⚙",
+    24
+   ],
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ]
+  ]
+ },
+ {
+  "name": "d-907x510",
+  "input": "mouse",
+  "modalOnFirstLoad": true,
+  "loadMs": 47,
+  "startDelay": 82,
+  "died": 41.1,
+  "frameMs": {
+   "n": 2457,
+   "p50": 16.69999999999709,
+   "p95": 16.700000000004366,
+   "p99": 16.80000000000109
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ],
+   [
+    12,
+    "k",
+    "LEVEL",
+    42
+   ],
+   [
+    12,
+    "k",
+    "SHARDS",
+    78
+   ],
+   [
+    12,
+    "k",
+    "CONTROLS",
+    73
+   ],
+   [
+    12,
+    "k",
+    "Keep the ball in the bul",
+    201
+   ]
+  ]
+ },
+ {
+  "name": "d-1077x606",
+  "input": "key",
+  "modalOnFirstLoad": true,
+  "loadMs": 49,
+  "startDelay": 4,
+  "died": 43.9,
+  "frameMs": {
+   "n": 2630,
+   "p50": 16.69999999999709,
+   "p95": 16.799999999995634,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ],
+   [
+    12,
+    "k",
+    "LEVEL",
+    42
+   ],
+   [
+    12,
+    "k",
+    "SHARDS",
+    78
+   ],
+   [
+    12,
+    "k",
+    "CONTROLS",
+    73
+   ],
+   [
+    12,
+    "k",
+    "Keep the ball in the bul",
+    212
+   ]
+  ]
+ },
+ {
+  "name": "d-1216x684",
+  "input": "mouse",
+  "modalOnFirstLoad": true,
+  "loadMs": 30,
+  "startDelay": 81,
+  "died": 40.3,
+  "frameMs": {
+   "n": 2436,
+   "p50": 16.69999999999709,
+   "p95": 16.700000000004366,
+   "p99": 16.80000000000109
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ],
+   [
+    12,
+    "k",
+    "LEVEL",
+    42
+   ],
+   [
+    12,
+    "k",
+    "SHARDS",
+    78
+   ],
+   [
+    12,
+    "k",
+    "CONTROLS",
+    73
+   ],
+   [
+    12,
+    "k",
+    "Keep the ball in the bul",
+    212
+   ]
+  ]
+ },
+ {
+  "name": "f-1280x720",
+  "input": "mouse",
+  "modalOnFirstLoad": true,
+  "loadMs": 30,
+  "startDelay": 82,
+  "died": 42.6,
+  "frameMs": {
+   "n": 2560,
+   "p50": 16.69999999999709,
+   "p95": 16.799999999999272,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ],
+   [
+    12,
+    "k",
+    "LEVEL",
+    42
+   ],
+   [
+    12,
+    "k",
+    "SHARDS",
+    78
+   ],
+   [
+    12,
+    "k",
+    "CONTROLS",
+    73
+   ],
+   [
+    12,
+    "k",
+    "Keep the ball in the bul",
+    212
+   ]
+  ]
+ },
+ {
+  "name": "f-1366x768",
+  "input": "key",
+  "modalOnFirstLoad": true,
+  "loadMs": 31,
+  "startDelay": 3,
+  "died": 45.5,
+  "frameMs": {
+   "n": 2723,
+   "p50": 16.69999999999709,
+   "p95": 16.700000000004366,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ],
+   [
+    12,
+    "k",
+    "LEVEL",
+    42
+   ],
+   [
+    12,
+    "k",
+    "SHARDS",
+    78
+   ],
+   [
+    12,
+    "k",
+    "CONTROLS",
+    73
+   ],
+   [
+    12,
+    "k",
+    "Keep the ball in the bul",
+    212
+   ]
+  ]
+ },
+ {
+  "name": "f-1536x864",
+  "input": "mouse",
+  "modalOnFirstLoad": true,
+  "loadMs": 34,
+  "startDelay": 80,
+  "died": 41.5,
+  "frameMs": {
+   "n": 2498,
+   "p50": 16.69999999999709,
+   "p95": 16.799999999999272,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ],
+   [
+    12,
+    "k",
+    "LEVEL",
+    42
+   ],
+   [
+    12,
+    "k",
+    "SHARDS",
+    78
+   ],
+   [
+    12,
+    "k",
+    "CONTROLS",
+    73
+   ],
+   [
+    12,
+    "k",
+    "Keep the ball in the bul",
+    212
+   ]
+  ]
+ },
+ {
+  "name": "f-1920x1080",
+  "retryMs": 1
+ },
+ {
+  "name": "f-1920x1080",
+  "input": "mouse",
+  "modalOnFirstLoad": true,
+  "loadMs": 55,
+  "startDelay": 77,
+  "died": 64.1,
+  "frameMs": {
+   "n": 3895,
+   "p50": 16.69999999999709,
+   "p95": 16.799999999995634,
+   "p99": 16.80000000000291
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ],
+   [
+    12,
+    "k",
+    "LEVEL",
+    42
+   ],
+   [
+    12,
+    "k",
+    "SHARDS",
+    78
+   ],
+   [
+    12,
+    "k",
+    "CONTROLS",
+    73
+   ],
+   [
+    12,
+    "k",
+    "Keep the ball in the bul",
+    212
+   ]
+  ]
+ },
+ {
+  "name": "m-800x450",
+  "retryMs": 32
+ },
+ {
+  "name": "m-800x450",
+  "input": "touch",
+  "modalOnFirstLoad": true,
+  "loadMs": 29,
+  "startDelay": 34,
+  "died": 30.9,
+  "frameMs": {
+   "n": 1850,
+   "p50": 16.69999999999891,
+   "p95": 16.700000000000728,
+   "p99": 16.800000000000182
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    10.7,
+    "mute",
+    "🔊",
+    24
+   ],
+   [
+    10.7,
+    "rCol",
+    "◈",
+    24
+   ],
+   [
+    10.7,
+    "rDaily",
+    "☼",
+    24
+   ],
+   [
+    10.7,
+    "rSet",
+    "⚙",
+    24
+   ],
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ]
+  ]
+ },
+ {
+  "name": "t-1080x607",
+  "input": "touch",
+  "modalOnFirstLoad": true,
+  "loadMs": 49,
+  "startDelay": 32,
+  "died": 41.8,
+  "frameMs": {
+   "n": 2529,
+   "p50": 16.69999999999709,
+   "p95": 16.700000000004366,
+   "p99": 16.80000000000109
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    12,
+    "k",
+    "BEST",
+    72
+   ],
+   [
+    12,
+    "k",
+    "LEVEL",
+    42
+   ],
+   [
+    12,
+    "k",
+    "SHARDS",
+    78
+   ],
+   [
+    12,
+    "k",
+    "CONTROLS",
+    73
+   ],
+   [
+    12,
+    "k",
+    "Keep the ball in the bul",
+    212
+   ]
+  ]
+ },
+ {
+  "name": "p-390x844",
+  "retryMs": 34
+ },
+ {
+  "name": "p-390x844",
+  "input": "touch",
+  "modalOnFirstLoad": true,
+  "loadMs": 30,
+  "startDelay": 34,
+  "died": 37.7,
+  "frameMs": {
+   "n": 2251,
+   "p50": 16.69999999999891,
+   "p95": 16.700000000004366,
+   "p99": 16.80000000000109
+  },
+  "errs": [],
+  "smallestDomText": [
+   [
+    16.5,
+    "mute",
+    "🔊",
+    36
+   ],
+   [
+    16.5,
+    "rCol",
+    "◈",
+    36
+   ],
+   [
+    16.5,
+    "rDaily",
+    "☼",
+    36
+   ],
+   [
+    16.5,
+    "rSet",
+    "⚙",
+    36
+   ],
+   [
+    19.1,
+    "gear",
+    "⚙",
+    36
+   ]
+  ]
+ }
+]
