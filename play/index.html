@@ -190,7 +190,7 @@ const PLATFORM = {
 PLATFORM.init();
 
 const TELEMETRY = { url: 'https://ahbfawcyytdrmmxepxjy.supabase.co/rest/v1/runs', key: 'sb_publishable_pWDVpRghWtIJLmDtPlQqag_lGzBQU3x', enabled: BUILD.telemetry && !/[?&]notel=1/.test(location.search) };
-const GAME_VERSION = '1.0.0' + (BUILD.target === 'web' ? '' : '+' + BUILD.target);
+const GAME_VERSION = '1.0.1' + (BUILD.target === 'web' ? '' : '+' + BUILD.target);
 // ============================================================
 // CONFIG: fixed constants + tunable params (exposed in panel)
 // ============================================================
@@ -344,10 +344,10 @@ const game = {
   shake: 0, flash: 0, edgeTouch: false,
   overAt: 0, acc: 0,
   bgT: 0, bgOff: { x: 0, y: 0 }, blobs: [],
-  stats: { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0 },
+  stats: { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0, clean: 0, cleanMax: 0 },
   shield: 0, safeUntil: 0, hold: false, holdT: 0, holdMove: 0, hitStop: 0, slowMo: 0,     // frame-time seconds (cosmetic pacing; never affects sim results)
   reduceMotion: lsGet('scrollgame.rm') === '1',
-  tutorial: '', tutSpawnAt: -1, breatherUntil: 0, stageSeen: 0, bestPassed: false, prevBest: 0, msDone: 0,
+  tutorial: '', tutGoals: null, tutSpawnAt: -1, breatherUntil: 0, stageSeen: 0, bestPassed: false, prevBest: 0, msDone: 0,
   mouseGoal: null, tutRun: false
 };
 game.stageName = () => CONFIG.stageNames[Math.min(7, Math.floor(game.stageF()))];
@@ -368,8 +368,8 @@ initBlobs();
 
 function resetRun() {
   game.pw = newPw(); game.pwUsed = 0; MOD.sweetTemp = 0; MOD.calm = 1; game.t = 0; game.maxHealth = CONFIG.startHealth * MOD.hp; game.health = game.maxHealth; game.newBest = false;
-  game.stats = { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0 };
-  game.shield = typeof prog !== 'undefined' && prog.runs < SHIELD_RUNS ? 1 : 0; game.safeUntil = 0; game.hold = true; game.holdT = 0; game.holdMove = 0; game.hitStop = 0; game.slowMo = 0; game.tutorial = ''; game.tutSpawnAt = -1; game.breatherUntil = 0; game.stageSeen = 0;
+  game.stats = { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0, clean: 0, cleanMax: 0 };
+  game.shield = typeof prog !== 'undefined' && prog.runs < SHIELD_RUNS ? 1 : 0; game.safeUntil = 0; game.hold = true; game.holdT = 0; game.holdMove = 0; game.tutGoals = null; game.hitStop = 0; game.slowMo = 0; game.tutorial = ''; game.tutSpawnAt = -1; game.breatherUntil = 0; game.stageSeen = 0;
   game.bestPassed = false; game.prevBest = game.best; game.msDone = 0; game.mouseGoal = null; game.tutRun = typeof prog !== 'undefined' && prog.runs === 0;
   game.obstacles = []; game.trailSt = newTrailSt(); game.unlockedNow = []; game.spawnTimer = 1.5;
   game.shake = 0; game.flash = 0; game.acc = 0;
@@ -585,6 +585,7 @@ const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, (typeof prog !== 'unde
 const WIDE_NEW = typeof WIDE_NEW_OVERRIDE === 'number' ? WIDE_NEW_OVERRIDE : 0.6;
 // Opening hold: the ball rides in the ring until GO, so every run starts from control (run 1 waits for the player to move)
 const EDGE_ASSIST = typeof EDGE_ASSIST_OVERRIDE === 'number' ? EDGE_ASSIST_OVERRIDE : 0.85;
+const TUT_GOAL_MAX = 14;   // seconds the push lesson waits before giving up and starting the run proper
 const HOLD_S = 0.8, HOLD_TUT_MAX = 8;
 // Second chance: on a player's first SHIELD_RUNS runs the first lethal hit refills health instead (fraction by run number)
 const SHIELD_RUNS = 3, SHIELD_REFILL = [0.7, 0.5, 0.4];
@@ -612,8 +613,14 @@ function step(dt) {
     fxe('milestone', { secs: m[0], shards: m[1] });
   }
   if (!g.bestPassed && g.prevBest > 0 && g.t > g.prevBest) { g.bestPassed = true; fxe('newBestPassed'); }
-  if (g.tutRun) {
-    if (g.t < 5) g.tutorial = 'centre';
+  g.stats.clean += dt; if (g.stats.clean > g.stats.cleanMax) g.stats.cleanMax = g.stats.clean;
+  if (g.tutRun) { // run 1: push the ball into two markers (no shapes meanwhile), then the first slow shape with a dodge hint
+    if (g.tutGoals === null) { const x0 = b.x, y0 = b.y; g.tutGoals = [[clamp(x0 + 150, 70, W - 70), clamp(y0 - 50, 110, PH - 90)], [clamp(x0 - 150, 70, W - 70), clamp(y0 + 70, 110, PH - 90)]]; }
+    if (g.tutGoals.length && g.t > TUT_GOAL_MAX) g.tutGoals.length = 0;
+    if (g.tutGoals.length && Math.hypot(b.x - g.tutGoals[0][0], b.y - g.tutGoals[0][1]) < 34) {
+      const gl = g.tutGoals.shift(); g.stats.bonusShards += 5; fxe('tutGoal', { x: gl[0], y: gl[1], last: !g.tutGoals.length });
+    }
+    if (g.tutGoals.length) g.tutorial = 'push';
     else if (g.tutSpawnAt >= 0 && g.t - g.tutSpawnAt < 4) g.tutorial = 'dodge';
     else g.tutorial = '';
   }
@@ -645,7 +652,7 @@ function step(dt) {
   b.x += b.vx * dt; b.y += b.vy * dt;
 
   // Obstacles (e): move, collide, cull
-  if (!(g.tutRun && g.t < 5)) g.spawnTimer -= g.t < g.breatherUntil ? dt * 0.25 : dt;
+  if (!(g.tutRun && g.tutGoals && g.tutGoals.length)) g.spawnTimer -= g.t < g.breatherUntil ? dt * 0.25 : dt;
   if (g.spawnTimer <= 0) {
     const cost = spawnObstacle();
     if (g.tutRun && g.tutSpawnAt < 0) { // first obstacle of run 1: gentle, and flagged for the 'dodge' hint
@@ -675,7 +682,7 @@ function step(dt) {
       if (!rm) g.shake = Math.max(g.shake, 3); telHit(o); Audio_.sfx('hit');
       if (g.t - (o.dmgAt === undefined ? -9 : o.dmgAt) > 0.6) { // one damage tick per obstacle contact
         o.dmgAt = g.t; const dmg = g.t < g.safeUntil ? 0 : T.hit * (1 + 0.2 * L) * (1 - 0.4 * assist());
-        g.health -= dmg; g.stats.hits++; if (!rm) g.hitStop = 0.06;
+        g.health -= dmg; g.stats.hits++; g.stats.clean = 0; if (!rm) g.hitStop = 0.06;
         fxe('hit', { x: b.x, y: b.y, dmg }); g.flash = Math.min(0.35, g.flash + 0.25);
       }
     }
@@ -1046,8 +1053,8 @@ function trailDraw(c, st, id, r, col) {
 
 // ---- Persistence + unlock rules ----
 function lsJSON(k, def) { try { const v = JSON.parse(lsGet(k)); return v == null ? def : v; } catch (e) { return def; } }
-const prog = { runs: 0, best: 0, nearMissBest: 0, stageMax: 0, sweetBest: 0 };   // last three: best single-run skill stats, used by skill unlocks
-(function () { const s = lsJSON(STORE_PROG, {}); prog.runs = +s.runs || 0; prog.best = Math.max(+s.best || 0, game.best); prog.nearMissBest = +s.nearMissBest || 0; prog.stageMax = +s.stageMax || 0; prog.sweetBest = +s.sweetBest || 0; })();
+const prog = { runs: 0, best: 0, nearMissBest: 0, stageMax: 0, sweetBest: 0, cleanBest: 0 };   // last three: best single-run skill stats, used by skill unlocks
+(function () { const s = lsJSON(STORE_PROG, {}); prog.runs = +s.runs || 0; prog.best = Math.max(+s.best || 0, game.best); prog.nearMissBest = +s.nearMissBest || 0; prog.stageMax = +s.stageMax || 0; prog.sweetBest = +s.sweetBest || 0; prog.cleanBest = +s.cleanBest || 0; })();
 const unlocked = new Set((function () { const a = lsJSON(STORE_UNLOCKS, []); return Array.isArray(a) ? a : []; })());
 const sel = { balls: 'orb', trails: 'classic', themes: 'neon' };
 (function () { const s = lsJSON(STORE_SEL, {}); for (const k in sel) if (typeof s[k] === 'string') sel[k] = s[k]; })();
@@ -1059,7 +1066,7 @@ function unlockText(it) {
   if (u.type === 'buy') return 'Buy  \u25c6 ' + u.v; if (u.type === 'streak') return u.v + '-day streak reward';
   return u.type === 'level' ? 'Reach level ' + u.v : u.type === 'time' ? 'Survive ' + u.v + 's' : u.type === 'near' ? u.v + ' near misses in one run'
     : u.type === 'stage' ? 'Reach Stage ' + u.v + (CONFIG.stageNames && CONFIG.stageNames[u.v - 1] ? ' (' + CONFIG.stageNames[u.v - 1] + ')' : '')
-    : u.type === 'sweet' ? u.v + 's in the sweet spot, one run' : 'Play ' + u.v + ' runs';
+    : u.type === 'sweet' ? u.v + 's in the still zone, one run' : 'Play ' + u.v + ' runs';
 }
 function unlockMet(it) {
   const u = it.unlock; if (!u) return true;
@@ -1076,7 +1083,7 @@ function countUnlocked(kind) { return LISTS[kind].filter(it => isUnlocked(kind, 
 function recordRun(seconds) {
   prog.runs++; prog.best = Math.max(prog.best, seconds);
   const st = game.stats;
-  if (st) { prog.nearMissBest = Math.max(prog.nearMissBest, st.nearMiss || 0); prog.stageMax = Math.max(prog.stageMax, st.stageMax || 0); prog.sweetBest = Math.max(prog.sweetBest, st.sweetTime || 0); }
+  if (st) { prog.nearMissBest = Math.max(prog.nearMissBest, st.nearMiss || 0); prog.stageMax = Math.max(prog.stageMax, st.stageMax || 0); prog.sweetBest = Math.max(prog.sweetBest, st.sweetTime || 0); prog.cleanBest = Math.max(prog.cleanBest, st.cleanMax || 0); }
   const fresh = []; // every unlock earned this run is announced on the game-over screen
   for (const kind in LISTS) for (const it of LISTS[kind]) {
     if (!isUnlocked(kind, it) && unlockMet(it)) { unlocked.add(ukey(kind, it)); fresh.push(it.name); }
@@ -1085,7 +1092,7 @@ function recordRun(seconds) {
 }
 function unlockAll() { for (const kind in LISTS) for (const it of LISTS[kind]) if (it.unlock) unlocked.add(ukey(kind, it)); saveCosm(); if (collOpen) renderColl(); }
 function resetUnlocks() {
-  unlocked.clear(); prog.runs = 0; prog.best = 0; prog.nearMissBest = 0; prog.stageMax = 0; prog.sweetBest = 0; sel.balls = 'orb'; sel.trails = 'classic'; sel.themes = 'neon'; saveCosm(); if (collOpen) renderColl();
+  unlocked.clear(); prog.runs = 0; prog.best = 0; prog.nearMissBest = 0; prog.stageMax = 0; prog.sweetBest = 0; prog.cleanBest = 0; sel.balls = 'orb'; sel.trails = 'classic'; sel.themes = 'neon'; saveCosm(); if (collOpen) renderColl();
 }
 document.getElementById('unlockAll').addEventListener('click', unlockAll);
 document.getElementById('resetUnlocks').addEventListener('click', resetUnlocks);
@@ -1289,34 +1296,41 @@ function ringColor(ratio) { // green -> yellow -> red
   return 'hsl(' + h + ',100%,55%)';
 }
 
-// ---- Reticle + ring-as-health ----
-const RING_SEGS = 24;
+// ---- Target: a repulsor. Empty still zone in the middle (no force), ripples flowing outward from its edge,
+// and the ripples brighten on the ball's side in proportion to the push. Outer segmented ring = health only. ----
+const RING_SEGS = 24, RIPPLES = 3, RIPPLE_SPAN = 46, C_FIELD = '#8fefff', C_PUSH = '#ffe36b';
 function drawTarget() {
   const g = game, tg = g.target, b = g.ball, R = CONFIG.ringRadius;
-  const d = Math.hypot(b.x - tg.x, b.y - tg.y), sr = sweetR();
-  const col = ringColor((d - sr) / (CONFIG.ringRadius * 1.6));
+  const dx = b.x - tg.x, dy = b.y - tg.y, d = Math.hypot(dx, dy), sr = sweetR();
+  const push = g.hold || d <= sr ? 0 : clamp(0.4 + 0.6 * (d - sr) / 34, 0, 1), ang = Math.atan2(dy, dx);   // 0 inside the still zone
   const hp = g.maxHealth ? clamp(g.health / g.maxHealth, 0, 1) : 1;
   const low = hp < 0.25 && g.state === 'play';
   const pulse = low ? 0.5 + 0.5 * Math.sin(fx.t * 11) : 0;
   ctx.save(); ctx.translate(tg.x, tg.y);
-  // Rotating bezel: tick marks + counter-rotating arc dashes
-  ctx.save(); ctx.rotate(fx.bezel);
-  ctx.strokeStyle = col; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5; ctx.beginPath();
-  for (let i = 0; i < 48; i++) {
-    const a = i * 0.1309, big = i % 6 === 0, r0 = R + 9, r1 = R + (big ? 17 : 13), c = Math.cos(a), s = Math.sin(a);
-    ctx.moveTo(c * r0, s * r0); ctx.lineTo(c * r1, s * r1);
+  // Still zone: calm, empty disc; its edge is exactly where the push begins
+  ctx.fillStyle = 'rgba(160,240,255,0.10)'; ctx.beginPath(); ctx.arc(0, 0, sr, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = C_FIELD; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 1;
+  // Ripples: travel outward from the still-zone edge and fade (static rings with reduce motion)
+  const flow = g.reduceMotion ? 0.5 : (fx.t * 0.55) % 1;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < RIPPLES; i++) {
+    const k = (flow + i / RIPPLES) % 1, r = sr + k * RIPPLE_SPAN, fade = 1 - k;
+    ctx.strokeStyle = C_FIELD; ctx.globalAlpha = 0.5 * fade; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.283); ctx.stroke();
+    if (push > 0.02) { // the push made visible: only the arc on the ball's side lights up
+      ctx.strokeStyle = C_PUSH; ctx.globalAlpha = push * (0.4 + 0.6 * fade); ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(0, 0, r, ang - 0.42, ang + 0.42); ctx.stroke();
+    }
   }
-  ctx.stroke(); ctx.restore();
-  ctx.save(); ctx.rotate(-fx.bezel * 0.6); ctx.strokeStyle = col; ctx.globalAlpha = 0.28; ctx.lineWidth = 2; ctx.beginPath();
-  for (let i = 0; i < 3; i++) { ctx.moveTo(Math.cos(i * 2.094) * (R + 24), Math.sin(i * 2.094) * (R + 24)); ctx.arc(0, 0, R + 24, i * 2.094, i * 2.094 + 0.7); }
-  ctx.stroke(); ctx.restore();
-  // Health arc: segmented, drops segments, pulses red when low
+  if (push > 0.02) { ctx.strokeStyle = C_PUSH; ctx.globalAlpha = push; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, sr, ang - 0.5, ang + 0.5); ctx.stroke(); }
+  if (fx.zonePulse > 0.02) { ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = fx.zonePulse * 0.8; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, sr + (1 - fx.zonePulse) * 26, 0, 6.283); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+  // Health arc: segmented, drops segments, pulses red when low (colour means health only)
   const lit = Math.ceil(hp * RING_SEGS - 1e-6), shown = Math.ceil(clamp(fx.hpShown, 0, 1) * RING_SEGS - 1e-6), span = 6.283 / RING_SEGS, gap = 0.07;
   ctx.lineCap = 'butt'; ctx.lineWidth = 5;
   ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.beginPath();
   for (let i = lit; i < RING_SEGS; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
   ctx.stroke();
-  if (shown > lit) { // segments just lost: flash white->red then fade
+  if (shown > lit) { // segments just lost: flash then fade
     ctx.strokeStyle = '#ff4060'; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(fx.t * 30); ctx.beginPath();
     for (let i = lit; i < shown; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
     ctx.stroke(); ctx.globalAlpha = 1;
@@ -1336,18 +1350,10 @@ function drawTarget() {
     }
     ctx.globalAlpha = 1;
   }
-  if (g.hold && g.state === 'play') { // opening hold: a ring closes on the reticle, then GO
+  if (g.hold && g.state === 'play') { // opening hold: a ring closes on the target, then GO
     const p = g.tutRun ? 0.5 + 0.5 * Math.sin(fx.t * 5) : clamp(g.holdT / HOLD_S, 0, 1);
     ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = 0.75; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, R + 44 - 30 * p, 0, 6.283); ctx.stroke(); ctx.globalAlpha = 1;
   }
-  // Crosshair notches + sweet spot
-  ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
-  for (let i = 0; i < 4; i++) { const c = Math.cos(i * 1.571), s = Math.sin(i * 1.571); ctx.moveTo(c * (R - 15), s * (R - 15)); ctx.lineTo(c * (R - 6), s * (R - 6)); }
-  ctx.stroke();
-  ctx.lineWidth = 2; ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.setLineDash([5, 5]);
-  glow(col, 10); ctx.beginPath(); ctx.arc(0, 0, sr, 0, 6.283); ctx.fill(); ctx.stroke(); noGlow();
-  ctx.setLineDash([]);
-  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, 6.283); ctx.fill();
   ctx.restore();
 }
 
@@ -1639,7 +1645,7 @@ const fx = {
   banners: [], pops: [], cracks: [],
   shake: 0, chroma: 0, wipe: 0, wipeCol: '#ffffff', ef: { l: 0, r: 0, t: 0, b: 0 },
   hpShown: 1, hpPulse: 0, bezel: 0, bestFlash: 0, bestPassed: false,
-  lastShards: 0, shardPulse: 0, deathT: -1
+  lastShards: 0, shardPulse: 0, deathT: -1, zonePulse: 0, inZone: true
 };
 for (let i = 0; i < FX_MAX; i++) fx.pool.push({ life: 0, max: 1, x: 0, y: 0, vx: 0, vy: 0, g: 0, s: 2, c: '#fff', k: 0, r: 0 });
 function frnd() { fx.seed = (Math.imul(fx.seed, 1664525) + 1013904223) >>> 0; return fx.seed / 4294967296; }
@@ -1706,6 +1712,10 @@ function fxEvent(type, d) {
       fxBurst(x, y, rm ? 10 : 36, '#7fff9a', 120, 420, 0, 0, 0.7); fx.wipe = 1; fx.wipeCol = '#7fff9a'; fx.hpShown = 0;
       fxSfx('power'); fxVibrate([20, 30, 20]);
       break;
+    case 'tutGoal':
+      fxPop(x, y - 30, d.last ? 'NICE!' : 'GOOD!', '#7fff9a', 26, 0.9); fxPop(x + 40, y - 6, '+5', '#ffd84d', 16, 0.8);
+      fxBurst(x, y, rm ? 8 : 22, '#7fff9a', 80, 300, 0, 0, 0.6); fxSfx('milestone');
+      break;
     case 'hit': {
       fxBurst(x, y, rm ? 6 : 16, d.color || pal[4], 90, 300, 0, 0, 0.55);
       if (!rm) fx.shake = Math.max(fx.shake, 5 + Math.min(1.5, (d.dmg || 0) / 10));
@@ -1763,6 +1773,12 @@ function fxUpdate(dt) {
   if (fx.deathT >= 0) fx.deathT += dt;
   fx.shake *= Math.exp(-dt * 11); fx.chroma *= Math.exp(-dt * 7);
   fx.ef.l *= Math.exp(-dt * 6); fx.ef.r *= Math.exp(-dt * 6); fx.ef.t *= Math.exp(-dt * 6); fx.ef.b *= Math.exp(-dt * 6);
+  fx.zonePulse *= Math.exp(-dt * 5);
+  if (g.state === 'play' && g.ball && g.target && !g.hold && typeof sweetR === 'function') { // leaving the still zone is felt as well as seen
+    const inside = Math.hypot(g.ball.x - g.target.x, g.ball.y - g.target.y) <= sweetR();
+    if (fx.inZone && !inside) { fx.zonePulse = 1; fxSfx('zone'); }
+    fx.inZone = inside;
+  } else fx.inZone = true;
   fx.hpPulse *= Math.exp(-dt * 5); fx.bestFlash *= Math.exp(-dt * 1.5); fx.shardPulse *= Math.exp(-dt * 6);
   if (fx.wipe > 0) fx.wipe = Math.max(0, fx.wipe - dt / 0.8);
   // Ring health lags behind real health so a lost chunk is visible dropping away
@@ -1863,7 +1879,7 @@ const MOD = { sweet: 0, hp: 1, drift: 1, shard: 1, sweetTemp: 0, calm: 1 };   //
 const assist = () => { const r = typeof prog !== 'undefined' ? prog.runs : 9; return r < 1 ? 1 : r < 2 ? 0.5 : 0; };
 const sweetR = () => T.sweet + MOD.sweet + MOD.sweetTemp + 10 * assist();
 const UPG = [
-  { id: 'sweet',  name: 'Sweet Spot',   desc: 'Bigger safe zone in the ring',   max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
+  { id: 'sweet',  name: 'Still Zone',   desc: 'A bigger calm centre',          max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
   { id: 'hull',   name: 'Sturdy Hull',  desc: 'More health (+8% per level)',    max: 5, base: 40, apply: l => { MOD.hp = 1 + 0.08 * l; } },
   { id: 'calm',   name: 'Calm Drift',   desc: 'The ball wanders less',          max: 5, base: 50, apply: l => { MOD.drift = 1 - 0.06 * l; } },
   { id: 'magnet', name: 'Shard Magnet', desc: 'Earn more shards (+10% per level)', max: 5, base: 60, apply: l => { MOD.shard = 1 + 0.1 * l; } }
@@ -1883,8 +1899,8 @@ const DAILY = [30, 40, 50, 60, 80, 100, 150];
 const MISSIONS = [
   { id: 'surv', text: v => 'Survive ' + v + 's', val: () => prog.best, steps: [[20, 20], [30, 25], [45, 30], [60, 40], [75, 50], [90, 60], [120, 80], [150, 100], [180, 130], [240, 180], [300, 250]] },
   { id: 'stage', text: v => 'Reach ' + CONFIG.stageNames[v - 1], val: () => prog.stageMax + 1, steps: [[2, 25], [3, 40], [4, 60], [5, 80], [6, 110], [7, 150], [8, 200]] },
-  { id: 'skill', kinds: { near: [v => v + ' near misses in a run', () => prog.nearMissBest], runs: [v => 'Play ' + v + ' runs', () => prog.runs], sweet: [v => v + 's in the sweet spot, one run', () => prog.sweetBest] },
-    steps: [['near', 3, 20], ['runs', 5, 20], ['sweet', 10, 25], ['near', 6, 35], ['runs', 15, 40], ['sweet', 20, 45], ['near', 10, 60], ['runs', 40, 70], ['sweet', 35, 80], ['near', 15, 100], ['runs', 100, 120], ['near', 22, 150]] }
+  { id: 'skill', kinds: { near: [v => v + ' near misses in a run', () => prog.nearMissBest], runs: [v => 'Play ' + v + ' runs', () => prog.runs], clean: [v => v + 's without a hit', () => prog.cleanBest] },
+    steps: [['near', 3, 20], ['runs', 5, 20], ['clean', 15, 25], ['near', 6, 35], ['runs', 15, 40], ['clean', 30, 45], ['near', 10, 60], ['runs', 40, 70], ['clean', 45, 80], ['near', 15, 100], ['runs', 100, 120], ['near', 22, 150]] }
 ];
 function missionNow(m) { // current step of a ladder, or null when finished
   const i = (meta.ms && meta.ms[m.id]) || 0; if (i >= m.steps.length) return null;
@@ -2030,7 +2046,7 @@ function renderMeta(el, tab) {
 // ============================================================
 const PWS = [
   { id: 'recentre', name: 'Recentre', glyph: '◎', desc: 'Snap the ball back to the centre', cost: 120, cd: 18 },
-  { id: 'surge',    name: 'Wide Spot', glyph: '⊕', desc: 'Bigger sweet spot for 5s',          cost: 200, cd: 24, dur: 5 },
+  { id: 'surge',    name: 'Wide Zone', glyph: '⊕', desc: 'Bigger still zone for 5s',          cost: 200, cd: 24, dur: 5 },
   { id: 'calm',     name: 'Calm',      glyph: '≋', desc: 'Everything calms down for 6s', cost: 300, cd: 30, dur: 6 }
 ];
 meta.pw = meta.pw || {}; meta.lefty = !!meta.lefty;
@@ -2089,7 +2105,7 @@ const Audio_ = (() => {
   const MASTER = 0.8, MUSIC = 0.9;       // mix: music sits about 8 dB under the SFX peaks and ducks on hits
   const SFX_GAIN = { buy: 1.7, power: 1.5, levelUp: 1.5, stage: 1.5, unlock: 1.3, edge: 0.8, milestone: 1.2, hit: 0.9 };   // levelled from measured peaks (see docs/play-review.md)
   const DUCK = { hit: 0.45, over: 0.3, newBest: 0.5, stage: 0.6 };   // music level while these play
-  const MIN_GAP = { edge: 80, hit: 80, nearMiss: 120, tick: 30 };
+  const MIN_GAP = { zone: 350, edge: 80, hit: 80, nearMiss: 120, tick: 30 };
 
   let ctx = null, master = null, bus = null, lp = null, noise = null;
   let timer = null, nextT = 0, step = 0, intensity = 0;
@@ -2226,6 +2242,7 @@ const Audio_ = (() => {
   const SFX = {
     start:  (o, t) => { voice(o, 'sawtooth', 220, 880, t, 0.01, 0.25, 0.2); voice(o, 'square', 440, 1320, t + 0.12, 0.01, 0.2, 0.08); },
     go:     (o, t) => { voice(o, 'square', 660, 0, t, 0.004, 0.09, 0.1); voice(o, 'square', 990, 0, t + 0.08, 0.004, 0.16, 0.12); },
+    zone:   (o, t) => voice(o, 'sine', 520, 700, t, 0.003, 0.06, 0.07),
     hit:    (o, t) => { voice(o, 'square', 180, 60, t, 0.005, 0.12, 0.25); voice(o, 'sine', 110, 38, t, 0.004, 0.22, 0.45); burst(o, t, 0.08, 1800, 0.8, 0.18); }, // + low thud
     edge:   (o, t) => { voice(o, 'triangle', 1200, 900, t, 0.003, 0.05, 0.15); burst(o, t, 0.1, 5200, 1.5, 0.22); burst(o, t + 0.03, 0.07, 3400, 2, 0.14); }, // + crackle
     over:   (o, t) => { voice(o, 'sawtooth', 440, 55, t, 0.01, 0.35, 0.3); voice(o, 'triangle', 330, 110, t + 0.12, 0.01, 0.22, 0.15); },
@@ -2372,7 +2389,7 @@ function drawTitle(pal) {
   ctx.globalAlpha = 0.7 + 0.3 * Math.sin(now * 3.5);
   scrText(kind === 'touch' ? 'TAP TO PLAY' : kind === 'key' ? 'PRESS SPACE' : 'CLICK TO PLAY', cy + 126, 27, '#ffee66', 14, { font: 'display' });
   ctx.globalAlpha = 1;
-  scrText('Keep the ball in the ring' + (kind === 'touch' ? '' : '  ·  mouse, arrows or WASD'), cy + 156, 15, '#cfe6f5', 0);
+  scrText('Push the ball. Dodge the shapes.' + (kind === 'touch' ? '' : '  ·  mouse, arrows or WASD'), cy + 156, 15, '#cfe6f5', 0);
   let y = cy + 196;
   if (prog.runs > 0) { // returning player: best + level
     const li = lvlInfo(meta.xp);
@@ -2398,10 +2415,20 @@ function drawTitle(pal) {
 function drawTutorial() {
   const g = game, tut = g.tutorial; if (!tut || g.state !== 'play' || g.paused) return;
   const kind = inputKind(), t = fx.t, cx = W / 2, y = Math.min(PH - 62, Math.max(g.target.y + 150, PH * 0.74));
-  const head = tut === 'move' ? 'MOVE THE RING' : tut === 'centre' ? 'KEEP THE BALL CENTRED' : 'DODGE THE SHAPES';
+  const head = tut === 'move' ? 'MOVE THE RING' : tut === 'push' ? 'PUSH THE BALL TO THE STAR' : 'PUSH IT AWAY FROM SHAPES';
   const sub = tut === 'move' ? (kind === 'touch' ? 'Drag anywhere' : kind === 'key' ? 'Arrow keys or WASD' : 'Move your mouse')
-    : tut === 'centre' ? 'It gets pushed away when it leaves the middle' : 'Hits break the ring';
+    : tut === 'push' ? 'Put the ring behind the ball. The ring pushes it away.' : 'Hits break the ring';
   ctx.save();
+  if (tut === 'push' && g.tutGoals && g.tutGoals.length) { // the lesson: a marker to reach, and a ghost ring showing where to stand to push towards it
+    const gx = g.tutGoals[0][0], gy = g.tutGoals[0][1], b = g.ball, ux = b.x - gx, uy = b.y - gy, ud = Math.hypot(ux, uy) || 1, p = 0.5 + 0.5 * Math.sin(t * 5);
+    ctx.strokeStyle = '#7fff9a'; ctx.fillStyle = '#7fff9a'; ctx.lineWidth = 2; glow('#7fff9a', 10);
+    ctx.globalAlpha = 0.5 + 0.4 * p; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(gx, gy, 30 + 3 * p, 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = 1; star4(ctx, gx, gy, 13 + 2 * p); noGlow();
+    ctx.globalAlpha = 0.28; ctx.setLineDash([2, 8]); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(b.x - ux / ud * 18, b.y - uy / ud * 18); ctx.lineTo(gx + ux / ud * 36, gy + uy / ud * 36); ctx.stroke(); ctx.setLineDash([]);
+    const hx = b.x + ux / ud * 46, hy = b.y + uy / ud * 46;   // ghost ring: behind the ball, opposite the star
+    if (Math.hypot(g.target.x - hx, g.target.y - hy) > 26) { ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = 0.22 + 0.2 * p; ctx.lineWidth = 2; ctx.setLineDash([5, 6]); ctx.beginPath(); ctx.arc(hx, hy, 40, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.globalAlpha = 1;
+  }
   if (tut === 'move') {
     const iy = y - 50, sway = Math.sin(t * 3) * 24; ctx.strokeStyle = '#dffcff'; ctx.fillStyle = '#dffcff'; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; glow('#6ff', 8);
     if (kind === 'key') {
@@ -2419,7 +2446,7 @@ function drawTutorial() {
     noGlow(); ctx.globalAlpha = 1;
   }
   const wT = 0.75 + 0.25 * Math.sin(t * 4);
-  ctx.fillStyle = 'rgba(3,1,9,0.5)'; scrRR(cx - 190, y - 20, 380, 62, 14); ctx.fill();
+  ctx.fillStyle = 'rgba(3,1,9,0.5)'; scrRR(cx - 205, y - 20, 410, 62, 14); ctx.fill();
   textAt(head, cx, y, 21, '#eaffff', 10, { font: 'display', alpha: wT });
   textAt(sub, cx, y + 26, 15, '#cfe6f5', 0);
   ctx.restore();
