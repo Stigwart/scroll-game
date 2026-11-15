@@ -192,7 +192,7 @@ const PLATFORM = {
 PLATFORM.init();
 
 const TELEMETRY = { url: 'https://ahbfawcyytdrmmxepxjy.supabase.co/rest/v1/runs', key: 'sb_publishable_pWDVpRghWtIJLmDtPlQqag_lGzBQU3x', enabled: BUILD.telemetry && !/[?&]notel=1/.test(location.search) };
-const GAME_VERSION = '1.0.1' + (BUILD.target === 'web' ? '' : '+' + BUILD.target);
+const GAME_VERSION = '1.0.2' + (BUILD.target === 'web' ? '' : '+' + BUILD.target);
 // ============================================================
 // CONFIG: fixed constants + tunable params (exposed in panel)
 // ============================================================
@@ -586,6 +586,7 @@ function obstacleGap(b, o) {
 const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, (typeof prog !== 'undefined' && prog.runs < 3) ? WIDE_NEW : 0.8, clamp((W - REF_W) / (MAX_W - REF_W), 0, 1));
 const WIDE_NEW = typeof WIDE_NEW_OVERRIDE === 'number' ? WIDE_NEW_OVERRIDE : 0.6;
 // Opening hold: the ball rides in the ring until GO, so every run starts from control (run 1 waits for the player to move)
+const PUSH_ASSIST = typeof PUSH_ASSIST_OVERRIDE === 'number' ? PUSH_ASSIST_OVERRIDE : 0.4;
 const EDGE_ASSIST = typeof EDGE_ASSIST_OVERRIDE === 'number' ? EDGE_ASSIST_OVERRIDE : 0.85;
 const TUT_GOAL_MAX = 14;   // seconds the push lesson waits before giving up and starting the run proper
 const HOLD_S = 0.8, HOLD_TUT_MAX = 8;
@@ -643,7 +644,7 @@ function step(dt) {
   const dx = b.x - tg.x, dy = b.y - tg.y, d = Math.hypot(dx, dy) || 1e-6;
   const excess = Math.max(0, d - sweetR());
   if (d <= sweetR()) g.stats.sweetTime += dt;
-  const repel = T.repel * MOD.calm * (1 + 0.55 * L) * CONFIG.repulsionUnit * excess;   // (a) away from target
+  const repel = T.repel * MOD.calm * (1 + 0.55 * L) * CONFIG.repulsionUnit * excess * (1 - PUSH_ASSIST * assist());   // gentler push on a player's first two runs   // (a) away from target
   ax += dx / d * repel; ay += dy / d * repel;
   ax += (W / 2 - b.x) * T.pull; ay += (PH * 0.5 - b.y) * T.pull;             // (b) towards screen centre
   ay -= T.up;                                                                // (c) upward bias
@@ -1300,7 +1301,7 @@ function ringColor(ratio) { // green -> yellow -> red
 
 // ---- Target: a repulsor. Empty still zone in the middle (no force), ripples flowing outward from its edge,
 // and the ripples brighten on the ball's side in proportion to the push. Outer segmented ring = health only. ----
-const RING_SEGS = 24, RIPPLES = 3, RIPPLE_SPAN = 46, C_FIELD = '#8fefff', C_PUSH = '#ffe36b';
+const RIPPLES = 3, RIPPLE_SPAN = 46, C_FIELD = '#8fefff', C_PUSH = '#ffe36b';
 function drawTarget() {
   const g = game, tg = g.target, b = g.ball, R = CONFIG.ringRadius;
   const dx = b.x - tg.x, dy = b.y - tg.y, d = Math.hypot(dx, dy), sr = sweetR();
@@ -1326,22 +1327,20 @@ function drawTarget() {
   if (push > 0.02) { ctx.strokeStyle = C_PUSH; ctx.globalAlpha = push; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, sr, ang - 0.5, ang + 0.5); ctx.stroke(); }
   if (fx.zonePulse > 0.02) { ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = fx.zonePulse * 0.8; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, sr + (1 - fx.zonePulse) * 26, 0, 6.283); ctx.stroke(); }
   ctx.globalAlpha = 1;
-  // Health arc: segmented, drops segments, pulses red when low (colour means health only)
-  const lit = Math.ceil(hp * RING_SEGS - 1e-6), shown = Math.ceil(clamp(fx.hpShown, 0, 1) * RING_SEGS - 1e-6), span = 6.283 / RING_SEGS, gap = 0.07;
-  ctx.lineCap = 'butt'; ctx.lineWidth = 5;
-  ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.beginPath();
-  for (let i = lit; i < RING_SEGS; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
-  ctx.stroke();
-  if (shown > lit) { // segments just lost: flash then fade
-    ctx.strokeStyle = '#ff4060'; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(fx.t * 30); ctx.beginPath();
-    for (let i = lit; i < shown; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
-    ctx.stroke(); ctx.globalAlpha = 1;
+  // Health: one thin, quiet arc that empties clockwise. It thickens and brightens for a moment when health is lost
+  // and pulses red when low, so it only asks for attention when something happened.
+  const shownHp = clamp(fx.hpShown, 0, 1), A0 = -1.571, hit = clamp(fx.hpPulse, 0, 1);
+  ctx.lineCap = 'butt';
+  ctx.strokeStyle = 'rgba(255,255,255,0.09)'; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, R, 0, 6.283); ctx.stroke();
+  if (shownHp > hp + 0.002) { // the chunk just lost: flashes, then drains away
+    ctx.strokeStyle = '#ff4060'; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(fx.t * 30); ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(0, 0, R, A0 + hp * 6.283, A0 + shownHp * 6.283); ctx.stroke(); ctx.globalAlpha = 1;
   }
-  const hc = low ? '#ff2a3a' : ringColor(1 - hp);
-  ctx.globalAlpha = low ? 0.55 + 0.45 * pulse : 1;
-  glow(hc, low ? 10 + 12 * pulse : 14); ctx.strokeStyle = hc; ctx.beginPath();
-  for (let i = 0; i < lit; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
-  ctx.stroke(); noGlow(); ctx.globalAlpha = 1;
+  if (hp > 0.002) {
+    const hc = low ? '#ff2a3a' : ringColor(1 - hp);
+    ctx.strokeStyle = hc; ctx.lineWidth = 2 + 2.5 * hit + (low ? 1.5 * pulse : 0); ctx.globalAlpha = low ? 0.6 + 0.4 * pulse : 0.5 + 0.5 * hit;
+    if (hit > 0.3 || low) glow(hc, 10);
+    ctx.lineCap = 'round'; ctx.beginPath(); ctx.arc(0, 0, R, A0, A0 + hp * 6.283); ctx.stroke(); noGlow(); ctx.lineCap = 'butt'; ctx.globalAlpha = 1;
+  }
   // Hit cracks across the ring
   if (fx.cracks.length) {
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 1.5;
@@ -1879,7 +1878,7 @@ const STORE_META = 'scrollgame.meta';
 const MOD = { sweet: 0, hp: 1, drift: 1, shard: 1, sweetTemp: 0, calm: 1 };   // permanent upgrade (and temporary power-up) modifiers read by the sim
 // New-player assist: bigger sweet spot and slower health loss in the first two runs
 const assist = () => { const r = typeof prog !== 'undefined' ? prog.runs : 9; return r < 1 ? 1 : r < 2 ? 0.5 : 0; };
-const sweetR = () => T.sweet + MOD.sweet + MOD.sweetTemp + 10 * assist();
+const sweetR = () => T.sweet + MOD.sweet + MOD.sweetTemp;   // still-zone radius: the same for new players as for everyone (upgrades and Wide Zone enlarge it)
 const UPG = [
   { id: 'sweet',  name: 'Still Zone',   desc: 'A bigger calm centre',          max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
   { id: 'hull',   name: 'Sturdy Hull',  desc: 'More health (+8% per level)',    max: 5, base: 40, apply: l => { MOD.hp = 1 + 0.08 * l; } },
