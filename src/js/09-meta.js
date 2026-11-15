@@ -8,7 +8,7 @@ const MOD = { sweet: 0, hp: 1, drift: 1, shard: 1, sweetTemp: 0, calm: 1 };   //
 const assist = () => { const r = typeof prog !== 'undefined' ? prog.runs : 9; return r < 1 ? 1 : r < 2 ? 0.5 : 0; };
 const sweetR = () => T.sweet + MOD.sweet + MOD.sweetTemp + 10 * assist();
 const UPG = [
-  { id: 'sweet',  name: 'Sweet Spot',   desc: 'Bigger safe zone in the ring',   max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
+  { id: 'sweet',  name: 'Still Zone',   desc: 'A bigger calm centre',          max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
   { id: 'hull',   name: 'Sturdy Hull',  desc: 'More health (+8% per level)',    max: 5, base: 40, apply: l => { MOD.hp = 1 + 0.08 * l; } },
   { id: 'calm',   name: 'Calm Drift',   desc: 'The ball wanders less',          max: 5, base: 50, apply: l => { MOD.drift = 1 - 0.06 * l; } },
   { id: 'magnet', name: 'Shard Magnet', desc: 'Earn more shards (+10% per level)', max: 5, base: 60, apply: l => { MOD.shard = 1 + 0.1 * l; } }
@@ -28,8 +28,8 @@ const DAILY = [30, 40, 50, 60, 80, 100, 150];
 const MISSIONS = [
   { id: 'surv', text: v => 'Survive ' + v + 's', val: () => prog.best, steps: [[20, 20], [30, 25], [45, 30], [60, 40], [75, 50], [90, 60], [120, 80], [150, 100], [180, 130], [240, 180], [300, 250]] },
   { id: 'stage', text: v => 'Reach ' + CONFIG.stageNames[v - 1], val: () => prog.stageMax + 1, steps: [[2, 25], [3, 40], [4, 60], [5, 80], [6, 110], [7, 150], [8, 200]] },
-  { id: 'skill', kinds: { near: [v => v + ' near misses in a run', () => prog.nearMissBest], runs: [v => 'Play ' + v + ' runs', () => prog.runs], sweet: [v => v + 's in the sweet spot, one run', () => prog.sweetBest] },
-    steps: [['near', 3, 20], ['runs', 5, 20], ['sweet', 10, 25], ['near', 6, 35], ['runs', 15, 40], ['sweet', 20, 45], ['near', 10, 60], ['runs', 40, 70], ['sweet', 35, 80], ['near', 15, 100], ['runs', 100, 120], ['near', 22, 150]] }
+  { id: 'skill', kinds: { near: [v => v + ' near misses in a run', () => prog.nearMissBest], runs: [v => 'Play ' + v + ' runs', () => prog.runs], clean: [v => v + 's without a hit', () => prog.cleanBest] },
+    steps: [['near', 3, 20], ['runs', 5, 20], ['clean', 15, 25], ['near', 6, 35], ['runs', 15, 40], ['clean', 30, 45], ['near', 10, 60], ['runs', 40, 70], ['clean', 45, 80], ['near', 15, 100], ['runs', 100, 120], ['near', 22, 150]] }
 ];
 function missionNow(m) { // current step of a ladder, or null when finished
   const i = (meta.ms && meta.ms[m.id]) || 0; if (i >= m.steps.length) return null;
@@ -175,7 +175,7 @@ function renderMeta(el, tab) {
 // ============================================================
 const PWS = [
   { id: 'recentre', name: 'Recentre', glyph: '◎', desc: 'Snap the ball back to the centre', cost: 120, cd: 18 },
-  { id: 'surge',    name: 'Wide Spot', glyph: '⊕', desc: 'Bigger sweet spot for 5s',          cost: 200, cd: 24, dur: 5 },
+  { id: 'surge',    name: 'Wide Zone', glyph: '⊕', desc: 'Bigger still zone for 5s',          cost: 200, cd: 24, dur: 5 },
   { id: 'calm',     name: 'Calm',      glyph: '≋', desc: 'Everything calms down for 6s', cost: 300, cd: 30, dur: 6 }
 ];
 meta.pw = meta.pw || {}; meta.lefty = !!meta.lefty;

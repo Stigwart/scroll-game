@@ -298,8 +298,8 @@ function trailDraw(c, st, id, r, col) {
 
 // ---- Persistence + unlock rules ----
 function lsJSON(k, def) { try { const v = JSON.parse(lsGet(k)); return v == null ? def : v; } catch (e) { return def; } }
-const prog = { runs: 0, best: 0, nearMissBest: 0, stageMax: 0, sweetBest: 0 };   // last three: best single-run skill stats, used by skill unlocks
-(function () { const s = lsJSON(STORE_PROG, {}); prog.runs = +s.runs || 0; prog.best = Math.max(+s.best || 0, game.best); prog.nearMissBest = +s.nearMissBest || 0; prog.stageMax = +s.stageMax || 0; prog.sweetBest = +s.sweetBest || 0; })();
+const prog = { runs: 0, best: 0, nearMissBest: 0, stageMax: 0, sweetBest: 0, cleanBest: 0 };   // last three: best single-run skill stats, used by skill unlocks
+(function () { const s = lsJSON(STORE_PROG, {}); prog.runs = +s.runs || 0; prog.best = Math.max(+s.best || 0, game.best); prog.nearMissBest = +s.nearMissBest || 0; prog.stageMax = +s.stageMax || 0; prog.sweetBest = +s.sweetBest || 0; prog.cleanBest = +s.cleanBest || 0; })();
 const unlocked = new Set((function () { const a = lsJSON(STORE_UNLOCKS, []); return Array.isArray(a) ? a : []; })());
 const sel = { balls: 'orb', trails: 'classic', themes: 'neon' };
 (function () { const s = lsJSON(STORE_SEL, {}); for (const k in sel) if (typeof s[k] === 'string') sel[k] = s[k]; })();
@@ -311,7 +311,7 @@ function unlockText(it) {
   if (u.type === 'buy') return 'Buy  \u25c6 ' + u.v; if (u.type === 'streak') return u.v + '-day streak reward';
   return u.type === 'level' ? 'Reach level ' + u.v : u.type === 'time' ? 'Survive ' + u.v + 's' : u.type === 'near' ? u.v + ' near misses in one run'
     : u.type === 'stage' ? 'Reach Stage ' + u.v + (CONFIG.stageNames && CONFIG.stageNames[u.v - 1] ? ' (' + CONFIG.stageNames[u.v - 1] + ')' : '')
-    : u.type === 'sweet' ? u.v + 's in the sweet spot, one run' : 'Play ' + u.v + ' runs';
+    : u.type === 'sweet' ? u.v + 's in the still zone, one run' : 'Play ' + u.v + ' runs';
 }
 function unlockMet(it) {
   const u = it.unlock; if (!u) return true;
@@ -328,7 +328,7 @@ function countUnlocked(kind) { return LISTS[kind].filter(it => isUnlocked(kind, 
 function recordRun(seconds) {
   prog.runs++; prog.best = Math.max(prog.best, seconds);
   const st = game.stats;
-  if (st) { prog.nearMissBest = Math.max(prog.nearMissBest, st.nearMiss || 0); prog.stageMax = Math.max(prog.stageMax, st.stageMax || 0); prog.sweetBest = Math.max(prog.sweetBest, st.sweetTime || 0); }
+  if (st) { prog.nearMissBest = Math.max(prog.nearMissBest, st.nearMiss || 0); prog.stageMax = Math.max(prog.stageMax, st.stageMax || 0); prog.sweetBest = Math.max(prog.sweetBest, st.sweetTime || 0); prog.cleanBest = Math.max(prog.cleanBest, st.cleanMax || 0); }
   const fresh = []; // every unlock earned this run is announced on the game-over screen
   for (const kind in LISTS) for (const it of LISTS[kind]) {
     if (!isUnlocked(kind, it) && unlockMet(it)) { unlocked.add(ukey(kind, it)); fresh.push(it.name); }
@@ -337,7 +337,7 @@ function recordRun(seconds) {
 }
 function unlockAll() { for (const kind in LISTS) for (const it of LISTS[kind]) if (it.unlock) unlocked.add(ukey(kind, it)); saveCosm(); if (collOpen) renderColl(); }
 function resetUnlocks() {
-  unlocked.clear(); prog.runs = 0; prog.best = 0; prog.nearMissBest = 0; prog.stageMax = 0; prog.sweetBest = 0; sel.balls = 'orb'; sel.trails = 'classic'; sel.themes = 'neon'; saveCosm(); if (collOpen) renderColl();
+  unlocked.clear(); prog.runs = 0; prog.best = 0; prog.nearMissBest = 0; prog.stageMax = 0; prog.sweetBest = 0; prog.cleanBest = 0; sel.balls = 'orb'; sel.trails = 'classic'; sel.themes = 'neon'; saveCosm(); if (collOpen) renderColl();
 }
 document.getElementById('unlockAll').addEventListener('click', unlockAll);
 document.getElementById('resetUnlocks').addEventListener('click', resetUnlocks);

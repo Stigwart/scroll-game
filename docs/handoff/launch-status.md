@@ -72,6 +72,8 @@ See [docs/qa-record.md](../qa-record.md). Headlines: 38 of 38 automated QA check
 
 ## 7. Open items
 
+0. **Version 1.0.1 is built but not uploaded.** After the first playtest the target was redrawn as a repulsor and run 1 now teaches the push (see the last section of `docs/play-review.md`). The build under review at CrazyGames is still 1.0.0. To update: on the game's page choose "Submit new version", upload `dist/crazygames/index.html`, then replace the covers and videos on the Art tab and the description on Game Info with the regenerated files and the reworded listing.
+
 1. **Load time in the QA tool read 15 seconds.** CrazyGames measures from its Play Now button to the first `gameplayStart`, so time spent on our title screen counts. The game loads in under a second; a player who hesitates before clicking shows as a slow load. Option if the dashboard shows a problem: drop first-time players straight into run 1 (the ball already waits until they move). Trade-off: a mouse player who never clicks gets no sound, because browsers only allow audio after a click or key press.
 2. **An idle first run lasts a long time** (over a minute on the wide field in the QA preview) because of the new-player edge relief and shield. Good for conversion; revisit if first runs feel too safe.
 3. **SDK mute support** (`muteAudio` setting) is not implemented. Small job; lets CrazyGames mute the game from its own UI.

@@ -123,34 +123,41 @@ function ringColor(ratio) { // green -> yellow -> red
   return 'hsl(' + h + ',100%,55%)';
 }
 
-// ---- Reticle + ring-as-health ----
-const RING_SEGS = 24;
+// ---- Target: a repulsor. Empty still zone in the middle (no force), ripples flowing outward from its edge,
+// and the ripples brighten on the ball's side in proportion to the push. Outer segmented ring = health only. ----
+const RING_SEGS = 24, RIPPLES = 3, RIPPLE_SPAN = 46, C_FIELD = '#8fefff', C_PUSH = '#ffe36b';
 function drawTarget() {
   const g = game, tg = g.target, b = g.ball, R = CONFIG.ringRadius;
-  const d = Math.hypot(b.x - tg.x, b.y - tg.y), sr = sweetR();
-  const col = ringColor((d - sr) / (CONFIG.ringRadius * 1.6));
+  const dx = b.x - tg.x, dy = b.y - tg.y, d = Math.hypot(dx, dy), sr = sweetR();
+  const push = g.hold || d <= sr ? 0 : clamp(0.4 + 0.6 * (d - sr) / 34, 0, 1), ang = Math.atan2(dy, dx);   // 0 inside the still zone
   const hp = g.maxHealth ? clamp(g.health / g.maxHealth, 0, 1) : 1;
   const low = hp < 0.25 && g.state === 'play';
   const pulse = low ? 0.5 + 0.5 * Math.sin(fx.t * 11) : 0;
   ctx.save(); ctx.translate(tg.x, tg.y);
-  // Rotating bezel: tick marks + counter-rotating arc dashes
-  ctx.save(); ctx.rotate(fx.bezel);
-  ctx.strokeStyle = col; ctx.globalAlpha = 0.5; ctx.lineWidth = 1.5; ctx.beginPath();
-  for (let i = 0; i < 48; i++) {
-    const a = i * 0.1309, big = i % 6 === 0, r0 = R + 9, r1 = R + (big ? 17 : 13), c = Math.cos(a), s = Math.sin(a);
-    ctx.moveTo(c * r0, s * r0); ctx.lineTo(c * r1, s * r1);
+  // Still zone: calm, empty disc; its edge is exactly where the push begins
+  ctx.fillStyle = 'rgba(160,240,255,0.10)'; ctx.beginPath(); ctx.arc(0, 0, sr, 0, 6.283); ctx.fill();
+  ctx.strokeStyle = C_FIELD; ctx.globalAlpha = 0.55; ctx.lineWidth = 1.5; ctx.stroke(); ctx.globalAlpha = 1;
+  // Ripples: travel outward from the still-zone edge and fade (static rings with reduce motion)
+  const flow = g.reduceMotion ? 0.5 : (fx.t * 0.55) % 1;
+  ctx.lineCap = 'round';
+  for (let i = 0; i < RIPPLES; i++) {
+    const k = (flow + i / RIPPLES) % 1, r = sr + k * RIPPLE_SPAN, fade = 1 - k;
+    ctx.strokeStyle = C_FIELD; ctx.globalAlpha = 0.5 * fade; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, r, 0, 6.283); ctx.stroke();
+    if (push > 0.02) { // the push made visible: only the arc on the ball's side lights up
+      ctx.strokeStyle = C_PUSH; ctx.globalAlpha = push * (0.4 + 0.6 * fade); ctx.lineWidth = 4;
+      ctx.beginPath(); ctx.arc(0, 0, r, ang - 0.42, ang + 0.42); ctx.stroke();
+    }
   }
-  ctx.stroke(); ctx.restore();
-  ctx.save(); ctx.rotate(-fx.bezel * 0.6); ctx.strokeStyle = col; ctx.globalAlpha = 0.28; ctx.lineWidth = 2; ctx.beginPath();
-  for (let i = 0; i < 3; i++) { ctx.moveTo(Math.cos(i * 2.094) * (R + 24), Math.sin(i * 2.094) * (R + 24)); ctx.arc(0, 0, R + 24, i * 2.094, i * 2.094 + 0.7); }
-  ctx.stroke(); ctx.restore();
-  // Health arc: segmented, drops segments, pulses red when low
+  if (push > 0.02) { ctx.strokeStyle = C_PUSH; ctx.globalAlpha = push; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, sr, ang - 0.5, ang + 0.5); ctx.stroke(); }
+  if (fx.zonePulse > 0.02) { ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = fx.zonePulse * 0.8; ctx.lineWidth = 2; ctx.beginPath(); ctx.arc(0, 0, sr + (1 - fx.zonePulse) * 26, 0, 6.283); ctx.stroke(); }
+  ctx.globalAlpha = 1;
+  // Health arc: segmented, drops segments, pulses red when low (colour means health only)
   const lit = Math.ceil(hp * RING_SEGS - 1e-6), shown = Math.ceil(clamp(fx.hpShown, 0, 1) * RING_SEGS - 1e-6), span = 6.283 / RING_SEGS, gap = 0.07;
   ctx.lineCap = 'butt'; ctx.lineWidth = 5;
   ctx.strokeStyle = 'rgba(255,255,255,0.10)'; ctx.beginPath();
   for (let i = lit; i < RING_SEGS; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
   ctx.stroke();
-  if (shown > lit) { // segments just lost: flash white->red then fade
+  if (shown > lit) { // segments just lost: flash then fade
     ctx.strokeStyle = '#ff4060'; ctx.globalAlpha = 0.5 + 0.5 * Math.sin(fx.t * 30); ctx.beginPath();
     for (let i = lit; i < shown; i++) { const a0 = -1.571 + i * span + gap; ctx.moveTo(Math.cos(a0) * R, Math.sin(a0) * R); ctx.arc(0, 0, R, a0, a0 + span - gap * 2); }
     ctx.stroke(); ctx.globalAlpha = 1;
@@ -170,18 +177,10 @@ function drawTarget() {
     }
     ctx.globalAlpha = 1;
   }
-  if (g.hold && g.state === 'play') { // opening hold: a ring closes on the reticle, then GO
+  if (g.hold && g.state === 'play') { // opening hold: a ring closes on the target, then GO
     const p = g.tutRun ? 0.5 + 0.5 * Math.sin(fx.t * 5) : clamp(g.holdT / HOLD_S, 0, 1);
     ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = 0.75; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, R + 44 - 30 * p, 0, 6.283); ctx.stroke(); ctx.globalAlpha = 1;
   }
-  // Crosshair notches + sweet spot
-  ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
-  for (let i = 0; i < 4; i++) { const c = Math.cos(i * 1.571), s = Math.sin(i * 1.571); ctx.moveTo(c * (R - 15), s * (R - 15)); ctx.lineTo(c * (R - 6), s * (R - 6)); }
-  ctx.stroke();
-  ctx.lineWidth = 2; ctx.fillStyle = 'rgba(255,255,255,0.08)'; ctx.setLineDash([5, 5]);
-  glow(col, 10); ctx.beginPath(); ctx.arc(0, 0, sr, 0, 6.283); ctx.fill(); ctx.stroke(); noGlow();
-  ctx.setLineDash([]);
-  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, 2.5, 0, 6.283); ctx.fill();
   ctx.restore();
 }
 

@@ -182,3 +182,21 @@ Order: P18 first (safety net), then P6 (everything else is laid out on it), P1â€
 - Missions pay one step per ladder per run, so a strong first run does not empty the ladder.
 - On wide fields, a player's first three runs get fewer shapes, and shapes stop growing after about 110 s so late stages stay readable.
 - N5 (Full Launch work) is not done, as agreed.
+
+## After the first playtest (15 Nov 2026, after submission)
+
+**Feedback (Stuart's tester):** the player thought the job was to hold the ball in the middle of the target and missed that the ring is how you move the ball. The reticle, the dashed "sweet spot", the ring turning red with distance, "Keep the ball in the ring" and my tutorial line "Keep the ball centred" all said so.
+
+**Change (Stuart chose the repulsor option, refined to keep the centre empty and add no arrow):**
+
+- [x] Target redrawn as a repulsor: an empty still zone (exactly the no-force radius), ripples flowing outward from its edge, and the ripples lighting up on the ball's side in proportion to the push. Crosshair, tick bezel, arc dashes and centre dot removed.
+- [x] The outer ring's colour now means health only; it no longer turns red with distance.
+- [x] Leaving the still zone gives a soft tick and one brighter ripple.
+- [x] Run 1 teaches the push: "Push the ball to the star", twice, with a ghost ring showing where to stand. No shapes appear until both are done (or 14 s pass).
+- [x] Copy: "Push the ball. Dodge the shapes."; upgrade renamed Still Zone; power-up renamed Wide Zone.
+- [x] The sweet-spot mission steps became "N s without a hit".
+- [x] Covers and videos regenerated; listing description reworded.
+
+The simulation rules are unchanged. Bot note: the bots keep the ball centred and never push to the star, so their first runs now include up to 14 s of lesson with no shapes; their first-run numbers are inflated by that and are not comparable with earlier tables.
+
+**Not done:** this build (1.0.1) is not uploaded to CrazyGames; the submission under review is 1.0.0 with the old target.

@@ -44,7 +44,7 @@ const alive = page => G(page, () => { window.__keep = setInterval(() => { const 
   await page.waitForTimeout(2500); s = await state(page);
   ok('run 1 holds until the player moves (no timer, no damage)', s.hold && s.t === 0 && s.tut === 'move' && s.hp === 100, JSON.stringify(s));
   await page.mouse.move(760, 340, { steps: 8 }); await page.mouse.move(600, 300, { steps: 8 }); await page.waitForTimeout(900); s = await state(page);
-  ok('moving releases the ball and starts the timer', !s.hold && s.t > 0 && s.tut === 'centre', JSON.stringify(s));
+  ok('moving releases the ball and starts the timer', !s.hold && s.t > 0 && s.tut === 'push', JSON.stringify(s));
   await alive(page);
   // ---- 2. pause paths, each must send exactly one stop and one start ----
   const pauseCase = async (name, doPause, doResume) => {

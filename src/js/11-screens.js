@@ -53,7 +53,7 @@ function drawTitle(pal) {
   ctx.globalAlpha = 0.7 + 0.3 * Math.sin(now * 3.5);
   scrText(kind === 'touch' ? 'TAP TO PLAY' : kind === 'key' ? 'PRESS SPACE' : 'CLICK TO PLAY', cy + 126, 27, '#ffee66', 14, { font: 'display' });
   ctx.globalAlpha = 1;
-  scrText('Keep the ball in the ring' + (kind === 'touch' ? '' : '  ·  mouse, arrows or WASD'), cy + 156, 15, '#cfe6f5', 0);
+  scrText('Push the ball. Dodge the shapes.' + (kind === 'touch' ? '' : '  ·  mouse, arrows or WASD'), cy + 156, 15, '#cfe6f5', 0);
   let y = cy + 196;
   if (prog.runs > 0) { // returning player: best + level
     const li = lvlInfo(meta.xp);
@@ -79,10 +79,20 @@ function drawTitle(pal) {
 function drawTutorial() {
   const g = game, tut = g.tutorial; if (!tut || g.state !== 'play' || g.paused) return;
   const kind = inputKind(), t = fx.t, cx = W / 2, y = Math.min(PH - 62, Math.max(g.target.y + 150, PH * 0.74));
-  const head = tut === 'move' ? 'MOVE THE RING' : tut === 'centre' ? 'KEEP THE BALL CENTRED' : 'DODGE THE SHAPES';
+  const head = tut === 'move' ? 'MOVE THE RING' : tut === 'push' ? 'PUSH THE BALL TO THE STAR' : 'PUSH IT AWAY FROM SHAPES';
   const sub = tut === 'move' ? (kind === 'touch' ? 'Drag anywhere' : kind === 'key' ? 'Arrow keys or WASD' : 'Move your mouse')
-    : tut === 'centre' ? 'It gets pushed away when it leaves the middle' : 'Hits break the ring';
+    : tut === 'push' ? 'Put the ring behind the ball. The ring pushes it away.' : 'Hits break the ring';
   ctx.save();
+  if (tut === 'push' && g.tutGoals && g.tutGoals.length) { // the lesson: a marker to reach, and a ghost ring showing where to stand to push towards it
+    const gx = g.tutGoals[0][0], gy = g.tutGoals[0][1], b = g.ball, ux = b.x - gx, uy = b.y - gy, ud = Math.hypot(ux, uy) || 1, p = 0.5 + 0.5 * Math.sin(t * 5);
+    ctx.strokeStyle = '#7fff9a'; ctx.fillStyle = '#7fff9a'; ctx.lineWidth = 2; glow('#7fff9a', 10);
+    ctx.globalAlpha = 0.5 + 0.4 * p; ctx.setLineDash([6, 6]); ctx.beginPath(); ctx.arc(gx, gy, 30 + 3 * p, 0, 6.283); ctx.stroke(); ctx.setLineDash([]);
+    ctx.globalAlpha = 1; star4(ctx, gx, gy, 13 + 2 * p); noGlow();
+    ctx.globalAlpha = 0.28; ctx.setLineDash([2, 8]); ctx.lineCap = 'round'; ctx.beginPath(); ctx.moveTo(b.x - ux / ud * 18, b.y - uy / ud * 18); ctx.lineTo(gx + ux / ud * 36, gy + uy / ud * 36); ctx.stroke(); ctx.setLineDash([]);
+    const hx = b.x + ux / ud * 46, hy = b.y + uy / ud * 46;   // ghost ring: behind the ball, opposite the star
+    if (Math.hypot(g.target.x - hx, g.target.y - hy) > 26) { ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = 0.22 + 0.2 * p; ctx.lineWidth = 2; ctx.setLineDash([5, 6]); ctx.beginPath(); ctx.arc(hx, hy, 40, 0, 6.283); ctx.stroke(); ctx.setLineDash([]); }
+    ctx.globalAlpha = 1;
+  }
   if (tut === 'move') {
     const iy = y - 50, sway = Math.sin(t * 3) * 24; ctx.strokeStyle = '#dffcff'; ctx.fillStyle = '#dffcff'; ctx.lineWidth = 2.2; ctx.lineJoin = 'round'; glow('#6ff', 8);
     if (kind === 'key') {
@@ -100,7 +110,7 @@ function drawTutorial() {
     noGlow(); ctx.globalAlpha = 1;
   }
   const wT = 0.75 + 0.25 * Math.sin(t * 4);
-  ctx.fillStyle = 'rgba(3,1,9,0.5)'; scrRR(cx - 190, y - 20, 380, 62, 14); ctx.fill();
+  ctx.fillStyle = 'rgba(3,1,9,0.5)'; scrRR(cx - 205, y - 20, 410, 62, 14); ctx.fill();
   textAt(head, cx, y, 21, '#eaffff', 10, { font: 'display', alpha: wT });
   textAt(sub, cx, y + 26, 15, '#cfe6f5', 0);
   ctx.restore();

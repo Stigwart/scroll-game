@@ -13,7 +13,7 @@ const Audio_ = (() => {
   const MASTER = 0.8, MUSIC = 0.9;       // mix: music sits about 8 dB under the SFX peaks and ducks on hits
   const SFX_GAIN = { buy: 1.7, power: 1.5, levelUp: 1.5, stage: 1.5, unlock: 1.3, edge: 0.8, milestone: 1.2, hit: 0.9 };   // levelled from measured peaks (see docs/play-review.md)
   const DUCK = { hit: 0.45, over: 0.3, newBest: 0.5, stage: 0.6 };   // music level while these play
-  const MIN_GAP = { edge: 80, hit: 80, nearMiss: 120, tick: 30 };
+  const MIN_GAP = { zone: 350, edge: 80, hit: 80, nearMiss: 120, tick: 30 };
 
   let ctx = null, master = null, bus = null, lp = null, noise = null;
   let timer = null, nextT = 0, step = 0, intensity = 0;
@@ -150,6 +150,7 @@ const Audio_ = (() => {
   const SFX = {
     start:  (o, t) => { voice(o, 'sawtooth', 220, 880, t, 0.01, 0.25, 0.2); voice(o, 'square', 440, 1320, t + 0.12, 0.01, 0.2, 0.08); },
     go:     (o, t) => { voice(o, 'square', 660, 0, t, 0.004, 0.09, 0.1); voice(o, 'square', 990, 0, t + 0.08, 0.004, 0.16, 0.12); },
+    zone:   (o, t) => voice(o, 'sine', 520, 700, t, 0.003, 0.06, 0.07),
     hit:    (o, t) => { voice(o, 'square', 180, 60, t, 0.005, 0.12, 0.25); voice(o, 'sine', 110, 38, t, 0.004, 0.22, 0.45); burst(o, t, 0.08, 1800, 0.8, 0.18); }, // + low thud
     edge:   (o, t) => { voice(o, 'triangle', 1200, 900, t, 0.003, 0.05, 0.15); burst(o, t, 0.1, 5200, 1.5, 0.22); burst(o, t + 0.03, 0.07, 3400, 2, 0.14); }, // + crackle
     over:   (o, t) => { voice(o, 'sawtooth', 440, 55, t, 0.01, 0.35, 0.3); voice(o, 'triangle', 330, 110, t + 0.12, 0.01, 0.22, 0.15); },

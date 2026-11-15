@@ -18,7 +18,7 @@
 
 ## Description
 
-Neon Bullseye is a one-move arcade game about balance. A glowing ball floats inside your ring and it does not want to stay there. Move the ring to keep the ball centred while neon shapes drift in and try to knock it loose.
+Neon Bullseye is a one-move arcade game about pushing without touching. Your ring repels the glowing ball: rest it in the calm centre and it stays put, slide the ring behind it and it shoots away. Use that push to steer the ball clear of the neon shapes drifting in to knock it about.
 
 Every second you survive counts. Runs climb through eight named stages, from CALM to BULLSEYE, each faster and brighter than the last, with pulsing circles and closing gates joining in as you go deeper. A near miss pays bonus shards. A clean hit cracks your ring.
 
@@ -33,13 +33,13 @@ Between runs, spend shards on upgrades and power-ups, complete missions and dail
 ## Controls
 
 **Desktop**
-- Click to start. Move the mouse to steer the ring.
+- Click to start. Move the mouse to steer the ring; the ring pushes the ball away from its centre.
 - Or use the arrow keys / WASD.
 - Space or Enter: start and retry.
 - 1, 2, 3: use power-ups. P: pause. M: mute.
 
 **Mobile and tablet**
-- Tap to start. Drag anywhere on the screen to move the ring.
+- Tap to start. Drag anywhere on the screen to move the ring; the ring pushes the ball away from its centre.
 - Tap the buttons at the screen edge to use power-ups.
 
 ## Assets

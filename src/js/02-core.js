@@ -90,10 +90,10 @@ const game = {
   shake: 0, flash: 0, edgeTouch: false,
   overAt: 0, acc: 0,
   bgT: 0, bgOff: { x: 0, y: 0 }, blobs: [],
-  stats: { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0 },
+  stats: { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0, clean: 0, cleanMax: 0 },
   shield: 0, safeUntil: 0, hold: false, holdT: 0, holdMove: 0, hitStop: 0, slowMo: 0,     // frame-time seconds (cosmetic pacing; never affects sim results)
   reduceMotion: lsGet('scrollgame.rm') === '1',
-  tutorial: '', tutSpawnAt: -1, breatherUntil: 0, stageSeen: 0, bestPassed: false, prevBest: 0, msDone: 0,
+  tutorial: '', tutGoals: null, tutSpawnAt: -1, breatherUntil: 0, stageSeen: 0, bestPassed: false, prevBest: 0, msDone: 0,
   mouseGoal: null, tutRun: false
 };
 game.stageName = () => CONFIG.stageNames[Math.min(7, Math.floor(game.stageF()))];
@@ -114,8 +114,8 @@ initBlobs();
 
 function resetRun() {
   game.pw = newPw(); game.pwUsed = 0; MOD.sweetTemp = 0; MOD.calm = 1; game.t = 0; game.maxHealth = CONFIG.startHealth * MOD.hp; game.health = game.maxHealth; game.newBest = false;
-  game.stats = { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0 };
-  game.shield = typeof prog !== 'undefined' && prog.runs < SHIELD_RUNS ? 1 : 0; game.safeUntil = 0; game.hold = true; game.holdT = 0; game.holdMove = 0; game.hitStop = 0; game.slowMo = 0; game.tutorial = ''; game.tutSpawnAt = -1; game.breatherUntil = 0; game.stageSeen = 0;
+  game.stats = { nearMiss: 0, bonusShards: 0, sweetTime: 0, hits: 0, stageMax: 0, milestones: 0, clean: 0, cleanMax: 0 };
+  game.shield = typeof prog !== 'undefined' && prog.runs < SHIELD_RUNS ? 1 : 0; game.safeUntil = 0; game.hold = true; game.holdT = 0; game.holdMove = 0; game.tutGoals = null; game.hitStop = 0; game.slowMo = 0; game.tutorial = ''; game.tutSpawnAt = -1; game.breatherUntil = 0; game.stageSeen = 0;
   game.bestPassed = false; game.prevBest = game.best; game.msDone = 0; game.mouseGoal = null; game.tutRun = typeof prog !== 'undefined' && prog.runs === 0;
   game.obstacles = []; game.trailSt = newTrailSt(); game.unlockedNow = []; game.spawnTimer = 1.5;
   game.shake = 0; game.flash = 0; game.acc = 0;

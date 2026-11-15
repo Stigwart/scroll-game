@@ -16,6 +16,7 @@ const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, (typeof prog !== 'unde
 const WIDE_NEW = typeof WIDE_NEW_OVERRIDE === 'number' ? WIDE_NEW_OVERRIDE : 0.6;
 // Opening hold: the ball rides in the ring until GO, so every run starts from control (run 1 waits for the player to move)
 const EDGE_ASSIST = typeof EDGE_ASSIST_OVERRIDE === 'number' ? EDGE_ASSIST_OVERRIDE : 0.85;
+const TUT_GOAL_MAX = 14;   // seconds the push lesson waits before giving up and starting the run proper
 const HOLD_S = 0.8, HOLD_TUT_MAX = 8;
 // Second chance: on a player's first SHIELD_RUNS runs the first lethal hit refills health instead (fraction by run number)
 const SHIELD_RUNS = 3, SHIELD_REFILL = [0.7, 0.5, 0.4];
@@ -43,8 +44,14 @@ function step(dt) {
     fxe('milestone', { secs: m[0], shards: m[1] });
   }
   if (!g.bestPassed && g.prevBest > 0 && g.t > g.prevBest) { g.bestPassed = true; fxe('newBestPassed'); }
-  if (g.tutRun) {
-    if (g.t < 5) g.tutorial = 'centre';
+  g.stats.clean += dt; if (g.stats.clean > g.stats.cleanMax) g.stats.cleanMax = g.stats.clean;
+  if (g.tutRun) { // run 1: push the ball into two markers (no shapes meanwhile), then the first slow shape with a dodge hint
+    if (g.tutGoals === null) { const x0 = b.x, y0 = b.y; g.tutGoals = [[clamp(x0 + 150, 70, W - 70), clamp(y0 - 50, 110, PH - 90)], [clamp(x0 - 150, 70, W - 70), clamp(y0 + 70, 110, PH - 90)]]; }
+    if (g.tutGoals.length && g.t > TUT_GOAL_MAX) g.tutGoals.length = 0;
+    if (g.tutGoals.length && Math.hypot(b.x - g.tutGoals[0][0], b.y - g.tutGoals[0][1]) < 34) {
+      const gl = g.tutGoals.shift(); g.stats.bonusShards += 5; fxe('tutGoal', { x: gl[0], y: gl[1], last: !g.tutGoals.length });
+    }
+    if (g.tutGoals.length) g.tutorial = 'push';
     else if (g.tutSpawnAt >= 0 && g.t - g.tutSpawnAt < 4) g.tutorial = 'dodge';
     else g.tutorial = '';
   }
@@ -76,7 +83,7 @@ function step(dt) {
   b.x += b.vx * dt; b.y += b.vy * dt;
 
   // Obstacles (e): move, collide, cull
-  if (!(g.tutRun && g.t < 5)) g.spawnTimer -= g.t < g.breatherUntil ? dt * 0.25 : dt;
+  if (!(g.tutRun && g.tutGoals && g.tutGoals.length)) g.spawnTimer -= g.t < g.breatherUntil ? dt * 0.25 : dt;
   if (g.spawnTimer <= 0) {
     const cost = spawnObstacle();
     if (g.tutRun && g.tutSpawnAt < 0) { // first obstacle of run 1: gentle, and flagged for the 'dodge' hint
@@ -106,7 +113,7 @@ function step(dt) {
       if (!rm) g.shake = Math.max(g.shake, 3); telHit(o); Audio_.sfx('hit');
       if (g.t - (o.dmgAt === undefined ? -9 : o.dmgAt) > 0.6) { // one damage tick per obstacle contact
         o.dmgAt = g.t; const dmg = g.t < g.safeUntil ? 0 : T.hit * (1 + 0.2 * L) * (1 - 0.4 * assist());
-        g.health -= dmg; g.stats.hits++; if (!rm) g.hitStop = 0.06;
+        g.health -= dmg; g.stats.hits++; g.stats.clean = 0; if (!rm) g.hitStop = 0.06;
         fxe('hit', { x: b.x, y: b.y, dmg }); g.flash = Math.min(0.35, g.flash + 0.25);
       }
     }

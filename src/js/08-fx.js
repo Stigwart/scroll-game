@@ -10,7 +10,7 @@ const fx = {
   banners: [], pops: [], cracks: [],
   shake: 0, chroma: 0, wipe: 0, wipeCol: '#ffffff', ef: { l: 0, r: 0, t: 0, b: 0 },
   hpShown: 1, hpPulse: 0, bezel: 0, bestFlash: 0, bestPassed: false,
-  lastShards: 0, shardPulse: 0, deathT: -1
+  lastShards: 0, shardPulse: 0, deathT: -1, zonePulse: 0, inZone: true
 };
 for (let i = 0; i < FX_MAX; i++) fx.pool.push({ life: 0, max: 1, x: 0, y: 0, vx: 0, vy: 0, g: 0, s: 2, c: '#fff', k: 0, r: 0 });
 function frnd() { fx.seed = (Math.imul(fx.seed, 1664525) + 1013904223) >>> 0; return fx.seed / 4294967296; }
@@ -77,6 +77,10 @@ function fxEvent(type, d) {
       fxBurst(x, y, rm ? 10 : 36, '#7fff9a', 120, 420, 0, 0, 0.7); fx.wipe = 1; fx.wipeCol = '#7fff9a'; fx.hpShown = 0;
       fxSfx('power'); fxVibrate([20, 30, 20]);
       break;
+    case 'tutGoal':
+      fxPop(x, y - 30, d.last ? 'NICE!' : 'GOOD!', '#7fff9a', 26, 0.9); fxPop(x + 40, y - 6, '+5', '#ffd84d', 16, 0.8);
+      fxBurst(x, y, rm ? 8 : 22, '#7fff9a', 80, 300, 0, 0, 0.6); fxSfx('milestone');
+      break;
     case 'hit': {
       fxBurst(x, y, rm ? 6 : 16, d.color || pal[4], 90, 300, 0, 0, 0.55);
       if (!rm) fx.shake = Math.max(fx.shake, 5 + Math.min(1.5, (d.dmg || 0) / 10));
@@ -134,6 +138,12 @@ function fxUpdate(dt) {
   if (fx.deathT >= 0) fx.deathT += dt;
   fx.shake *= Math.exp(-dt * 11); fx.chroma *= Math.exp(-dt * 7);
   fx.ef.l *= Math.exp(-dt * 6); fx.ef.r *= Math.exp(-dt * 6); fx.ef.t *= Math.exp(-dt * 6); fx.ef.b *= Math.exp(-dt * 6);
+  fx.zonePulse *= Math.exp(-dt * 5);
+  if (g.state === 'play' && g.ball && g.target && !g.hold && typeof sweetR === 'function') { // leaving the still zone is felt as well as seen
+    const inside = Math.hypot(g.ball.x - g.target.x, g.ball.y - g.target.y) <= sweetR();
+    if (fx.inZone && !inside) { fx.zonePulse = 1; fxSfx('zone'); }
+    fx.inZone = inside;
+  } else fx.inZone = true;
   fx.hpPulse *= Math.exp(-dt * 5); fx.bestFlash *= Math.exp(-dt * 1.5); fx.shardPulse *= Math.exp(-dt * 6);
   if (fx.wipe > 0) fx.wipe = Math.max(0, fx.wipe - dt / 0.8);
   // Ring health lags behind real health so a lost chunk is visible dropping away
