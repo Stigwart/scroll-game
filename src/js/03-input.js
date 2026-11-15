@@ -16,7 +16,8 @@ function onDown(e) {
   drag = { id: e.pointerId, x: e.clientX, y: e.clientY };
   try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
 }
-function resumeGame() { game.paused = false; telClearInProg(); }
+function resumeGame() { if (!game.paused || game.resumeT > 0) return; game.resumeT = RESUME_S; telClearInProg(); }   // countdown runs in update()
+const RESUME_S = 0.9;
 // Desktop mouse: ring follows the cursor (absolute position), no click needed
 function mouseFollow(e) {
   const r = canvas.getBoundingClientRect(); if (!r.width) return;
@@ -151,6 +152,9 @@ window.addEventListener('keydown', e => {
     return;
   }
   Audio_.unlock();
+  if (e.code === 'KeyM' && !e.repeat) { Audio_.toggleMute(); syncMuteBtn(); return; }
+  if (e.code === 'KeyP' && !e.repeat && game.state === 'play' && !game.paused) { autoPause(); return; }
+  if (/^(Shift|Control|Alt|Meta|Tab|CapsLock|Escape|F\d+)/.test(e.key)) return;   // never bind Escape; ignore modifier keys
   if (game.paused && !panelOpen && !collOpen) { resumeGame(); return; }
   if (k === '1' || k === '2' || k === '3') { usePw(PWS[+k - 1].id); return; }
   keys[e.code] = true;

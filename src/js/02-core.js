@@ -4,6 +4,7 @@ const canvas = document.getElementById('c');
 const ctx = canvas.getContext('2d');
 // Logical play field. Height 648 with width 450..1152 on landscape frames (fills 16:9), width 450 with height 648..800 on portrait.
 // Physics units are the same everywhere; obstacle density is normalised by fieldK() (04-sim.js).
+const START_Y = 0.42;   // ring/ball start height (fraction of the field)
 const REF_W = 450, REF_H = 648, MAX_W = 1152, MAX_H = 800;
 let W = REF_W, H = REF_H, DPR = 1, SCALE = 1, RS = 1, PH = REF_H, FH = 0, SAFE = { t: 0, r: 0, b: 0, l: 0 }; // PH = play-area height (footer starts at y=PH); RS = DPR*SCALE
 const stageEl = document.getElementById('stage');
@@ -22,12 +23,12 @@ function resize() {
   SCALE = Math.min(vw / W, vh / H); RS = DPR * SCALE;
   stageEl.style.width = W + 'px'; stageEl.style.height = H + 'px';
   stageEl.style.transform = 'translate(' + (SAFE.l + (vw - W * SCALE) / 2) + 'px,' + (SAFE.t + (vh - H * SCALE) / 2) + 'px) scale(' + SCALE + ')';
-  stageEl.style.setProperty('--s', SCALE); stageEl.classList.toggle('wide', W > 700);
+  stageEl.style.setProperty('--s', SCALE); stageEl.style.setProperty('--oy', Math.round((H - REF_H) / 2) + 'px'); stageEl.classList.toggle('wide', W > 700);
   canvas.width = Math.round(W * RS); canvas.height = Math.round(H * RS);
   ctx.setTransform(RS, 0, 0, RS, 0, 0);
   if (game.target) { game.target.x = clamp(game.target.x, 0, W); game.target.y = clamp(game.target.y, 0, PH); }
   if (game.ball) { game.ball.x = clamp(game.ball.x, game.ball.r, W - game.ball.r); game.ball.y = clamp(game.ball.y, game.ball.r, PH - game.ball.r); }
-  if (game.state !== 'play' && game.ball && game.target) { game.target.x = game.ball.x = W / 2; game.target.y = game.ball.y = PH * 0.32; }
+  if (game.state !== 'play' && game.ball && game.target) { game.target.x = game.ball.x = W / 2; game.target.y = game.ball.y = PH * START_Y; }
 }
 window.addEventListener('resize', resize);
 window.addEventListener('orientationchange', resize);
@@ -64,7 +65,7 @@ function rgbToHex(s) {
 // ============================================================
 const game = {
   state: 'start',            // start | play | over
-  paused: false,             // visibility/panel pause
+  paused: false, resumeT: 0,  // visibility/panel pause; resumeT > 0 = 3-2-1 countdown before play continues
   t: 0,                      // survival time
   health: CONFIG.startHealth, maxHealth: CONFIG.startHealth, runSum: null,
   best: parseFloat(lsGet(STORE_BEST)) || 0,
@@ -104,14 +105,15 @@ function resetRun() {
   game.bestPassed = false; game.prevBest = game.best; game.msDone = 0; game.mouseGoal = null; game.tutRun = typeof prog !== 'undefined' && prog.runs === 0;
   game.obstacles = []; game.trailSt = newTrailSt(); game.unlockedNow = []; game.spawnTimer = 1.5;
   game.shake = 0; game.flash = 0; game.acc = 0;
-  game.target = { x: W / 2, y: PH * 0.32 };
-  game.ball = { x: W / 2, y: PH * 0.32, vx: 0, vy: 0, r: CONFIG.ballRadius };
+  game.paused = false; game.resumeT = 0;
+  game.target = { x: W / 2, y: PH * START_Y };
+  game.ball = { x: W / 2, y: PH * START_Y, vx: 0, vy: 0, r: CONFIG.ballRadius };
   game.drift = { x: 0, y: 0, tx: 0, ty: 0, timer: 0 };
 }
 function fxe(type, data) { if (typeof fxEvent === 'function') fxEvent(type, data || {}); }
 function startRun() {
   meta.notice = []; meta.pending = null; telRunStart(); resetRun(); game.state = 'play'; telBegin(); PLATFORM.gameplayStart(); Audio_.sfx('start'); Audio_.music(true);
-  fxe('start'); fxe('stage', { index: 0, name: CONFIG.stageNames[0] });
+  fxe('start');
 }
 function endRun() {
   fxe('death', { x: game.ball ? game.ball.x : 0, y: game.ball ? game.ball.y : 0 });

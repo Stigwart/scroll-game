@@ -1,21 +1,22 @@
 <div id="stage">
-<body>
 <canvas id="c"></canvas>
 <div id="pw"></div>
 <div id="rail">
-  <button id="mute" class="keep" aria-label="Mute"></button>
-  <button id="rCol" class="rb" aria-label="Collection" title="Collection">&#9672;<i class="dot"></i></button>
-  <button id="rDaily" class="rb" aria-label="Daily" title="Daily">&#9788;<i class="dot"></i></button>
-  <button id="rSet" class="rb" aria-label="Settings" title="Settings">&#9881;</button>
-  <button id="rPause" class="rb keep" aria-label="Pause" title="Pause">&#10074;&#10074;</button>
+  <button id="mute" class="keep" aria-label="Sound"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9.5h3.5L12 6v12l-4.5-3.5H4z"/><path class="on" d="M15.5 9.5a3.6 3.6 0 0 1 0 5M18 7a7 7 0 0 1 0 10"/><path class="off" d="M16 9.5l5 5M21 9.5l-5 5"/></svg></button>
+  <button id="rShop" class="rb" aria-label="Upgrades"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4l7 7h-4v5H9v-5H5z"/><path d="M8 20h8"/></svg><i class="dot"></i><span>Upgrades</span></button>
+  <button id="rCol" class="rb" aria-label="Balls and trails"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="5"/><path d="M3.5 15.5c-1.5-2 3-5.5 8.5-7s9-.5 8.500 1.500"/></svg><i class="dot"></i><span>Balls</span></button>
+  <button id="rDaily" class="rb" aria-label="Daily rewards"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="6" width="16" height="14" rx="2.500"/><path d="M4 10.500h16M8.500 3.500v4M15.500 3.500v4M9 15.500l2.200 2.200 4-4.200"/></svg><i class="dot"></i><span>Daily</span></button>
+  <button id="rSet" class="rb" aria-label="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h9M17 7h3M4 12h3M11 12h9M4 17h11M19 17h1"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="17" r="2"/></svg><span>Settings</span></button>
+  <button id="rPause" class="rb keep" aria-label="Pause"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8.500 5.500v13M15.500 5.500v13"/></svg></button>
 </div>
+<button id="goUp"></button>
 <button id="retry">RETRY</button>
 <div id="settings"><div class="card"><h2>SETTINGS</h2>
   <div class="mrow"><div class="tx"><b>Reduce motion</b><small>No screen shake, flashes or slow-mo</small></div><button id="setRm"></button></div>
   <div class="mrow"><div class="tx"><b>Left-handed</b><small>Power-up buttons on the right edge</small></div><button id="setLefty"></button></div>
   <button id="setClose" class="big">Close</button></div></div>
 <div id="streak"><div class="card"><h2>DAILY STREAK</h2><div class="cal" id="stDays"></div><p id="stTxt"></p><button id="stOk" class="big">Nice!</button></div></div>
-<div id="priv">This game saves your progress on this device and sends anonymous play stats. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a> <button id="privOk">OK</button></div>
+<div id="priv">Saves progress on this device and sends anonymous play stats. <a href="privacy.html" target="_blank" rel="noopener">Privacy</a> <button id="privOk">OK</button></div>
 <button id="gear" aria-label="Tuning">&#9881;</button>
 <div id="panel"><h2>TUNING</h2><div id="rows"></div>
   <div class="row"><label><span>Send stats</span><input type="checkbox" id="telToggle"></label><div id="telStat"></div></div>
@@ -23,7 +24,7 @@
   <button class="reset" id="unlockAll">Unlock all (testing)</button>
   <button class="reset" id="resetUnlocks">Reset unlocks</button>
   <div class="hint">Changes apply live. Tap the gear to close and resume.</div></div>
-<div id="coll"><div class="chead"><button id="collBack">&larr; Back</button><h2>COLLECTION</h2></div>
+<div id="coll"><div class="chead"><button id="collBack">&larr; Back</button><h2 id="collTitle">COLLECTION</h2></div>
   <div id="tabs"><button data-k="balls"></button><button data-k="trails"></button><button data-k="upgrades"></button><button data-k="daily"></button></div>
   <div id="grid"></div></div>
 </div>

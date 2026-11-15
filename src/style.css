@@ -1,7 +1,7 @@
   html, body { margin:0; padding:0; height:100%; background:#05030d; overflow:hidden;
     touch-action:none; overscroll-behavior:none; -webkit-user-select:none; user-select:none;
     -webkit-touch-callout:none; -webkit-tap-highlight-color:transparent;
-    font-family: "Trebuchet MS", system-ui, sans-serif; color:#dff; }
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; color:#dff; }
   #c { position:absolute; inset:0; width:100%; height:100%; display:block; touch-action:none; }
   #gear { position:absolute; top:max(10px, 0px); right:10px; width:42px; height:42px;
     border-radius:50%; border:1px solid #6ff8; background:#0a1020cc; color:#8ff; font-size:22px;
@@ -23,10 +23,10 @@
   .chead { display:flex; align-items:center; gap:12px; margin-bottom:10px; }
   .chead h2 { margin:0; color:#6ff; letter-spacing:2px; font-size:18px; }
   #collBack { min-height:44px; padding:0 16px; border-radius:10px; border:1px solid #f8f8; background:#201030; color:#f8f;
-    font:bold 16px "Trebuchet MS", system-ui, sans-serif; cursor:pointer; }
+    font:bold 16px var(--ui); cursor:pointer; }
   #tabs { display:flex; gap:10px; margin-bottom:12px; }
   #tabs button { flex:1; min-height:46px; border-radius:10px; border:1px solid #6ff6; background:#0a1020; color:#9cd;
-    font:bold 16px "Trebuchet MS", system-ui, sans-serif; cursor:pointer; }
+    font:bold 16px var(--ui); cursor:pointer; }
   #tabs button.on { background:#0e3a4a; color:#fff; border-color:#6ff; box-shadow:0 0 10px #0ff5; }
   #grid { flex:1; overflow-y:auto; touch-action:pan-y; display:grid; grid-template-columns:1fr 1fr; gap:12px;
     align-content:start; grid-auto-rows:min-content; padding-bottom:max(20px, 0px); }
@@ -49,7 +49,7 @@
 
   /* Fixed logical stage (STAGE_W x STAGE_H), scaled to fit and letterboxed. --s = current scale. */
   html, body { background: radial-gradient(ellipse at center, #120a2a 0%, #05030d 70%); }
-  #stage { position:fixed; left:0; top:0; width:450px; height:648px; transform-origin:0 0; overflow:hidden; background:#05030d; --s:1; }
+  #stage { --ui: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif; --disp: "NB Display", var(--ui); position:fixed; left:0; top:0; width:450px; height:648px; transform-origin:0 0; overflow:hidden; background:#05030d; --s:1; }
   /* keep small DOM text >= ~12 screen px when the stage is scaled down */
   .tile .st, .tile .nm, #telStat, #panel .hint, .row { font-size:max(12px, calc(12px / var(--s))); }
 
@@ -59,13 +59,17 @@
   .mhead b { color:#ffd84d; } .mhead span:last-child i { display:inline-block; vertical-align:middle; height:8px; width:0; max-width:90px; background:#6ff; margin-left:8px; border-radius:4px; }
   .mrow { grid-column:1/-1; display:flex; align-items:center; gap:10px; border:1px solid #6ff4; background:#0a1020cc; border-radius:14px; padding:10px 12px; color:#dff; }
   .mrow .tx { flex:1; } .mrow b { display:block; font-size:16px; } .mrow small { color:#8ab; font-size:max(13px, calc(12px / var(--s))); } .mrow em { display:block; font-style:normal; color:#7fff9a; letter-spacing:2px; font-size:12px; } .mrow em s { text-decoration:none; color:#345; }
-  .mrow button { min-height:44px; min-width:84px; border-radius:10px; border:1px solid #7fff9a; background:#0e3a4a; color:#fff; font:bold 15px "Trebuchet MS", system-ui, sans-serif; cursor:pointer; }
+  .mrow button { min-height:44px; min-width:84px; border-radius:10px; border:1px solid #7fff9a; background:#0e3a4a; color:#fff; font:bold 15px var(--ui); cursor:pointer; }
   .mrow button:disabled { opacity:.45; border-color:#6ff4; cursor:default; } .mrow.done { border-color:#7fff9a; }
 
-  /* top icon rail */
-  #rail { position:absolute; top:10px; left:10px; display:flex; gap:8px; z-index:5; }
-  #rail button { position:relative; width:42px; height:42px; border-radius:50%; border:1px solid #6ff8; background:#0a1020cc; color:#8ff; font-size:19px; line-height:1; padding:0; cursor:pointer; box-shadow:0 0 10px #0ff3; }
-  #rail .dot { position:absolute; top:-3px; right:-3px; width:12px; height:12px; border-radius:50%; background:#ff3b5c; border:2px solid #0a1020; box-shadow:0 0 8px #f36; display:none; }
+  /* top icon rail: inline SVG icons, labelled on the menu screens */
+  #rail { position:absolute; top:10px; left:10px; display:flex; gap:14px; z-index:5; align-items:flex-start; }
+  #rail button { position:relative; width:48px; height:48px; border-radius:50%; border:1.5px solid #6ff8; background:#0a1020cc; color:#9ff; padding:0; cursor:pointer; box-shadow:0 0 10px #0ff3; }
+  #rail svg { width:26px; height:26px; display:block; margin:auto; fill:none; stroke:currentColor; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+  #rail button span { position:absolute; left:50%; top:52px; transform:translateX(-50%); font:600 max(11px, calc(12px / var(--s))) var(--ui); color:#9cd; letter-spacing:.3px; white-space:nowrap; pointer-events:none; }
+  #rail button:hover { border-color:#6ff; color:#fff; }
+  #mute .off { display:none; } #mute.off .on { display:none; } #mute.off .off { display:inline; } #mute.off { color:#789; }
+  #rail .dot { position:absolute; top:-2px; right:-2px; width:13px; height:13px; border-radius:50%; background:#ffd84d; border:2px solid #0a1020; box-shadow:0 0 8px #fd4; display:none; }
   #rail .dot.on { display:block; }
   #stage[data-st=play] #rail .rb:not(.keep) { display:none; }
   #rail #rPause { display:none; } #stage[data-st=play] #rail #rPause { display:block; }
@@ -78,11 +82,14 @@
   .cal .dc.today { border-color:#ffd84d; box-shadow:0 0 12px #fd48; } .cal .dc.today b { color:#ffd84d; }
   .cal .dc.big { grid-column:1/-1; padding:9px; border-color:#ff8ae6aa; } .cal .dc.big b { font-size:20px; } .cal .dc.big em { display:block; font-style:normal; font-size:12px; letter-spacing:2px; color:#ff8ae6; }
 
-  /* game-over DOM buttons */
+  /* game-over DOM buttons (positions follow the canvas layout; --oy centres the block on tall fields) */
   @keyframes fin { from { opacity:0; } to { opacity:1; } }
-  #retry { position:absolute; left:50%; transform:translateX(-50%); display:none; z-index:3; cursor:pointer; font-family:"Trebuchet MS", system-ui, sans-serif; color:#fff; }
-  #retry.show { display:block; animation:fin .3s; }
-  #retry { top:452px; width:270px; height:62px; border-radius:31px; border:2px solid #fff; background:linear-gradient(#ff3b8c,#b0117a); font-size:28px; font-weight:900; letter-spacing:4px; box-shadow:0 0 24px #f3a9; }
+  #retry, #goUp { position:absolute; left:50%; transform:translateX(-50%); display:none; z-index:3; cursor:pointer; font-family:var(--disp); color:#fff; }
+  #retry.show, #goUp.show { display:block; animation:fin .3s; }
+  #retry { top:calc(498px + var(--oy, 0px)); width:280px; height:64px; border-radius:32px; border:2px solid #dff; background:linear-gradient(#19c8dc,#0b7f9c); font-size:28px; letter-spacing:3px; box-shadow:0 0 26px #0ff7; text-shadow:0 1px 0 #0468; }
+  #retry:hover { filter:brightness(1.12); }
+  #goUp { top:calc(428px + var(--oy, 0px)); min-width:280px; height:50px; padding:0 22px; border-radius:25px; border:1.5px solid #ffd84d; background:#2a2208ee; color:#ffd84d; font-size:16px; letter-spacing:1.5px; box-shadow:0 0 16px #fd45; white-space:nowrap; }
+  #goUp:hover { background:#3a300cee; }
 
   /* settings + streak sheets */
   #settings, #streak { position:absolute; inset:0; z-index:7; background:#05030dd9; display:none; align-items:center; justify-content:center; }
@@ -91,7 +98,7 @@
   .card h2 { margin:0; color:#6ff; letter-spacing:2px; font-size:18px; text-align:center; }
   .card p { margin:0; text-align:center; color:#dff; font-size:15px; }
   .card .mrow { grid-column:auto; }
-  .card button.big { min-height:48px; border-radius:12px; border:1px solid #6ff; background:#0e3a4a; color:#fff; font:bold 17px "Trebuchet MS", system-ui, sans-serif; cursor:pointer; }
+  .card button.big { min-height:48px; border-radius:12px; border:1px solid #6ff; background:#0e3a4a; color:#fff; font:bold 17px var(--ui); cursor:pointer; }
 
   /* wide screens: neon letterbox + side panels (the 450x800 stage is unchanged) */
   body::before { content:""; position:fixed; inset:0; pointer-events:none; background-image:linear-gradient(#6ff1 1px, transparent 1px), linear-gradient(90deg, #6ff1 1px, transparent 1px); background-size:64px 64px; -webkit-mask-image:radial-gradient(ellipse at center, #000 5%, transparent 75%); mask-image:radial-gradient(ellipse at center, #000 5%, transparent 75%); }
@@ -103,10 +110,17 @@
   #pw button span { position:relative; z-index:1; } #pw button i { position:absolute; left:0; right:0; bottom:0; height:0; background:#000a; }
   #pw button.cd { color:#567; border-color:#6ff4; box-shadow:none; } #pw kbd { position:absolute; z-index:1; right:7px; bottom:3px; font:bold 11px sans-serif; color:#ffd84d; }
 
-#priv { position:absolute; left:8px; bottom:8px; width:236px; z-index:6; display:none; background:#0a1020ee; border:1px solid #6ff6; border-radius:10px; padding:8px 10px; font:11px/1.3 system-ui,sans-serif; color:#cde; opacity:.92; }
+#priv { position:absolute; left:8px; bottom:8px; width:260px; z-index:6; display:none; background:#0a1020ee; border:1px solid #6ff6; border-radius:10px; padding:8px 10px; font:max(12px, calc(12px / var(--s)))/1.3 var(--ui); color:#cde; opacity:.92; }
 #stage[data-st=play] #priv { display:none !important; }
-#priv a { color:#6ff; } #priv button { margin-left:6px; padding:3px 12px; border-radius:6px; border:1px solid #6ff8; background:#123; color:#8ff; font-size:12px; cursor:pointer; }
+#priv a { color:#6ff; } #priv button { margin-left:6px; padding:3px 12px; border-radius:6px; border:1px solid #6ff8; background:#123; color:#8ff; font-size:inherit; cursor:pointer; }
 
 #safe { position:fixed; visibility:hidden; pointer-events:none; padding:env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
 /* wide field: keep sheets and the collection at a readable column width */
 #coll { align-items:center; } #coll > * { width:100%; max-width:560px; box-sizing:border-box; }
+/* display face on headings and primary buttons; one button style */
+.chead h2, .card h2, #panel h2 { font-family:var(--disp); font-weight:normal; letter-spacing:2px; }
+.card button.big, .mrow button, #collBack, #tabs button .tl { font-family:var(--disp); font-weight:normal; letter-spacing:1px; }
+.mrow button { font-size:14px; } .card button.big { font-size:17px; }
+#collBack { border-color:#6ff8; background:#0e3a4a; color:#fff; font-size:14px; }
+.cal .dc small { font-size:max(11px, calc(12px / var(--s))); } .cal .dc b { font-size:max(14px, calc(12px / var(--s))); }
+#stage.wide .cal .dc small { font-size:12px; }

@@ -39,7 +39,7 @@ function step(dt) {
   }
   if (!g.bestPassed && g.prevBest > 0 && g.t > g.prevBest) { g.bestPassed = true; fxe('newBestPassed'); }
   if (g.tutRun) {
-    if (g.t < 8) g.tutorial = 'centre';
+    if (g.t < 5) g.tutorial = 'centre';
     else if (g.tutSpawnAt >= 0 && g.t - g.tutSpawnAt < 4) g.tutorial = 'dodge';
     else g.tutorial = '';
   }
@@ -71,7 +71,7 @@ function step(dt) {
   b.x += b.vx * dt; b.y += b.vy * dt;
 
   // Obstacles (e): move, collide, cull
-  if (!(g.tutRun && g.t < 8)) g.spawnTimer -= g.t < g.breatherUntil ? dt * 0.25 : dt;
+  if (!(g.tutRun && g.t < 5)) g.spawnTimer -= g.t < g.breatherUntil ? dt * 0.25 : dt;
   if (g.spawnTimer <= 0) {
     spawnObstacle();
     if (g.tutRun && g.tutSpawnAt < 0) { // first obstacle of run 1: gentle, and flagged for the 'dodge' hint
@@ -145,6 +145,7 @@ function update(frameDt) {
   }
   g.shake *= Math.exp(-frameDt * 10); g.flash *= Math.exp(-frameDt * 6);
   if (g.reduceMotion) { g.shake = 0; g.hitStop = 0; g.slowMo = 0; }
+  if (g.paused && g.resumeT > 0) { g.resumeT -= frameDt; if (g.resumeT <= 0) { g.resumeT = 0; g.paused = false; if (g.state === 'play') { PLATFORM.gameplayStart(); Audio_.music(true); } } }
   if (g.state === 'play' && !g.paused && !panelOpen) {
     { const kd = kbDir(); if (kd.x || kd.y) g.mouseGoal = null; }
     if (g.mouseGoal && g.target) { // desktop mouse-follow: ring chases the cursor at a capped speed

@@ -121,9 +121,10 @@ function telFinalize(retried, keepalive) {
   } catch (e) {}
 }
 document.addEventListener('visibilitychange', () => { document.hidden ? Audio_.pause() : Audio_.resume(); });
-function autoPause() {
-  if (rs && game.state === 'play' && !game.paused && !panelOpen) rs.paused++;
-  game.paused = true;
+function autoPause() { // blur, tab switch, pause button, P key
+  if (game.state !== 'play') return;
+  if (!game.paused) { if (rs && !panelOpen) rs.paused++; PLATFORM.gameplayStop(); Audio_.music(false); }
+  game.paused = true; game.resumeT = 0; game.mouseGoal = null; drag = null;   // the ring stays put until the player moves again
 }
 const STORE_INPROG = 'scrollgame.inProgressRun';
 function telClearInProg() { try { localStorage.removeItem(STORE_INPROG); } catch (e) {} }

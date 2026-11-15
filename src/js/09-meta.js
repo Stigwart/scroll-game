@@ -8,10 +8,10 @@ const MOD = { sweet: 0, hp: 1, drift: 1, shard: 1, sweetTemp: 0, calm: 1 };   //
 const assist = () => { const r = typeof prog !== 'undefined' ? prog.runs : 9; return r < 1 ? 1 : r < 2 ? 0.5 : 0; };
 const sweetR = () => T.sweet + MOD.sweet + MOD.sweetTemp + 10 * assist();
 const UPG = [
-  { id: 'sweet',  name: 'Sweet Spot',   desc: '+3 radius per level',  max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
-  { id: 'hull',   name: 'Sturdy Hull',  desc: '+8% health per level', max: 5, base: 40, apply: l => { MOD.hp = 1 + 0.08 * l; } },
-  { id: 'calm',   name: 'Calm Drift',   desc: '-6% drift per level',  max: 5, base: 50, apply: l => { MOD.drift = 1 - 0.06 * l; } },
-  { id: 'magnet', name: 'Shard Magnet', desc: '+10% shards per level', max: 5, base: 60, apply: l => { MOD.shard = 1 + 0.1 * l; } }
+  { id: 'sweet',  name: 'Sweet Spot',   desc: 'Bigger safe zone in the ring',   max: 5, base: 40, apply: l => { MOD.sweet = 3 * l; } },
+  { id: 'hull',   name: 'Sturdy Hull',  desc: 'More health (+8% per level)',    max: 5, base: 40, apply: l => { MOD.hp = 1 + 0.08 * l; } },
+  { id: 'calm',   name: 'Calm Drift',   desc: 'The ball wanders less',          max: 5, base: 50, apply: l => { MOD.drift = 1 - 0.06 * l; } },
+  { id: 'magnet', name: 'Shard Magnet', desc: 'Earn more shards (+10% per level)', max: 5, base: 60, apply: l => { MOD.shard = 1 + 0.1 * l; } }
 ];
 const upgCost = (u, lvl) => Math.round(u.base * Math.pow(1.6, lvl));
 const QUESTS = [
@@ -23,6 +23,25 @@ const QUESTS = [
   { id: 'time180', text: 'Survive 180s in total', metric: 'time', target: 180, reward: 40 }
 ];
 const DAILY = [30, 40, 50, 60, 80, 100, 150];
+// Missions: three permanent ladders; the current step of each is shown on the title and game-over screens.
+// val() reads lifetime/best-run stats from prog (05-cosmetics.js). Steps are [target, shard reward].
+const MISSIONS = [
+  { id: 'surv', text: v => 'Survive ' + v + 's', val: () => prog.best, steps: [[20, 20], [30, 25], [45, 30], [60, 40], [75, 50], [90, 60], [120, 80], [150, 100], [180, 130], [240, 180], [300, 250]] },
+  { id: 'stage', text: v => 'Reach ' + CONFIG.stageNames[v - 1], val: () => prog.stageMax + 1, steps: [[2, 25], [3, 40], [4, 60], [5, 80], [6, 110], [7, 150], [8, 200]] },
+  { id: 'skill', kinds: { near: [v => v + ' near misses in a run', () => prog.nearMissBest], runs: [v => 'Play ' + v + ' runs', () => prog.runs], sweet: [v => v + 's in the sweet spot, one run', () => prog.sweetBest] },
+    steps: [['near', 3, 20], ['runs', 5, 20], ['sweet', 10, 25], ['near', 6, 35], ['runs', 15, 40], ['sweet', 20, 45], ['near', 10, 60], ['runs', 40, 70], ['sweet', 35, 80], ['near', 15, 100], ['runs', 100, 120], ['near', 22, 150]] }
+];
+function missionNow(m) { // current step of a ladder, or null when finished
+  const i = (meta.ms && meta.ms[m.id]) || 0; if (i >= m.steps.length) return null;
+  const st = m.steps[i];
+  if (m.kinds) { const k = m.kinds[st[0]]; return { text: k[0](st[1]), v: k[1](), target: st[1], reward: st[2] }; }
+  return { text: m.text(st[0]), v: m.val(), target: st[0], reward: st[1] };
+}
+function missionsCheck() { // after a run: pay out every completed step; returns [[text, reward]]
+  const done = []; meta.ms = meta.ms || {};
+  for (const m of MISSIONS) for (;;) { const c = missionNow(m); if (!c || c.v < c.target) break; meta.ms[m.id] = (meta.ms[m.id] || 0) + 1; meta.shards += c.reward; done.push([c.text, c.reward]); }
+  return done;
+}
 const dayKey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const xpNeed = n => 60 + 30 * n;                                       // xp to go from level n to n+1
 function lvlInfo(xp) { let n = 1; while (xp >= xpNeed(n)) { xp -= xpNeed(n); n++; } return { lvl: n, into: xp, need: xpNeed(n) }; }
@@ -66,13 +85,15 @@ function metaOnRunEnd(t, newBest) {
   for (const q of todaysQuests()) if (!meta.q.done[q.id] && meta.q[q.metric] >= q.target) {
     meta.q.done[q.id] = true; meta.shards += q.reward; s.shards += q.reward; s.lines.push(['Quest: ' + q.text + ' +' + q.reward, '#ffd84d']);
   }
+  s.missions = missionsCheck(); for (const d of s.missions) { s.shards += d[1]; s.lines.push(['Mission: ' + d[0] + ' +' + d[1], '#ffd84d']); }
+  s.shardsRun = runShards(); s.total = meta.shards;
   meta.pending = null; metaSave(); return s;
 }
 function metaGoalInfo() { // cheapest not-maxed upgrade
   let best = null; for (const u of UPG) { const l = upgLvl(u); if (l < u.max) { const c = upgCost(u, l); if (!best || c < best.c) best = { u, c }; } }
   if (!best) return null;
   const afford = meta.shards >= best.c;
-  return { u: best.u, c: best.c, afford, frac: clamp(meta.shards / best.c, 0, 1), text: afford ? 'Upgrade ready: ' + best.u.name + '!' : best.u.name + ' upgrade in ' + (best.c - meta.shards) + ' shards' };
+  return { u: best.u, c: best.c, afford, frac: clamp(meta.shards / best.c, 0, 1), text: afford ? 'Upgrade ready: ' + best.u.name + '!' : best.u.name + ' in ' + Math.ceil(best.c - meta.shards) + ' shards' };
 }
 function buyUpg(u) {
   const l = upgLvl(u); if (l >= u.max) return false;
@@ -187,6 +208,7 @@ function syncPw() { // cheap per-frame: only touches the DOM when something chan
 }
 // Shop rows (appended to the Upgrades tab)
 function renderPwShop(el) {
+  const hd = document.createElement('div'); hd.className = 'mhead sub'; hd.innerHTML = '<span>POWER-UPS</span><span>use in a run with the buttons or keys 1-3</span>'; el.appendChild(hd);
   for (const d of PWS) {
     const own = !!meta.pw[d.id], r = document.createElement('div'); r.className = 'mrow' + (own ? ' done' : '');
     r.innerHTML = '<div class="tx"><b></b><small></small></div><button></button>'; r.querySelector('b').textContent = d.glyph + ' ' + d.name + '  [' + (PWS.indexOf(d) + 1) + ']';
@@ -195,6 +217,4 @@ function renderPwShop(el) {
     b.addEventListener('click', () => { if (!own && meta.shards >= d.cost) { meta.shards -= d.cost; meta.pw[d.id] = 1; metaSave(); Audio_.sfx('buy'); renderColl(); } });
     el.appendChild(r);
   }
-  const r = document.createElement('div'); r.className = 'mrow'; r.innerHTML = '<div class="tx"><b>Left-hand mode</b><small>Power-up buttons on the right edge</small></div><button></button>';
-  const b = r.querySelector('button'); b.textContent = meta.lefty ? 'ON' : 'OFF'; b.addEventListener('click', () => { meta.lefty = !meta.lefty; metaSave(); renderColl(); }); el.appendChild(r);
 }

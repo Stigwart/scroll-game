@@ -37,9 +37,9 @@ function fxConfetti(x, y, n) {
     fxSpawn(x, y, Math.cos(a) * sp, Math.sin(a) * sp, fr(1.0, 2.0), fr(3, 6), FX_CONFETTI[(frnd() * FX_CONFETTI.length) | 0], 1, 420);
   }
 }
-function fxBanner(text, color, secs, size) {
-  if (fx.banners.length >= 3) fx.banners.shift();
-  fx.banners.push({ text: String(text), color: color || '#ffffff', t: 0, max: secs || 1.6, size: size || 34 });
+function fxBanner(text, color, secs, size, cap) {
+  if (fx.banners.length >= 2) fx.banners.shift();
+  fx.banners.push({ text: String(text), color: color || '#ffffff', t: 0, max: secs || 1.6, size: size || 34, cap: cap || '' });
 }
 function fxPop(x, y, text, color, size, secs) {
   if (fx.pops.length >= 8) fx.pops.shift();
@@ -68,6 +68,10 @@ function fxEvent(type, d) {
       fx.shake = 0; fx.chroma = 0; fx.wipe = 0; fx.ef.l = fx.ef.r = fx.ef.t = fx.ef.b = 0;
       fx.hpShown = 1; fx.bestFlash = 0; fx.bestPassed = false; fx.lastShards = 0; fx.deathT = -1;
       break;
+    case 'go':
+      fxPop(x, y - 92, 'GO!', '#7fff9a', 30, 0.7); fxSfx('go');
+      if (!g.tutRun) fxEvent('stage', { index: 0 });
+      break;
     case 'hit': {
       fxBurst(x, y, rm ? 6 : 16, d.color || pal[4], 90, 300, 0, 0, 0.55);
       if (!rm) fx.shake = Math.max(fx.shake, 5 + Math.min(1.5, (d.dmg || 0) / 10));
@@ -95,18 +99,17 @@ function fxEvent(type, d) {
     case 'stage': {
       const idx = d.index | 0, name = d.name || (CONFIG.stageNames && CONFIG.stageNames[Math.min(idx, 7)]) || '', col = palette(idx)[2];
       fx.wipe = 1; fx.wipeCol = col;
-      fxBanner('STAGE ' + (idx + 1) + ' · ' + name, col, idx ? 2.2 : 1.5);
+      fxBanner(name, col, idx ? 1.6 : 1.2, 32, 'STAGE ' + (idx + 1));
       if (idx >= 1) { fxSfx('stage'); try { if (typeof Audio_ !== 'undefined' && Audio_.lift) Audio_.lift(); } catch (e) {} }
       break;
     }
     case 'milestone':
-      fxBanner((d.secs || 0) + ' SECONDS', '#ffd84d', 1.6, 28);
-      fxPop(W / 2, 112, '+' + (d.shards || 0) + ' ◆', '#ffd84d', 24, 1.4);
+      fxBanner((d.secs || 0) + ' SECONDS', '#ffd84d', 1.6, 26, '+' + (d.shards || 0) + ' SHARDS');
       if (!rm) fxConfetti(W / 2, 60, 28);
       fxSfx('milestone');
       break;
     case 'newBestPassed':
-      fxBanner('NEW BEST!', '#ffee00', 2.4, 42);
+      fxBanner('NEW BEST!', '#ffee00', 2.0, 34);
       if (!rm) fxConfetti(W / 2, 52, 70); else fxBurst(W / 2, 52, 10, '#ffee00', 60, 140, 0, 0, 0.6);
       fx.bestFlash = 1; fx.bestPassed = true;
       fxSfx('newBest'); fxVibrate([30, 40, 30]);
@@ -200,17 +203,18 @@ function fxDraw(c) {
     const k = p.t / p.max, e = 1 - Math.pow(1 - Math.min(1, k * 4), 2);
     textAt(p.text, p.x, p.y - k * 28, p.size * (rm ? 1 : 0.7 + 0.3 * e), p.color, 12, { font: 'display', alpha: clamp(1.6 - k * 1.6, 0, 1) });
   }
-  let row = 0;
+  // Banners: top third, on a dark plate, small caption above the main line (clear of the reticle's usual area)
+  let by = 128;
   for (const bn of fx.banners) {
-    const k = bn.t / bn.max, inT = Math.min(1, bn.t / 0.22), outA = clamp((1 - k) / 0.25, 0, 1);
-    const sc = rm ? 1 : 1 + 0.35 * Math.pow(1 - inT, 2);
-    const y = PH * 0.6 + row * (bn.size * 1.6 + 14);
-    c.save(); c.translate(W / 2, y); c.scale(sc, sc); c.translate(-W / 2, -y);
-    const size = bn.size;
-    textAt(bn.text, W / 2, y, size, bn.color, 20, { font: 'display', alpha: Math.min(inT, outA) * 0.95 });
+    const k = bn.t / bn.max, inT = Math.min(1, bn.t / 0.18), outA = clamp((1 - k) / 0.25, 0, 1), al = Math.min(inT, outA);
+    const sc = rm ? 1 : 1 + 0.25 * Math.pow(1 - inT, 2), hgt = bn.size + (bn.cap ? 30 : 12);
+    c.font = bn.size + 'px ' + FONT_DISPLAY; const tw = Math.min(W - 40, Math.max(170, c.measureText(bn.text).width + 56));
+    c.save(); c.translate(W / 2, by + hgt / 2); c.scale(sc, sc); c.translate(-W / 2, -(by + hgt / 2));
+    c.globalAlpha = al * 0.62; c.fillStyle = '#04020c'; scrRR(W / 2 - tw / 2, by, tw, hgt, 12); c.fill();
+    c.globalAlpha = al * 0.8; c.strokeStyle = bn.color; c.lineWidth = 1.5; c.stroke(); c.globalAlpha = 1;
+    if (bn.cap) textAt(bn.cap, W / 2, by + 15, 12, '#ffffff', 0, { font: 'display', alpha: al * 0.8, ls: 2 });
+    textAt(bn.text, W / 2, by + hgt - bn.size / 2 - 7, bn.size, bn.color, 14, { font: 'display', alpha: al });
     c.restore();
-    c.save(); c.globalAlpha = Math.min(inT, outA) * 0.6; c.fillStyle = bn.color;
-    const lw = Math.min(W - 80, 220) * inT; c.fillRect(W / 2 - lw / 2, y + size * 0.75, lw, 2); c.restore();
-    row++;
+    by += hgt + 8;
   }
 }

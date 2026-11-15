@@ -138,6 +138,7 @@ const Audio_ = (() => {
   // Sound effects: each takes (output node, start time).
   const SFX = {
     start:  (o, t) => { voice(o, 'sawtooth', 220, 880, t, 0.01, 0.25, 0.2); voice(o, 'square', 440, 1320, t + 0.12, 0.01, 0.2, 0.08); },
+    go:     (o, t) => { voice(o, 'square', 660, 0, t, 0.004, 0.09, 0.1); voice(o, 'square', 990, 0, t + 0.08, 0.004, 0.16, 0.12); },
     hit:    (o, t) => { voice(o, 'square', 180, 60, t, 0.005, 0.12, 0.25); voice(o, 'sine', 110, 38, t, 0.004, 0.22, 0.45); burst(o, t, 0.08, 1800, 0.8, 0.18); }, // + low thud
     edge:   (o, t) => { voice(o, 'triangle', 1200, 900, t, 0.003, 0.05, 0.15); burst(o, t, 0.1, 5200, 1.5, 0.22); burst(o, t + 0.03, 0.07, 3400, 2, 0.14); }, // + crackle
     over:   (o, t) => { voice(o, 'sawtooth', 440, 55, t, 0.01, 0.35, 0.3); voice(o, 'triangle', 330, 110, t + 0.12, 0.01, 0.22, 0.15); },
@@ -221,10 +222,10 @@ const Audio_ = (() => {
   };
 })();
 
+function syncMuteBtn() { const b = document.getElementById('mute'); if (b) b.classList.toggle('off', Audio_.muted); }
 (function () { // mute button (top-left)
   const b = document.getElementById('mute');
-  const sync = () => { b.textContent = Audio_.muted ? '\u{1F507}' : '\u{1F50A}'; };
   for (const ev of ['pointerdown', 'pointerup', 'touchstart', 'mousedown']) b.addEventListener(ev, e => e.stopPropagation());
-  b.addEventListener('click', e => { e.stopPropagation(); Audio_.unlock(); Audio_.toggleMute(); sync(); });
-  sync();
+  b.addEventListener('click', e => { e.stopPropagation(); Audio_.unlock(); Audio_.toggleMute(); syncMuteBtn(); });
+  syncMuteBtn();
 })();

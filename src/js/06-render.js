@@ -1,15 +1,17 @@
 // Rendering
 // ============================================================
-const FONT_DISPLAY = '"Orbitron","Audiowide","Trebuchet MS",system-ui,sans-serif';
-const FONT_UI = '"Trebuchet MS",system-ui,sans-serif';
+const FONT_DISPLAY = '"NB Display","Trebuchet MS",system-ui,sans-serif';   // own display face (scripts/font.py), embedded by the build
+const FONT_UI = 'system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",sans-serif';
+try { document.fonts.load('20px "NB Display"').then(() => { for (const k in _dw) delete _dw[k]; }); } catch (e) {}
 function glow(color, blur) { ctx.shadowColor = color; ctx.shadowBlur = blur; }
 function noGlow() { ctx.shadowBlur = 0; }
 
 // Text helper. opts: {font:'display'|'ui', align, alpha}
 function textAt(str, x, y, size, color, blur, opts) {
   const o = opts || {};
-  ctx.font = 'bold ' + Math.round(Math.max(size, 12 / SCALE)) + 'px ' + (o.font === 'display' ? FONT_DISPLAY : FONT_UI);
+  ctx.font = (o.font === 'display' ? '' : '600 ') + Math.round(Math.max(size, 12 / SCALE)) + 'px ' + (o.font === 'display' ? FONT_DISPLAY : FONT_UI);
   ctx.textAlign = o.align || 'center'; ctx.textBaseline = 'middle';
+  if ('letterSpacing' in ctx) ctx.letterSpacing = (o.ls || 0) + 'px';
   const pa = ctx.globalAlpha; if (o.alpha !== undefined) ctx.globalAlpha = pa * o.alpha;
   if (blur) glow(color, blur);
   ctx.fillStyle = color; ctx.fillText(str, x, y);
@@ -21,7 +23,7 @@ function textCenter(str, y, size, color, blur) { textAt(str, W / 2, y, size, col
 const _dw = {};
 function monoText(str, cx, y, size, color, blur, alpha) {
   const px = Math.round(Math.max(size, 12 / SCALE));
-  ctx.font = 'bold ' + px + 'px ' + FONT_DISPLAY; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.font = px + 'px ' + FONT_DISPLAY; ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; if ('letterSpacing' in ctx) ctx.letterSpacing = '0px';
   let dw = _dw[px]; if (!dw) { dw = +ctx.measureText('0').width || px * 0.7; _dw[px] = dw; }
   const adv = ch => (ch === '.' || ch === ':') ? dw * 0.5 : dw;
   let tot = 0; for (let i = 0; i < str.length; i++) tot += adv(str[i]);
@@ -161,6 +163,10 @@ function drawTarget() {
     }
     ctx.globalAlpha = 1;
   }
+  if (g.hold && g.state === 'play') { // opening hold: a ring closes on the reticle, then GO
+    const p = g.tutRun ? 0.5 + 0.5 * Math.sin(fx.t * 5) : clamp(g.holdT / HOLD_S, 0, 1);
+    ctx.strokeStyle = '#ffffff'; ctx.globalAlpha = 0.75; ctx.lineWidth = 3; ctx.beginPath(); ctx.arc(0, 0, R + 44 - 30 * p, 0, 6.283); ctx.stroke(); ctx.globalAlpha = 1;
+  }
   // Crosshair notches + sweet spot
   ctx.strokeStyle = col; ctx.lineWidth = 2; ctx.beginPath();
   for (let i = 0; i < 4; i++) { const c = Math.cos(i * 1.571), s = Math.sin(i * 1.571); ctx.moveTo(c * (R - 15), s * (R - 15)); ctx.lineTo(c * (R - 6), s * (R - 6)); }
@@ -218,31 +224,23 @@ function drawEdgeDanger() {
 function drawHero() {
   const g = game, passed = g.best > 0 && g.t > g.best;
   const pulse = 1 + (game.reduceMotion ? 0 : 0.06 * fx.bestFlash);
-  monoText(fmtTime(g.t), W / 2, 44, 52 * pulse, passed ? '#ffee66' : '#ffffff', passed ? 20 : 14);
+  monoText(fmtTime(g.t), W / 2, 38, 46 * pulse, passed ? '#ffee66' : '#ffffff', passed ? 18 : 12);
   if (g.best > 0) {
     if (passed) {
-      textAt('NEW BEST', W / 2, 82, 14, '#ffee00', 8 + 10 * fx.bestFlash, { font: 'display', alpha: 0.75 + 0.25 * Math.sin(fx.t * 6) });
+      textAt('NEW BEST', W / 2, 74, 13, '#ffee00', 8 + 10 * fx.bestFlash, { font: 'display', alpha: 0.75 + 0.25 * Math.sin(fx.t * 6) });
     } else {
-      textAt('BEST ' + fmtTime(g.best), W / 2, 82, 13, '#ffffff', 0, { font: 'display', alpha: 0.45 });
+      textAt('BEST ' + fmtTime(g.best), W / 2, 74, 12, '#ffffff', 0, { font: 'display', alpha: 0.5 });
       const bw = 120, bx = (W - bw) / 2, p = clamp(g.t / g.best, 0, 1);
-      ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(bx, 94, bw, 3);
-      ctx.fillStyle = p > 0.85 ? '#ffee66' : 'rgba(255,255,255,0.6)'; ctx.fillRect(bx, 94, bw * p, 3);
-      ctx.fillStyle = '#ffee66'; ctx.fillRect(bx + bw - 1, 91, 2, 9); // ghost marker at the best time
+      ctx.fillStyle = 'rgba(255,255,255,0.12)'; ctx.fillRect(bx, 86, bw, 3);
+      ctx.fillStyle = p > 0.85 ? '#ffee66' : 'rgba(255,255,255,0.6)'; ctx.fillRect(bx, 86, bw * p, 3);
+      ctx.fillStyle = '#ffee66'; ctx.fillRect(bx + bw - 1, 83, 2, 9); // ghost marker at the best time
     }
   }
-  // In-run shards, top right
+  // In-run shards, top right (below the dev gear in playtest builds)
   if (typeof runShards === 'function') {
-    const sc = 1 + (game.reduceMotion ? 0 : 0.25 * fx.shardPulse);
-    textAt('◆ ' + runShards(), W - 14, 68, 19 * sc, '#ffd84d', 8, { font: 'display', align: 'right' });
-  }
-  // Tutorial hint
-  const tut = g.tutorial;
-  if (tut) {
-    const msg = tut === 'centre' ? 'KEEP THE BALL NEAR THE CIRCLE' : tut === 'dodge' ? 'DODGE THE SHAPES' : '';
-    if (msg) {
-      textAt(msg, W / 2, PH * 0.8, 20, '#dffcff', 12, { font: 'display', alpha: 0.65 + 0.35 * Math.sin(fx.t * 4) });
-      if (tut === 'centre') textAt('drag anywhere to steer', W / 2, PH * 0.8 + 28, 14, '#ffffff', 0, { alpha: 0.55 });
-    }
+    const sc = 1 + (game.reduceMotion ? 0 : 0.25 * fx.shardPulse), y = BUILD.devUI ? 72 : 34, str = String(runShards());
+    ctx.font = Math.round(20 * sc) + 'px ' + FONT_DISPLAY; const w = ctx.measureText(str).width;
+    textAt(str, W - 16, y, 20 * sc, '#ffd84d', 8, { font: 'display', align: 'right' }); scrShard(W - 16 - w - 14, y - 1, 8);
   }
 }
 
@@ -276,7 +274,3 @@ function render() {
   drawOverlayScreens(pal);
 }
 
-// Tap to resume after auto-pause
-window.addEventListener('pointerdown', e => {
-  if (game.paused && !panelOpen && e.target === canvas) { game.paused = false; telClearInProg(); }
-}, true);

@@ -31,13 +31,13 @@ for (const [name, w, h, input, full] of SIZES) {
   const modal = await page.evaluate(() => document.getElementById('streak').classList.contains('open'));
   if (modal) { await shot('0-firstload-modal'); const bb = await page.locator('#stOk').boundingBox(); if (input === 'touch') await page.touchscreen.tap(bb.x + bb.width / 2, bb.y + bb.height / 2); else await page.mouse.click(bb.x + bb.width / 2, bb.y + bb.height / 2); await page.waitForTimeout(300); }
   await shot('1-title');
-  const st = () => page.evaluate(() => { const H = __TEST_HOOKS, g = H.game, r = document.getElementById('c').getBoundingClientRect(), k = r.width / 450;
+  const st = () => page.evaluate(() => { const H = __TEST_HOOKS, g = H.game, r = document.getElementById('c').getBoundingClientRect(), k = r.width / H.area().W;
     return { state: g.state, t: g.t, hp: g.health, k, bx: r.left + (g.ball.x + g.ball.vx * 0.12) * k, by: r.top + (g.ball.y + g.ball.vy * 0.12) * k, tx: r.left + g.target.x * k, ty: r.top + g.target.y * k, paused: g.paused }; });
   // frame-time sampler
   await page.evaluate(() => { window.__ft = []; let l = performance.now(); (function f(n) { __ft.push(n - l); l = n; requestAnimationFrame(f); })(l); });
   // start + play with real input, steering the ring onto the (slightly led) ball
   let s = await st(), finger = null; const startAt = Date.now(); let startDelay = 0;
-  if (input === 'mouse') { await page.mouse.move(s.tx - 30, s.ty + 40); await page.mouse.move(s.tx, s.ty, { steps: 4 }); }
+  if (input === 'mouse') { await page.mouse.click(s.tx, s.ty); await page.mouse.move(s.tx + 60, s.ty + 30, { steps: 6 }); await page.mouse.move(s.tx - 60, s.ty, { steps: 6 }); }
   else if (input === 'key') await page.keyboard.press('ArrowUp');
   else { finger = { x: w / 2, y: h * 0.75 }; await cdp.send('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: [finger] }); }
   const held = new Set(); const marks = [[3, '2-tutorial'], [11, '3-dodge'], [34, '4-stage2'], [50, '5-play50']]; let died = 0;

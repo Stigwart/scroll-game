@@ -201,9 +201,9 @@ function recordRun(seconds) {
   prog.runs++; prog.best = Math.max(prog.best, seconds);
   const st = game.stats;
   if (st) { prog.nearMissBest = Math.max(prog.nearMissBest, st.nearMiss || 0); prog.stageMax = Math.max(prog.stageMax, st.stageMax || 0); prog.sweetBest = Math.max(prog.sweetBest, st.sweetTime || 0); }
-  const fresh = []; // at most one unlock per run; other met conditions unlock on later runs
-  outer: for (const kind in LISTS) for (const it of LISTS[kind]) {
-    if (!isUnlocked(kind, it) && unlockMet(it)) { unlocked.add(ukey(kind, it)); fresh.push(it.name); break outer; }
+  const fresh = []; // every unlock earned this run is announced on the game-over screen
+  for (const kind in LISTS) for (const it of LISTS[kind]) {
+    if (!isUnlocked(kind, it) && unlockMet(it)) { unlocked.add(ukey(kind, it)); fresh.push(it.name); }
   }
   saveCosm(); return fresh;
 }
@@ -233,6 +233,7 @@ function renderColl() {
     b.innerHTML = '<span class="ti">' + (TAB_ICON[k] || '') + '</span><span class="tl"></span>'; b.lastChild.textContent = lab;
     b.classList.toggle('on', k === collTab);
   });
+  document.getElementById('collTitle').textContent = collTab === 'upgrades' ? 'UPGRADES' : collTab === 'daily' ? 'DAILY' : 'COLLECTION';
   gridEl.innerHTML = ''; tiles = [];
   if (!LISTS[collTab]) { renderMeta(gridEl, collTab); gridEl.scrollTop = top; return; }
   const kind = collTab, chosen = selItem(kind);
