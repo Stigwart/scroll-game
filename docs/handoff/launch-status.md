@@ -1,6 +1,6 @@
 # Neon Bullseye: launch status
 
-*Updated 15 Nov 2026, build 1.0.0. Status: **submitted to CrazyGames for Basic Launch on 15 Nov 2026 and awaiting review.** Game ID 174300.*
+*Updated 15 Nov 2026, build 1.0.2. Status: **submitted to CrazyGames for Basic Launch on 15 Nov 2026 and awaiting review.** Game ID 174300.*
 
 ---
 
@@ -72,7 +72,7 @@ See [docs/qa-record.md](../qa-record.md). Headlines: 38 of 38 automated QA check
 
 ## 7. Open items
 
-0. **Version 1.0.2 is built but not uploaded.** After the first playtest the target was redrawn as a repulsor and run 1 now teaches the push (see the last section of `docs/play-review.md`). The build under review at CrazyGames is still 1.0.0. To update: on the game's page choose "Submit new version", upload `dist/crazygames/index.html`, then replace the covers and videos on the Art tab and the description on Game Info with the regenerated files and the reworded listing.
+0. **Version 1.0.2 is submitted.** On 15 Nov 2026 (23:47) build 1.0.2 was uploaded with "Submit new version" and marked Submitted after Stuart's QA answers; it ran in the QA preview with no warnings. New art (three covers, two videos, saved 23:53) is awaiting review, and the description and controls on Game Info were updated to the push wording. The first build (1.0.0, 22:06) and the first art set are still listed as earlier versions. The covers now show the quieter target; if click-through is weak, a bolder target on the covers only is the first thing to try.
 
 1. **Load time in the QA tool read 15 seconds.** CrazyGames measures from its Play Now button to the first `gameplayStart`, so time spent on our title screen counts. The game loads in under a second; a player who hesitates before clicking shows as a slow load. Option if the dashboard shows a problem: drop first-time players straight into run 1 (the ball already waits until they move). Trade-off: a mouse player who never clicks gets no sound, because browsers only allow audio after a click or key press.
 2. **An idle first run lasts a long time** (over a minute on the wide field in the QA preview) because of the new-player edge relief and shield. Good for conversion; revisit if first runs feel too safe.

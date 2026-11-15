@@ -33,7 +33,7 @@ Between runs, spend shards on upgrades and power-ups, complete missions and dail
 ## Controls
 
 **Desktop**
-- Click to start. Move the mouse to steer the ring; the ring pushes the ball away from its centre.
+- Click to start. Move the mouse to steer the ring. The ring pushes the ball away from its centre, so put the ring behind the ball to send it where you want.
 - Or use the arrow keys / WASD.
 - Space or Enter: start and retry.
 - 1, 2, 3: use power-ups. P: pause. M: mute.
