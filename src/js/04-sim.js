@@ -14,6 +14,8 @@ function obstacleGap(b, o) {
 const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, 0.8, clamp((W - REF_W) / (MAX_W - REF_W), 0, 1));
 // Opening hold: the ball rides in the ring until GO, so every run starts from control (run 1 waits for the player to move)
 const HOLD_S = 0.8, HOLD_TUT_MAX = 8;
+// Second chance: on a player's first SHIELD_RUNS runs the first lethal hit refills health instead (fraction by run number)
+const SHIELD_RUNS = 3, SHIELD_REFILL = [0.7, 0.5, 0.4];
 function step(dt) {
   const g = game, b = g.ball, tg = g.target, L = level();
   if (g.hold) {
@@ -99,7 +101,7 @@ function step(dt) {
       o.hit = true;
       if (!rm) g.shake = Math.max(g.shake, 3); telHit(o); Audio_.sfx('hit');
       if (g.t - (o.dmgAt === undefined ? -9 : o.dmgAt) > 0.6) { // one damage tick per obstacle contact
-        o.dmgAt = g.t; const dmg = T.hit * (1 + 0.2 * L) * (1 - 0.4 * assist());
+        o.dmgAt = g.t; const dmg = g.t < g.safeUntil ? 0 : T.hit * (1 + 0.2 * L) * (1 - 0.4 * assist());
         g.health -= dmg; g.stats.hits++; if (!rm) g.hitStop = 0.06;
         fxe('hit', { x: b.x, y: b.y, dmg }); g.flash = Math.min(0.35, g.flash + 0.25);
       }
@@ -127,8 +129,13 @@ function step(dt) {
   const loss = lossD + lossE;
   if (loss > 0) { const f = Math.min(g.health, loss * dt) / loss; telStep(dt, d, edge, lossD * f, lossE * f); }
   else telStep(dt, d, edge, 0, 0);
-  g.health -= loss * dt;
-  if (g.health <= 0) { g.health = 0; endRun(); }
+  if (g.t >= g.safeUntil) g.health -= loss * dt;
+  if (g.health <= 0) {
+    if (g.shield > 0) { // second chance on a new player's first runs: one save per run, announced on screen
+      g.shield--; g.health = g.maxHealth * SHIELD_REFILL[Math.min(prog.runs, SHIELD_REFILL.length - 1)]; g.safeUntil = g.t + 1.5; g.stats.saved = 1;
+      fxe('shield', { x: b.x, y: b.y });
+    } else { g.health = 0; endRun(); }
+  }
 }
 
 function update(frameDt) {

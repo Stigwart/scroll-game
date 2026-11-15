@@ -72,6 +72,11 @@ function fxEvent(type, d) {
       fxPop(x, y - 92, 'GO!', '#7fff9a', 30, 0.7); fxSfx('go');
       if (!g.tutRun) fxEvent('stage', { index: 0 });
       break;
+    case 'shield':
+      fxBanner('SECOND CHANCE', '#7fff9a', 1.8, 28, 'SHIELD');
+      fxBurst(x, y, rm ? 10 : 36, '#7fff9a', 120, 420, 0, 0, 0.7); fx.wipe = 1; fx.wipeCol = '#7fff9a'; fx.hpShown = 0;
+      fxSfx('power'); fxVibrate([20, 30, 20]);
+      break;
     case 'hit': {
       fxBurst(x, y, rm ? 6 : 16, d.color || pal[4], 90, 300, 0, 0, 0.55);
       if (!rm) fx.shake = Math.max(fx.shake, 5 + Math.min(1.5, (d.dmg || 0) / 10));
