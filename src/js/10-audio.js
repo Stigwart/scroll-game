@@ -10,6 +10,9 @@ const Audio_ = (() => {
   ];
   const DIV = [4, 2, 2, 1];            // arp note every N sixteenths, by intensity
   const CUT = [900, 1300, 1800, 2600]; // lowpass cutoff by intensity
+  const MASTER = 0.8, MUSIC = 0.9;       // mix: music sits about 8 dB under the SFX peaks and ducks on hits
+  const SFX_GAIN = { buy: 1.7, power: 1.5, levelUp: 1.5, stage: 1.5, unlock: 1.3, edge: 0.8, milestone: 1.2, hit: 0.9 };   // levelled from measured peaks (see docs/play-review.md)
+  const DUCK = { hit: 0.45, over: 0.3, newBest: 0.5, stage: 0.6 };   // music level while these play
   const MIN_GAP = { edge: 80, hit: 80, nearMiss: 120, tick: 30 };
 
   let ctx = null, master = null, bus = null, lp = null, noise = null;
@@ -26,10 +29,12 @@ const Audio_ = (() => {
       if (!AC) return null;
       const c = new AC();
       master = c.createGain();
-      master.gain.value = muted ? 0 : 0.5;
-      master.connect(c.destination);
+      master.gain.value = muted ? 0 : MASTER;
+      const comp = c.createDynamicsCompressor();   // safety limiter: overlapping SFX never clip
+      comp.threshold.value = -10; comp.knee.value = 8; comp.ratio.value = 12; comp.attack.value = 0.003; comp.release.value = 0.12;
+      master.connect(comp); comp.connect(c.destination);
       lp = c.createBiquadFilter();
-      lp.type = 'lowpass'; lp.frequency.value = CUT[intensity]; lp.Q.value = 0.7;
+      lp.type = 'lowpass'; lp.frequency.value = CUT[Math.min(3, intensity)]; lp.Q.value = 0.7;
       lp.connect(master);
       bus = c.createGain(); bus.gain.value = 0;
       bus.connect(lp);
@@ -73,7 +78,13 @@ const Audio_ = (() => {
   }
 
   function playStep(s, t) {
-    const ch = CHORDS[(s >> 4) & 3], lvl = intensity, div = DIV[lvl];
+    const ch = CHORDS[(s >> 4) & 3], L8 = intensity, lvl = Math.min(3, L8), div = DIV[lvl];
+    // One more layer per stage: kick (2), backbeat (5), sub bass (6), answering lead (7), driving hats (8)
+    if (L8 >= 1 && s % 4 === 0) voice(bus, 'sine', 120, 42, t, 0.004, 0.16, 0.2);
+    if (L8 >= 4 && s % 8 === 4) { hat(t, 0.11); voice(bus, 'triangle', 190, 120, t, 0.003, 0.08, 0.12); }
+    if (L8 >= 5 && s % 8 === 0) voice(bus, 'sine', ch[0] / 2, 0, t, 0.01, SIX * 7, 0.22);
+    if (L8 >= 6 && s % 4 === 0) voice(bus, 'square', ch[0] * 4 * Math.pow(2, (ch[1][(s >> 2) % 4] + 7) / 12), 0, t + SIX, 0.003, SIX * 1.2, 0.022);
+    if (L8 >= 7 && s % 2 === 0) hat(t, 0.035);
     if (s % 16 === 0) pad(ch, t);
     if (s % div === 0) {
       const k = (s / div) % 4;
@@ -104,7 +115,7 @@ const Audio_ = (() => {
       if (ctx.state !== 'running') return; // retried after resume()
       nextT = now + 0.05; step = 0;
       timer = setInterval(schedule, TICK);
-      bus.gain.setTargetAtTime(0.8, now, 0.1); // ~0.3s fade in
+      bus.gain.setTargetAtTime(MUSIC, now, 0.1); // ~0.3s fade in
       schedule();
     } else if (!on && timer) {
       clearInterval(timer); timer = null;
@@ -115,7 +126,7 @@ const Audio_ = (() => {
   function setMuted(v) {
     muted = !!v;
     try { lsSet(MUTE_KEY, muted ? '1' : '0'); } catch (e) {}
-    if (ctx) master.gain.setTargetAtTime(muted ? 0 : 0.5, ctx.currentTime, 0.02);
+    if (ctx) master.gain.setTargetAtTime(muted ? 0 : MASTER, ctx.currentTime, 0.02);
     syncMusic();
   }
 
@@ -188,19 +199,19 @@ const Audio_ = (() => {
         if (now - (lastAt[name] || 0) < MIN_GAP[name]) return;
         lastAt[name] = now;
       }
-      try { f(master, c.currentTime); } catch (e) {}
+      try { let out = master; if (SFX_GAIN[name]) { out = c.createGain(); out.gain.value = SFX_GAIN[name]; out.connect(master); } f(out, c.currentTime); if (DUCK[name] && bus && timer) { const t = c.currentTime; bus.gain.cancelScheduledValues(t); bus.gain.setTargetAtTime(MUSIC * DUCK[name], t, 0.015); bus.gain.setTargetAtTime(MUSIC, t + 0.18, 0.2); } } catch (e) {}
     },
     // Brief intensity lift on stage change: filter opens wide, then relaxes back to the stage's level.
     lift() {
       if (!ctx || !lp) return;
       const now = ctx.currentTime;
       lp.frequency.setTargetAtTime(CUT[3] * 1.7, now, 0.08);
-      setTimeout(() => { if (ctx) lp.frequency.setTargetAtTime(CUT[intensity], ctx.currentTime, 0.9); }, 1400);
+      setTimeout(() => { if (ctx) lp.frequency.setTargetAtTime(CUT[Math.min(3, intensity)], ctx.currentTime, 0.9); }, 1400);
     },
     music(on) { wanted = !!on; syncMusic(); },
     setIntensity(n) {
-      intensity = Math.max(0, Math.min(3, Math.floor(+n || 0)));
-      if (ctx) lp.frequency.setTargetAtTime(CUT[intensity], ctx.currentTime, 0.4);
+      const v = Math.max(0, Math.min(7, Math.floor(+n || 0))); if (v === intensity) return; intensity = v;
+      if (ctx) lp.frequency.setTargetAtTime(CUT[Math.min(3, intensity)], ctx.currentTime, 0.4);
     },
     get muted() { return muted; },
     setMuted(v) { setMuted(v); },

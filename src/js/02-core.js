@@ -56,7 +56,18 @@ function rgba(h, a) { const c = hex2rgb(h); return 'rgba(' + c[0] + ',' + c[1] +
 function palette(stageF) {
   const P = CONFIG.palettes, i = Math.min(P.length - 1, Math.floor(stageF)), j = Math.min(P.length - 1, i + 1);
   const t = clamp(stageF - i, 0, 1), s = t * t * (3 - 2 * t);
-  return P[i].map((c, n) => mixHex(c, P[j][n], s)).map(rgbToHex);
+  const out = P[i].map((c, n) => mixHex(c, P[j][n], s)).map(rgbToHex);
+  const th = typeof selItem === 'function' ? selItem('themes') : null;
+  return th && th.fx ? out.map(c => themeColor(c, th.fx)) : out;
+}
+// Background themes (cosmetic): fx = [hue shift in degrees, saturation multiplier] applied to every stage palette
+function themeColor(hex, fx) {
+  const m = hex2rgb(hex).map(v => v / 255), mx = Math.max(...m), mn = Math.min(...m), l = (mx + mn) / 2, d = mx - mn;
+  let h = 0, s = 0;
+  if (d > 1e-6) { s = d / (1 - Math.abs(2 * l - 1)); h = mx === m[0] ? ((m[1] - m[2]) / d) % 6 : mx === m[1] ? (m[2] - m[0]) / d + 2 : (m[0] - m[1]) / d + 4; h *= 60; }
+  h = ((h + fx[0]) % 360 + 360) % 360; s = clamp(s * fx[1], 0, 1);
+  const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs((h / 60) % 2 - 1)), k = l - c / 2, r = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+  return '#' + r.map(v => Math.round((v + k) * 255).toString(16).padStart(2, '0')).join('');
 }
 function rgbToHex(s) {
   const m = s.match(/\d+/g).map(Number);

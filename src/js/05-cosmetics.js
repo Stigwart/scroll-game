@@ -195,9 +195,15 @@ const TRAILS = [
   { id: 'echo', name: 'Echo', unlock: { type: 'time', v: 90 } },
   { id: 'none', name: 'None', unlock: null }
 ];
-const LISTS = { balls: BALLS, trails: TRAILS };
-const LABELS = { balls: 'Balls', trails: 'Trails' };
-const TAB_ICON = { balls: '&#9679;', trails: '&#8779;', upgrades: '&#9650;', daily: '&#10003;' };
+const THEMES = [
+  { id: 'neon', name: 'Neon', unlock: null },
+  { id: 'aurora', name: 'Aurora', unlock: { type: 'level', v: 6 }, fx: [-70, 1] },
+  { id: 'ember', name: 'Ember', unlock: { type: 'buy', v: 500 }, fx: [150, 1.1] },
+  { id: 'mono', name: 'Mono', unlock: { type: 'stage', v: 8 }, fx: [0, 0.12] }
+];
+const LISTS = { balls: BALLS, trails: TRAILS, themes: THEMES };
+const LABELS = { balls: 'Balls', trails: 'Trails', themes: 'Themes' };
+const TAB_ICON = { themes: '&#9641;', balls: '&#9679;', trails: '&#8779;', upgrades: '&#9650;', daily: '&#10003;' };
 
 function ballDraw(c, id, x, y, r, t, ang, col) {
   const it = BALLS.find(b => b.id === id) || BALLS[0];
@@ -295,7 +301,7 @@ function lsJSON(k, def) { try { const v = JSON.parse(lsGet(k)); return v == null
 const prog = { runs: 0, best: 0, nearMissBest: 0, stageMax: 0, sweetBest: 0 };   // last three: best single-run skill stats, used by skill unlocks
 (function () { const s = lsJSON(STORE_PROG, {}); prog.runs = +s.runs || 0; prog.best = Math.max(+s.best || 0, game.best); prog.nearMissBest = +s.nearMissBest || 0; prog.stageMax = +s.stageMax || 0; prog.sweetBest = +s.sweetBest || 0; })();
 const unlocked = new Set((function () { const a = lsJSON(STORE_UNLOCKS, []); return Array.isArray(a) ? a : []; })());
-const sel = { balls: 'orb', trails: 'classic' };
+const sel = { balls: 'orb', trails: 'classic', themes: 'neon' };
 (function () { const s = lsJSON(STORE_SEL, {}); for (const k in sel) if (typeof s[k] === 'string') sel[k] = s[k]; })();
 const ukey = (kind, it) => kind + ':' + it.id;
 const isUnlocked = (kind, it) => !it.unlock || unlocked.has(ukey(kind, it));
@@ -331,7 +337,7 @@ function recordRun(seconds) {
 }
 function unlockAll() { for (const kind in LISTS) for (const it of LISTS[kind]) if (it.unlock) unlocked.add(ukey(kind, it)); saveCosm(); if (collOpen) renderColl(); }
 function resetUnlocks() {
-  unlocked.clear(); prog.runs = 0; prog.best = 0; prog.nearMissBest = 0; prog.stageMax = 0; prog.sweetBest = 0; sel.balls = 'orb'; sel.trails = 'classic'; saveCosm(); if (collOpen) renderColl();
+  unlocked.clear(); prog.runs = 0; prog.best = 0; prog.nearMissBest = 0; prog.stageMax = 0; prog.sweetBest = 0; sel.balls = 'orb'; sel.trails = 'classic'; sel.themes = 'neon'; saveCosm(); if (collOpen) renderColl();
 }
 document.getElementById('unlockAll').addEventListener('click', unlockAll);
 document.getElementById('resetUnlocks').addEventListener('click', resetUnlocks);
@@ -390,6 +396,10 @@ function drawTile(tl, t, dt) {
   const A = w * (trail ? 0.3 : 0.1), B = h * (trail ? 0.26 : 0.08);
   const x = w / 2 + Math.sin(t * 1.9) * A, y = h / 2 + Math.sin(t * 3.1) * B;
   const ang = Math.atan2(Math.cos(t * 3.1) * 3.1 * B, Math.cos(t * 1.9) * 1.9 * A);
+  if (tl.kind === 'themes') { // swatches: the eight stage accents under this theme
+    const sw = (w - 16) / 8; for (let i = 0; i < 8; i++) { const cc = CONFIG.palettes[i][2]; c.fillStyle = tl.it.fx ? themeColor(cc, tl.it.fx) : cc; c.fillRect(8 + i * sw + 1, h / 2 - 16, sw - 2, 32); }
+    return;
+  }
   if (trail) {
     trailUpdate(tl.st, tl.it.id, x, y, dt, true); trailDraw(c, tl.st, tl.it.id, 10, col);
     ballDraw(c, selItem('balls').id, x, y, 10, t, ang, col);

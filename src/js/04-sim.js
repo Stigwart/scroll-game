@@ -143,7 +143,7 @@ function step(dt) {
 
 function update(frameDt) {
   const g = game;
-  g.bgT += frameDt; Audio_.setIntensity(Math.min(3, Math.floor(g.stageF())));
+  g.bgT += frameDt; Audio_.setIntensity(Math.min(7, Math.floor(g.stageF())));
   // Background always drifts
   const sf = g.stageF();
   g.bgOff.x += Math.cos(g.bgT * 0.17) * 22 * frameDt * (1 + sf);
