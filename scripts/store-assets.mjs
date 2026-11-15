@@ -48,8 +48,9 @@ const compose = ({ ring, mark, zoom, markZoom, shapes }) => {
 const TRI = { kind: 'tri', x: 116, y: -86, r: 44, rot: 0.5, hue: 0.9 };   // the shape about to hit, same place in every layout
 const COVERS = { // viewport -> layout in field units (the field is 1152x648, 450x675 or 648x648 for these three ratios); shapes are relative to the ring
   '1920x1080': { ring: [812, 336], zoom: 1.7, mark: [316, 352], markZoom: 1.55, shapes: [TRI, { kind: 'circle', x: -42, y: 150, r: 34 }, { kind: 'rect', x: -60, y: -150, w: 150, h: 22, hue: 0.9 }, { kind: 'rect', x: 180, y: 86, w: 22, h: 120 }, { kind: 'circle', x: 196, y: -150, r: 24, hue: 0.9, pulse: 1 }] },
-  '800x1200': { ring: [225, 418], zoom: 1.18, mark: [225, 132], markZoom: 1.08, shapes: [TRI, { kind: 'circle', x: -128, y: 132, r: 36 }, { kind: 'rect', x: 96, y: 168, w: 130, h: 22, hue: 0.9 }, { kind: 'rect', x: -158, y: -70, w: 22, h: 110, hue: 0.9 }, { kind: 'circle', x: 150, y: 60, r: 22, pulse: 1 }] },
-  '800x800': { ring: [324, 412], zoom: 1.16, mark: [324, 128], markZoom: 1.45, shapes: [TRI, { kind: 'circle', x: -196, y: 96, r: 40 }, { kind: 'rect', x: 196, y: 110, w: 22, h: 130, hue: 0.9 }, { kind: 'rect', x: -200, y: -70, w: 110, h: 22, hue: 0.9 }, { kind: 'circle', x: 226, y: -36, r: 24, pulse: 1 }] },
+  // CrazyGames overlays a label in the top-left corner (about 40% x 12% on portrait, 35% x 30% on square): keep the title out of it
+  '800x1200': { ring: [225, 440], zoom: 1.16, mark: [225, 170], markZoom: 1.08, shapes: [TRI, { kind: 'circle', x: -128, y: 132, r: 36 }, { kind: 'rect', x: 96, y: 168, w: 130, h: 22, hue: 0.9 }, { kind: 'rect', x: -158, y: -70, w: 22, h: 110, hue: 0.9 }, { kind: 'circle', x: 150, y: 60, r: 22, pulse: 1 }] },
+  '800x800': { ring: [336, 262], zoom: 1.16, mark: [324, 552], markZoom: 1.5, shapes: [TRI, { kind: 'circle', x: -200, y: 120, r: 36 }, { kind: 'rect', x: 206, y: 96, w: 22, h: 120, hue: 0.9 }, { kind: 'rect', x: -206, y: -96, w: 110, h: 22, hue: 0.9 }, { kind: 'circle', x: 232, y: -56, r: 24, pulse: 1 }] },
 };
 COVERS['1080x1620'] = COVERS['800x1200'];   // portrait video intro frame
 async function cover(size, path) {
