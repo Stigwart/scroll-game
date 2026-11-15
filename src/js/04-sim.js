@@ -15,6 +15,7 @@ function obstacleGap(b, o) {
 const fieldK = () => (W * PH) / (REF_W * REF_H) * lerp(1, (typeof prog !== 'undefined' && prog.runs < 3) ? WIDE_NEW : 0.8, clamp((W - REF_W) / (MAX_W - REF_W), 0, 1));
 const WIDE_NEW = typeof WIDE_NEW_OVERRIDE === 'number' ? WIDE_NEW_OVERRIDE : 0.6;
 // Opening hold: the ball rides in the ring until GO, so every run starts from control (run 1 waits for the player to move)
+const EDGE_ASSIST = typeof EDGE_ASSIST_OVERRIDE === 'number' ? EDGE_ASSIST_OVERRIDE : 0.85;
 const HOLD_S = 0.8, HOLD_TUT_MAX = 8;
 // Second chance: on a player's first SHIELD_RUNS runs the first lethal hit refills health instead (fraction by run number)
 const SHIELD_RUNS = 3, SHIELD_REFILL = [0.7, 0.5, 0.4];
@@ -127,7 +128,7 @@ function step(dt) {
   // Health: none in sweet spot, grows with distance, much faster on edge
   const lossD = T.loss * (excess / 40) * (1 + 0.5 * L) * (1 - 0.4 * assist());
   let lossE = 0;
-  const edgeRate = (CONFIG.edgeBase * T.edge * CONFIG.edgeLossBase * 1.5 + 6) * (1 - 0.4 * assist());
+  const edgeRate = (CONFIG.edgeBase * T.edge * CONFIG.edgeLossBase * 1.5 + 6) * (1 - EDGE_ASSIST * assist());   // edges are what end most first runs, so new players get the most relief here
   if (edge) { lossE = edgeRate + (newContact ? 0.15 * edgeRate / dt : 0); if (!rm) g.shake = Math.max(g.shake, 4); g.flash = Math.min(0.35, g.flash + dt * 2); }
   const loss = lossD + lossE;
   if (loss > 0) { const f = Math.min(g.health, loss * dt) / loss; telStep(dt, d, edge, lossD * f, lossE * f); }

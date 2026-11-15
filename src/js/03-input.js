@@ -100,7 +100,7 @@ function spawnObstacle() {
   const L = level(), r = srng(), si = Math.min(7, Math.floor(game.stageF()));
   if (si >= 4 && srng() < 0.13) { spawnGate(L); return 1.6; }
   const kind = r < 0.4 ? 'circle' : r < 0.75 ? 'rect' : 'tri';
-  const sizeMul = 1 + 0.5 * L;
+  const sizeMul = Math.min(1.9, 1 + 0.5 * L);   // shapes stop growing after ~110 s so late stages stay readable; speed and count keep rising
   const speed = srand(45, 80) * (1 + 0.45 * L);
   // Enter from top, left or right; travel across the screen
   const side = srng();
